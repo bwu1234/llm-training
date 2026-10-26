@@ -15,9 +15,8 @@ from pathlib import Path
 
 import torch
 
-from llm_training.data.qwen3_tokenizer import Qwen3Tokenizer
-
 from .model import QWEN3_0_6B, Qwen3Model
+from .tokenizer import Qwen3Tokenizer
 
 REPOSITORY = "rasbt/qwen3-from-scratch"
 REVISION = "8a3862bde98adf1c10e551bc4a400bf836f11e78"

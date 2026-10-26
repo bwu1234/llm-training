@@ -51,7 +51,7 @@ def main():
     args = parser.parse_args()
     try:
         if args.command == "inspect":
-            from .training.trainer import collect_runtime_metadata
+            from .training.provenance import collect_runtime_metadata
 
             print(json.dumps(collect_runtime_metadata(), indent=2))
             return
@@ -96,7 +96,7 @@ def main():
         cfg = load_config(args.config) if args.config else None
         if args.command == "prepare" and cfg.data.format == "tokens":
             from .data.corpus import prepare_corpus
-            from .data.gpt2_tokenizer import prepare_tokenizer
+            from .model.gpt2.tokenizer import prepare_tokenizer
 
             prepare_tokenizer(Path(cfg.data.tokenizer_cache))
             prepare_corpus(cfg.data.corpus, Path(cfg.data.path), Path(cfg.data.tokenizer_cache))
@@ -104,7 +104,7 @@ def main():
                 f"Prepared {cfg.data.corpus} tokens in {cfg.data.path} and GPT-2 tokenizer assets"
             )
         elif args.command == "prepare":
-            from .data.gpt2_tokenizer import prepare_tokenizer
+            from .model.gpt2.tokenizer import prepare_tokenizer
 
             path = Path(cfg.data.path)
             if not path.exists():

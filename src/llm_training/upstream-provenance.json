@@ -169,7 +169,7 @@
           "symbols": [
             "Qwen3Tokenizer"
           ],
-          "destination": "src/llm_training/data/qwen3_tokenizer.py",
+          "destination": "src/llm_training/model/qwen3/tokenizer.py",
           "sha256": "873c3cbde81f80e2dfcadde57e8c314a85b138d68fba02a2681afe98bd43eb53",
           "source_diff": ""
         }

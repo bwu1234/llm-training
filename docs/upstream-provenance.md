@@ -80,7 +80,7 @@ Apache 2.0, without the book exclusions in this repository's `LICENSE.txt`.
 | `model/qwen3/attention.py` | `GroupedQueryAttention` |
 | `model/qwen3/layers.py` | `FeedForward`, `RMSNorm` |
 | `model/qwen3/rope.py` | `compute_rope_params`, `apply_rope` |
-| `data/qwen3_tokenizer.py` | `Qwen3Tokenizer` |
+| `model/qwen3/tokenizer.py` | `Qwen3Tokenizer` |
 
 Changes:
 

@@ -12,9 +12,10 @@ import yaml
 from llm_training.config import config_from_dict, load_config
 from llm_training.model.gpt2.layers import GELU
 from llm_training.model.gpt2.model import GPTModel
+from llm_training.training import trainer
 from llm_training.training.optim import build_optimizer, clip_and_measure
+from llm_training.training.provenance import implementation_fingerprint
 from llm_training.training.schedule import is_constant, learning_rate_at
-from llm_training.training.trainer import implementation_fingerprint
 from tests.reference import baseline
 from tests.reference.compare import TINY_CONFIG
 
@@ -307,6 +308,29 @@ def test_fingerprint_ignores_cli_and_inspection_modules(tmp_path):
     (package / "cli.py").write_text("print('changed')\n")
     (package / "prediction.py").write_text("print('changed')\n")
     assert implementation_fingerprint(package) == before
+
+
+def test_scoped_fingerprint_ignores_code_outside_its_paths(tmp_path):
+    package = package_copy(tmp_path, "X = 1\n")
+    (package / "other").mkdir()
+    (package / "other" / "mod.py").write_text("Y = 1\n")
+    before = implementation_fingerprint(package, ["mod.py"])
+    (package / "other" / "mod.py").write_text("Y = 2\n")
+    assert implementation_fingerprint(package, ["mod.py"]) == before
+    assert implementation_fingerprint(package, ["mod.py", "other"]) != before
+
+
+def test_scoped_fingerprint_rejects_missing_paths(tmp_path):
+    package = package_copy(tmp_path, "X = 1\n")
+    with pytest.raises(ValueError, match="do not exist"):
+        implementation_fingerprint(package, ["renamed"])
+
+
+def test_lm_fingerprint_covers_gpt2_but_not_qwen3():
+    package = Path(trainer.__file__).parent.parent
+    implementation_fingerprint(package, trainer.LM_TRAINING_CODE)  # every listed path exists
+    assert "model/gpt2" in trainer.LM_TRAINING_CODE
+    assert not any(entry.startswith("model/qwen3") for entry in trainer.LM_TRAINING_CODE)
 
 
 def test_replace_helper_keeps_frozen_config_valid():

@@ -2,8 +2,9 @@
 
 `llm_training.model.qwen3` is a modular port of `reasoning_from_scratch/qwen3.py` from
 Sebastian Raschka's *Build a Reasoning Model (From Scratch)*. It loads the released
-Qwen3-0.6B base weights as the starting point for fine-tuning. The GPT modules under
-`model/` are unchanged.
+Qwen3-0.6B base weights as the starting point for fine-tuning. It sits beside the GPT-2
+modules in `model/gpt2/`; each family keeps its architecture, weights, and tokenizer in its own
+package.
 
 **Status:** the architecture, pinned weight loading, and tokenizer are in place and checked
 against Hugging Face Transformers. These are not wired up yet:
@@ -52,7 +53,7 @@ The preset `QWEN3_0_6B` has 596,049,920 parameters: 28 layers, `emb_dim` 1024, a
 | [`layers.py`](../src/llm_training/model/qwen3/layers.py) | `RMSNorm`, SwiGLU `FeedForward` |
 | [`rope.py`](../src/llm_training/model/qwen3/rope.py) | `compute_rope_params`, `apply_rope` |
 | [`pretrained.py`](../src/llm_training/model/qwen3/pretrained.py) | pinned assets: `prepare_qwen3_base`, `load_qwen3_base` |
-| [`data/qwen3_tokenizer.py`](../src/llm_training/data/qwen3_tokenizer.py) | `Qwen3Tokenizer` (Hugging Face `tokenizers`, EOS `<\|endoftext\|>`) |
+| [`model/qwen3/tokenizer.py`](../src/llm_training/model/qwen3/tokenizer.py) | `Qwen3Tokenizer` (Hugging Face `tokenizers`, EOS `<\|endoftext\|>`) |
 
 `KVCache` is kept with the source forward pass. `generation.py` does not use it yet: it
 recomputes the whole context for each new token.

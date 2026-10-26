@@ -152,7 +152,7 @@ def build_token_corpus(
 
 
 def prepare_corpus(name, out_dir: Path, tokenizer_cache: Path):
-    from .gpt2_tokenizer import load_tokenizer
+    from ..model.gpt2.tokenizer import load_tokenizer
 
     manifest_path = out_dir / "manifest.json"
     tokenizer_manifest = json.loads((tokenizer_cache / "manifest.json").read_text())

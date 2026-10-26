@@ -143,7 +143,9 @@ restored, and completed budgets cannot be extended through resume. Changes to
 data, tokenizer assets, Python/Torch/dependency versions, device, thread count, or
 numerical settings are rejected. A change to executable training code (model, data, trainer;
 not comments, docstrings, formatting, the CLI, or `predict`) is rejected too, unless you pass
-`--allow-code-drift`; the child run's `provenance.json` records that the override was used. Exact recovery is tested
+`--allow-code-drift`; the child run's `provenance.json` records that the override was used.
+Only the code a run executes counts: `LM_TRAINING_CODE` in `training/trainer.py` lists it, so
+edits to the Qwen3 modules never block a GPT-2 resume. Exact recovery is tested
 on CPU FP32 in the recorded environment. On MPS, resume was checked on the TinyStories preset and
 matches an uninterrupted run to float32 rounding (about 1e-7), not bitwise, because MPS kernels are
 not bitwise deterministic. CUDA recovery is not yet validated.

@@ -40,7 +40,7 @@ runpy.run_module("llm_training", run_name="__main__")
     reload_script = """
 import json, socket, sys, torch
 from pathlib import Path
-from llm_training.data.gpt2_tokenizer import load_tokenizer
+from llm_training.model.gpt2.tokenizer import load_tokenizer
 from llm_training.generation import generate_greedy
 from llm_training.model.gpt2.model import GPTModel
 def forbidden(*args, **kwargs):

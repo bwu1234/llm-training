@@ -1,15 +1,11 @@
 """Single-process FP32 training with periodic loss monitoring and full-state recovery."""
 
-import ast
 import hashlib
-import importlib.metadata
 import json
 import math
-import platform
 import random
 import shutil
 import signal
-import subprocess
 import time
 from dataclasses import asdict
 from datetime import UTC, datetime
@@ -24,11 +20,11 @@ from torch.utils.data import DataLoader
 from llm_training.config import Config, config_from_dict
 from llm_training.data.corpus import SPLITS, load_token_corpus
 from llm_training.data.dataset import SlidingWindowTokenDataset
-from llm_training.data.gpt2_tokenizer import load_tokenizer
 from llm_training.data.token_dataset import TokenWindowDataset
 from llm_training.evaluation import evaluate
 from llm_training.generation import generate_greedy, generate_sampled
 from llm_training.model.gpt2.model import GPTModel
+from llm_training.model.gpt2.tokenizer import load_tokenizer
 from llm_training.training.checkpoint import (
     FORMAT_VERSION,
     atomic_save,
@@ -41,43 +37,13 @@ from llm_training.training.checkpoint import (
 from llm_training.training.loss import next_token_cross_entropy
 from llm_training.training.monitoring import evaluate_train_validation_loss
 from llm_training.training.optim import build_optimizer, clip_and_measure
+from llm_training.training.provenance import (
+    collect_runtime_metadata,
+    git_provenance,
+    implementation_fingerprint,
+    write_json,
+)
 from llm_training.training.schedule import is_constant, learning_rate_at
-
-
-def write_json(path, value):
-    temporary = path.with_suffix(path.suffix + ".tmp")
-    temporary.write_text(json.dumps(value, indent=2, allow_nan=False) + "\n")
-    temporary.replace(path)
-
-
-def collect_runtime_metadata():
-    return {
-        "python": platform.python_version(),
-        "platform": platform.platform(),
-        "machine": platform.machine(),
-        "torch": str(torch.__version__),
-        "cuda_available": torch.cuda.is_available(),
-        "mps_available": torch.backends.mps.is_available(),
-        "numpy": np.__version__,
-        "tiktoken": importlib.metadata.version("tiktoken"),
-    }
-
-
-def _git_provenance():
-    root = Path(__file__).resolve().parents[3]
-    try:
-        if not (root / "pyproject.toml").is_file():
-            raise OSError("Installed wheel has no working-tree metadata")
-        status = subprocess.check_output(["git", "status", "--short"], text=True, cwd=root)
-        try:
-            commit = subprocess.check_output(
-                ["git", "rev-parse", "HEAD"], text=True, stderr=subprocess.DEVNULL, cwd=root
-            ).strip()
-        except subprocess.CalledProcessError:
-            commit = None
-        return {"commit": commit, "status": status}
-    except OSError, subprocess.CalledProcessError:
-        return {"commit": None, "note": "No working-tree metadata in installed wheel"}
 
 
 def _sample(model, tokenizer, cfg, device, step=0):
@@ -162,31 +128,15 @@ def _batch_hash(batches):
     return hashlib.sha256(b"".join(b.numpy().tobytes() for b in batches)).hexdigest()
 
 
-# Files that cannot change training numerics (CLI plumbing, inspection tooling).
-_NOT_TRAINING_CODE = {"__init__.py", "__main__.py", "cli.py", "prediction.py"}
-
-
-def implementation_fingerprint(package: Path):
-    """Hash behavior-relevant source: the normalized AST, so comments, docstrings, and
-    formatting do not change it but any edit to executable code does."""
-    digest = hashlib.sha256()
-    for path in sorted(package.rglob("*.py")):
-        if path.name in _NOT_TRAINING_CODE:
-            continue
-        tree = ast.parse(path.read_text())
-        for node in ast.walk(tree):
-            if isinstance(node, ast.Module | ast.ClassDef | ast.FunctionDef | ast.AsyncFunctionDef):
-                body = node.body
-                if (
-                    body
-                    and isinstance(body[0], ast.Expr)
-                    and isinstance(body[0].value, ast.Constant)
-                    and isinstance(body[0].value.value, str)
-                ):
-                    body[0] = ast.Pass()
-        digest.update(str(path.relative_to(package)).encode())
-        digest.update(ast.dump(tree).encode())
-    return digest.hexdigest()
+# The code a GPT-2 language-model run executes; see implementation_fingerprint.
+LM_TRAINING_CODE = (
+    "config.py",
+    "evaluation.py",
+    "generation.py",
+    "data",
+    "model/gpt2",
+    "training",
+)
 
 
 def _same_environment(saved, current, allow_code_drift=False):
@@ -248,7 +198,7 @@ def train(
         "matmul_precision": torch.get_float32_matmul_precision(),
     }
     package = Path(__file__).parent.parent
-    env["implementation_sha256"] = implementation_fingerprint(package)
+    env["implementation_sha256"] = implementation_fingerprint(package, LM_TRAINING_CODE)
     if device == "cuda" and not env["cuda_available"]:
         raise ValueError("CUDA was requested but is unavailable")
     if device == "mps" and not env["mps_available"]:
@@ -322,7 +272,7 @@ def train(
     write_json(run / "environment.json", env)
     write_json(
         run / "provenance.json",
-        _git_provenance()
+        git_provenance()
         | {
             "upstream": json.loads(
                 (Path(__file__).parent.parent / "upstream-provenance.json").read_text()

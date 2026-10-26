@@ -11,9 +11,9 @@ from torch.utils.data import DataLoader, TensorDataset
 
 from llm_training.config import load_config
 from llm_training.data.dataset import SlidingWindowTokenDataset
-from llm_training.data.gpt2_tokenizer import load_tokenizer
 from llm_training.evaluation import evaluate
 from llm_training.model.gpt2.model import GPTModel
+from llm_training.model.gpt2.tokenizer import load_tokenizer
 from tests.reference import baseline
 from tests.reference.compare import TINY_CONFIG, compare
 
