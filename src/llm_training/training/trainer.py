@@ -24,8 +24,8 @@ from torch.utils.data import DataLoader
 from llm_training.config import Config, config_from_dict
 from llm_training.data.corpus import SPLITS, load_token_corpus
 from llm_training.data.dataset import SlidingWindowTokenDataset
+from llm_training.data.gpt2_tokenizer import load_tokenizer
 from llm_training.data.token_dataset import TokenWindowDataset
-from llm_training.data.tokenizer import load_tokenizer
 from llm_training.evaluation import evaluate
 from llm_training.generation import generate_greedy, generate_sampled
 from llm_training.model.gpt2.model import GPTModel

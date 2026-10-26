@@ -21,7 +21,7 @@ import yaml
 from torch.utils.data import DataLoader
 
 from llm_training.config import load_config
-from llm_training.data.tokenizer import load_tokenizer
+from llm_training.data.gpt2_tokenizer import load_tokenizer
 from llm_training.training.checkpoint import atomic_save, capture_rng, load_checkpoint
 from llm_training.training.trainer import collect_runtime_metadata, write_json
 from tests.reference import baseline, training_loop

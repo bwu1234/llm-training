@@ -7,7 +7,7 @@ from pathlib import Path
 
 import torch
 
-from .data.tokenizer import load_tokenizer
+from .data.gpt2_tokenizer import load_tokenizer
 from .model.gpt2.model import GPTModel
 
 

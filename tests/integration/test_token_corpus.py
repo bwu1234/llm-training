@@ -8,7 +8,7 @@ from pathlib import Path
 import yaml
 
 from llm_training.data.corpus import build_token_corpus
-from llm_training.data.tokenizer import load_tokenizer
+from llm_training.data.gpt2_tokenizer import load_tokenizer
 from llm_training.training.checkpoint import load_checkpoint
 from scripts.compare_training_runs import compare_states
 from tests.integration.test_gpt2_recipe import GPT2_MODEL, RECIPE
