@@ -162,11 +162,11 @@ differs by 61.5.
 
 ## Implementation map
 
-- [`gpt.py`](../src/llm_training/model/gpt.py): embeddings, Transformer block,
+- [`gpt2/model.py`](../src/llm_training/model/gpt2/model.py): embeddings, Transformer block,
   final normalization, and GPT model forward pass.
-- [`attention.py`](../src/llm_training/model/attention.py): causal multi-head
+- [`gpt2/attention.py`](../src/llm_training/model/gpt2/attention.py): causal multi-head
   self-attention and masking.
-- [`layers.py`](../src/llm_training/model/layers.py): layer normalization,
+- [`gpt2/layers.py`](../src/llm_training/model/gpt2/layers.py): layer normalization,
   GELU, and feed-forward network.
 - [`config.py`](../src/llm_training/config.py): model settings and validation.
 - [`dataset.py`](../src/llm_training/data/dataset.py) and

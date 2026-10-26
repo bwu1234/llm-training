@@ -8,7 +8,7 @@ from pathlib import Path
 import torch
 
 from .data.tokenizer import load_tokenizer
-from .model.gpt import GPTModel
+from .model.gpt2.model import GPTModel
 
 
 def _token(tokenizer, token_id):

@@ -92,7 +92,7 @@ Verified 2026-10-25 with the full suite (69 passed, plus the opt-in oracle, 2 pa
 - The resume guard is exact only for unchanged executable code; with `--allow-code-drift`
   nothing is guaranteed, and the child run records the override.
 - `train()` is still one large function (F4). The new logic lives in `training/optim.py`,
-  `training/schedule.py`, and `model/init.py`, but the accumulation loop is inside `train()`.
+  `training/schedule.py`, and `model/gpt2/init.py`, but the accumulation loop is inside `train()`.
 - The preset's data path, warmup, evaluation cadence, and token budget are placeholders.
 
 ## Priority key

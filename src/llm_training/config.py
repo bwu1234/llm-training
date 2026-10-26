@@ -19,7 +19,7 @@ class ModelConfig:
     # Defaults reproduce the book model; the gpt2_124m preset overrides all four.
     tie_embeddings: bool = False
     init: str = (
-        "pytorch"  # "pytorch" keeps module defaults; "gpt2" is N(0, 0.02), see model/init.py
+        "pytorch"  # "pytorch" keeps module defaults; "gpt2" is N(0, 0.02), see model/gpt2/init.py
     )
     residual_scaled_init: bool = True  # only read when init == "gpt2"
     attn_impl: str = "explicit"  # "sdpa" uses the fused kernel; dropout RNG then differs

@@ -16,7 +16,7 @@ import os
 import pytest
 import torch
 
-from llm_training.model.gpt import GPTModel
+from llm_training.model.gpt2.model import GPTModel
 from tests.reference.gpt2_weights import GPT2_SMALL, load_hf_gpt2_into
 
 pytestmark = pytest.mark.skipif(

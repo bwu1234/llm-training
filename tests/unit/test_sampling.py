@@ -9,7 +9,7 @@ from torch import nn
 
 from llm_training.config import config_from_dict, load_config
 from llm_training.generation import generate_greedy, generate_sampled
-from llm_training.model.gpt import GPTModel
+from llm_training.model.gpt2.model import GPTModel
 from tests.reference.compare import TINY_CONFIG
 
 

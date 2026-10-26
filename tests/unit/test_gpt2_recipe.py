@@ -10,8 +10,8 @@ import torch
 import yaml
 
 from llm_training.config import config_from_dict, load_config
-from llm_training.model.gpt import GPTModel
-from llm_training.model.layers import GELU
+from llm_training.model.gpt2.layers import GELU
+from llm_training.model.gpt2.model import GPTModel
 from llm_training.training.optim import build_optimizer, clip_and_measure
 from llm_training.training.schedule import is_constant, learning_rate_at
 from llm_training.training.trainer import implementation_fingerprint

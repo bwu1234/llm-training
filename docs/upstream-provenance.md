@@ -12,9 +12,9 @@ The original repository was left unchanged.
 
 | New module | Original module | Selected implementation |
 | --- | --- | --- |
-| `model/attention.py` | `pkg/llms_from_scratch/ch03.py` | `MultiHeadAttention` |
-| `model/layers.py` | `pkg/llms_from_scratch/ch04.py` | `LayerNorm`, `GELU`, `FeedForward` |
-| `model/gpt.py` | `pkg/llms_from_scratch/ch04.py` | `TransformerBlock`, `GPTModel` |
+| `model/gpt2/attention.py` | `pkg/llms_from_scratch/ch03.py` | `MultiHeadAttention` |
+| `model/gpt2/layers.py` | `pkg/llms_from_scratch/ch04.py` | `LayerNorm`, `GELU`, `FeedForward` |
+| `model/gpt2/model.py` | `pkg/llms_from_scratch/ch04.py` | `TransformerBlock`, `GPTModel` |
 | `generation.py` | `pkg/llms_from_scratch/ch04.py` | `generate_text_simple` → `generate_greedy` |
 | `data/dataset.py` | `pkg/llms_from_scratch/ch02.py` | `GPTDatasetV1` → `SlidingWindowTokenDataset` |
 | `training/loss.py` | `pkg/llms_from_scratch/ch05.py` | `calc_loss_batch` → `next_token_cross_entropy` |
@@ -29,10 +29,10 @@ the frozen-source parity tests assert zero difference on that path.
 
 Opt-in extensions added after extraction (project code, not upstream):
 
-- `model/init.py`: GPT-2-style initialization, selected by `model.init: gpt2`.
-- `model/gpt.py`: optional tied output head (`model.tie_embeddings`).
-- `model/attention.py`: optional `scaled_dot_product_attention` path (`model.attn_impl: sdpa`).
-- `model/layers.py`: `GELU` builds its float32 constant once as a non-persistent buffer. The
+- `model/gpt2/init.py`: GPT-2-style initialization, selected by `model.init: gpt2`.
+- `model/gpt2/model.py`: optional tied output head (`model.tie_embeddings`).
+- `model/gpt2/attention.py`: optional `scaled_dot_product_attention` path (`model.attn_impl: sdpa`).
+- `model/gpt2/layers.py`: `GELU` builds its float32 constant once as a non-persistent buffer. The
   arithmetic is identical (a test asserts exact equality with the frozen reference) and
   `state_dict` is unchanged.
 

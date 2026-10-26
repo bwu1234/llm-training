@@ -8,7 +8,7 @@
       "symbols": [
         "MultiHeadAttention"
       ],
-      "destination": "src/llm_training/model/attention.py",
+      "destination": "src/llm_training/model/gpt2/attention.py",
       "sha256": "54d6710139851f5e1b25a074cfdd5b38e2bd70ec923bdf0984f9fc68ad7c7374",
       "source_diff": ""
     },
@@ -19,7 +19,7 @@
         "GELU",
         "FeedForward"
       ],
-      "destination": "src/llm_training/model/layers.py",
+      "destination": "src/llm_training/model/gpt2/layers.py",
       "sha256": "6722b3ab5939c3218803be0de9153170c62ba5f02ab23fd6dcdce5ea6bf712f7",
       "source_diff": ""
     },
@@ -29,7 +29,7 @@
         "TransformerBlock",
         "GPTModel"
       ],
-      "destination": "src/llm_training/model/gpt.py",
+      "destination": "src/llm_training/model/gpt2/model.py",
       "sha256": "6722b3ab5939c3218803be0de9153170c62ba5f02ab23fd6dcdce5ea6bf712f7",
       "source_diff": ""
     },

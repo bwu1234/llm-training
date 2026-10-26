@@ -28,7 +28,7 @@ from llm_training.data.token_dataset import TokenWindowDataset
 from llm_training.data.tokenizer import load_tokenizer
 from llm_training.evaluation import evaluate
 from llm_training.generation import generate_greedy, generate_sampled
-from llm_training.model.gpt import GPTModel
+from llm_training.model.gpt2.model import GPTModel
 from llm_training.training.checkpoint import (
     FORMAT_VERSION,
     atomic_save,

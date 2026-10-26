@@ -6,7 +6,7 @@ from pathlib import Path
 
 import torch
 
-from llm_training.model.gpt import GPTModel
+from llm_training.model.gpt2.model import GPTModel
 from llm_training.training.loss import next_token_cross_entropy
 from tests.reference import baseline
 

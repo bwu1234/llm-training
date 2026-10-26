@@ -31,7 +31,7 @@ loading takes about 4 s.
 Both models share one interface: `forward(token_ids) -> [batch, seq, vocab]` logits. Every
 component is different:
 
-| | GPT (`model/gpt.py`) | Qwen3 (`model/qwen3/`) |
+| | GPT (`model/gpt2/`) | Qwen3 (`model/qwen3/`) |
 | --- | --- | --- |
 | Positions | learned table added to embeddings | RoPE on queries and keys, θ = 1,000,000 |
 | Normalization | LayerNorm (scale + shift) | RMSNorm (scale only), also on Q and K per head |

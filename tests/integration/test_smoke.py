@@ -42,7 +42,7 @@ import json, socket, sys, torch
 from pathlib import Path
 from llm_training.data.tokenizer import load_tokenizer
 from llm_training.generation import generate_greedy
-from llm_training.model.gpt import GPTModel
+from llm_training.model.gpt2.model import GPTModel
 def forbidden(*args, **kwargs):
     raise AssertionError("Network access during offline reload")
 socket.socket.connect = forbidden
