@@ -1,0 +1,14 @@
+{
+  "scope": "tiny CPU FP32; identical weights/batches/dropout; one AdamW update",
+  "python": "3.14.9",
+  "torch": "2.14.1",
+  "atol": 1e-06,
+  "rtol": 1e-05,
+  "max_absolute_differences": {
+    "logits": 0.0,
+    "loss": 0.0,
+    "gradients": 0.0,
+    "updated_state": 0.0
+  },
+  "passed": true
+}

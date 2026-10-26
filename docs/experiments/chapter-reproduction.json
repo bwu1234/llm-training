@@ -1,0 +1,87 @@
+{
+  "passed": true,
+  "atol": 1e-06,
+  "rtol": 1e-05,
+  "max_absolute_differences": {
+    "model_state_dict": 0.0,
+    "optimizer_state_dict": 0.0,
+    "rng": 0
+  },
+  "optimizer_steps": 90,
+  "parameters": 162419712,
+  "stop_after": 46,
+  "evaluations_compared": 18,
+  "epoch_samples_compared": 10,
+  "environment": {
+    "python": "3.14.9",
+    "platform": "macOS-27.0.1-arm64-arm-64bit-Mach-O",
+    "machine": "arm64",
+    "torch": "2.14.1",
+    "cuda_available": false,
+    "mps_available": true
+  },
+  "config": {
+    "model": {
+      "vocab_size": 50257,
+      "context_length": 256,
+      "emb_dim": 768,
+      "n_heads": 12,
+      "n_layers": 12,
+      "drop_rate": 0.1,
+      "qkv_bias": false
+    },
+    "data": {
+      "path": "/Users/bwu19/llm-training/data/the-verdict.txt",
+      "train_ratio": 0.9,
+      "tokenizer_cache": "/Users/bwu19/llm-training/data/tokenizer",
+      "source_url": "https://raw.githubusercontent.com/rasbt/LLMs-from-scratch/cdbd33e6d57a71e20ea31434841095fac50cecd8/ch02/01_main-chapter-code/the-verdict.txt",
+      "sha256": "b41e41a68f0398a3154ae69e2e4c0e2694e17fe0d66730536837f1b01935b31f"
+    },
+    "training": {
+      "seed": 123,
+      "batch_size": 2,
+      "num_epochs": 10,
+      "max_steps": null,
+      "learning_rate": 0.0005,
+      "weight_decay": 0.1,
+      "eval_freq": 5,
+      "eval_iter": 1,
+      "recipe": "chapter5",
+      "checkpoint_every": 10
+    },
+    "runtime": {
+      "device": "cpu",
+      "num_threads": 4
+    },
+    "output": {
+      "root": "/Users/bwu19/llm-training/runs/chapter-reproduction-20261025/port-runs",
+      "prompt": "Every effort moves you",
+      "sample_tokens": 50
+    }
+  },
+  "reference_elapsed_seconds": 81.62655558400729,
+  "final_evaluation": {
+    "initial": {
+      "loss": 10.981106758117676,
+      "perplexity": 58753.54426594195,
+      "tokens": 512
+    },
+    "final": {
+      "loss": 6.598801612854004,
+      "perplexity": 734.2147882520809,
+      "tokens": 512
+    },
+    "full_validation": {
+      "loss": 6.598801612854004,
+      "perplexity": 734.2147882520809,
+      "tokens": 512
+    },
+    "split": "validation",
+    "policy": "initial/final monitor subset plus final full split"
+  },
+  "port_runs": {
+    "stopped_run": "/Users/bwu19/llm-training/runs/chapter-reproduction-20261025/port-runs/20261025T020635Z-41adad03",
+    "resumed_run": "/Users/bwu19/llm-training/runs/chapter-reproduction-20261025/port-runs/20261025T020735Z-8779a178",
+    "stop_after": 46
+  }
+}

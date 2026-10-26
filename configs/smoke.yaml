@@ -1,0 +1,28 @@
+model:
+  vocab_size: 50257
+  context_length: 16
+  emb_dim: 32
+  n_heads: 4
+  n_layers: 2
+  drop_rate: 0.1
+  qkv_bias: false
+data:
+  path: ../tests/fixtures/smoke.txt
+  tokenizer_cache: ../data/tokenizer
+  train_ratio: 0.9
+training:
+  seed: 123
+  batch_size: 2
+  num_epochs: 1
+  max_steps: 4
+  learning_rate: 0.0005
+  weight_decay: 0.1
+  eval_freq: 5
+  eval_iter: 1
+runtime:
+  device: cpu
+  num_threads: 1
+output:
+  root: ../runs
+  prompt: Every effort moves you
+  sample_tokens: 20

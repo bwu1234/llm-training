@@ -1,0 +1,33 @@
+# 162M-parameter GPT pretraining on the pinned small text corpus; ten epochs.
+model:
+  vocab_size: 50257
+  context_length: 256
+  emb_dim: 768
+  n_heads: 12
+  n_layers: 12
+  drop_rate: 0.1
+  qkv_bias: false
+data:
+  path: ../data/the-verdict.txt
+  tokenizer_cache: ../data/tokenizer
+  source_url: https://raw.githubusercontent.com/rasbt/LLMs-from-scratch/cdbd33e6d57a71e20ea31434841095fac50cecd8/ch02/01_main-chapter-code/the-verdict.txt
+  sha256: b41e41a68f0398a3154ae69e2e4c0e2694e17fe0d66730536837f1b01935b31f
+  train_ratio: 0.9
+training:
+  seed: 123
+  batch_size: 2
+  num_epochs: 10
+  max_steps: null
+  learning_rate: 0.0005
+  weight_decay: 0.1
+  eval_freq: 5
+  eval_iter: 1
+  recipe: sampled_train_validation
+  checkpoint_every: 10
+runtime:
+  device: cpu
+  num_threads: 4
+output:
+  root: ../runs
+  prompt: Every effort moves you
+  sample_tokens: 50

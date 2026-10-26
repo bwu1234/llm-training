@@ -1,0 +1,57 @@
+# One-day readable-output run: a 51M-parameter GPT on TinyStories, on Apple-silicon MPS.
+#
+# Goal: show the training mechanics end to end with output that reads as English, not GPT-2
+# quality. Same block design as the GPT-2 recipe (tied head, GPT-2 init, SDPA, AdamW
+# (0.9, 0.95), decay on matrices only, clipping, warmup then cosine), scaled to 8 layers x 512.
+# Measured on an M2 Max (FP32, synthetic batches): about 6,850 tokens/s, so the ~459M-token
+# training split is about 19 hours for one epoch. `--stop-after N` ends earlier at a safe
+# boundary; every 500th update carries a temperature-0.8 sample in metrics.jsonl.
+#
+# Prepare once (downloads ~1.9 GB, pinned revision and SHA-256; see data/corpus.py):
+#   uv run llm-training prepare --config configs/tinystories_51m.yaml
+model:
+  vocab_size: 50257
+  context_length: 512
+  emb_dim: 512
+  n_heads: 8
+  n_layers: 8
+  drop_rate: 0.0
+  qkv_bias: true
+  tie_embeddings: true
+  init: gpt2
+  residual_scaled_init: true
+  attn_impl: sdpa
+data:
+  format: tokens
+  corpus: tinystories
+  path: ../data/tinystories
+  tokenizer_cache: ../data/tokenizer
+training:
+  seed: 1337
+  batch_size: 16
+  grad_accum_steps: 4  # 16 x 512 x 4 = 32,768 tokens per update
+  num_epochs: 1
+  max_steps: null
+  learning_rate: 0.0006
+  min_lr: 0.00006
+  lr_schedule: cosine
+  warmup_steps: 200
+  beta1: 0.9
+  beta2: 0.95
+  weight_decay: 0.1
+  weight_decay_policy: matrices
+  grad_clip: 1.0
+  eval_freq: 250
+  eval_iter: 20
+  recipe: validation_only
+  checkpoint_every: 250
+runtime:
+  device: mps
+  num_threads: 4
+output:
+  root: ../runs/tinystories
+  prompt: Once upon a time
+  sample_tokens: 150
+  temperature: 0.8
+  top_k: 50
+  sample_every: 250

@@ -1,0 +1,34 @@
+{
+  "environment.json": {
+    "python": "3.14.9",
+    "platform": "macOS-27.0.1-arm64-arm-64bit-Mach-O",
+    "machine": "arm64",
+    "torch": "2.14.1",
+    "cuda_available": false,
+    "mps_available": true,
+    "device": "cpu",
+    "precision": "float32"
+  },
+  "status.json": {
+    "status": "completed",
+    "optimizer_steps": 4,
+    "tokens_seen": 128,
+    "elapsed_seconds": 0.11992416599241551
+  },
+  "evaluation.json": {
+    "initial": {
+      "loss": 10.905165672302246,
+      "perplexity": 54456.945210495396,
+      "tokens": 32
+    },
+    "final": {
+      "loss": 10.783382415771484,
+      "perplexity": 48212.92491092916,
+      "tokens": 32
+    },
+    "split": "validation",
+    "policy": "first eval_iter batches; monitoring subset, not final full-split evaluation"
+  },
+  "run_directory": "runs/20261025T015329Z-813fc8cc",
+  "scope": "Four-step execution check on repetitive synthetic text, not capability evaluation"
+}

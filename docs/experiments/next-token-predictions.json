@@ -1,0 +1,581 @@
+{
+  "format_version": 1,
+  "prompt": "Every effort moves you",
+  "prompt_token_ids": [
+    6109,
+    3626,
+    6100,
+    345
+  ],
+  "selection": "greedy argmax; lowest token ID breaks exact logit ties",
+  "probability_definition": "softmax over the full vocabulary; temperature=1; no filtering",
+  "top_k_display_only": 5,
+  "context_size": 256,
+  "max_new_tokens": 8,
+  "steps": [
+    {
+      "step": 1,
+      "context_token_ids": [
+        6109,
+        3626,
+        6100,
+        345
+      ],
+      "context_text": "Every effort moves you",
+      "context_tokens_dropped": 0,
+      "candidates": [
+        {
+          "token_id": 1701,
+          "text": "?\"",
+          "bytes_hex": "3f22",
+          "complete_utf8": true,
+          "rank": 1,
+          "probability": 0.22889529168605804,
+          "selected": true
+        },
+        {
+          "token_id": 760,
+          "text": " know",
+          "bytes_hex": "206b6e6f77",
+          "complete_utf8": true,
+          "rank": 2,
+          "probability": 0.18497231602668762,
+          "selected": false
+        },
+        {
+          "token_id": 287,
+          "text": " in",
+          "bytes_hex": "20696e",
+          "complete_utf8": true,
+          "rank": 3,
+          "probability": 0.028003837913274765,
+          "selected": false
+        },
+        {
+          "token_id": 910,
+          "text": " say",
+          "bytes_hex": "20736179",
+          "complete_utf8": true,
+          "rank": 4,
+          "probability": 0.026309041306376457,
+          "selected": false
+        },
+        {
+          "token_id": 1807,
+          "text": " thought",
+          "bytes_hex": "2074686f75676874",
+          "complete_utf8": true,
+          "rank": 5,
+          "probability": 0.02326538972556591,
+          "selected": false
+        }
+      ],
+      "selected_token_id": 1701,
+      "displayed_probability_mass": 0.4914458766579628,
+      "other_probability_mass": 0.5085541233420372
+    },
+    {
+      "step": 2,
+      "context_token_ids": [
+        6109,
+        3626,
+        6100,
+        345,
+        1701
+      ],
+      "context_text": "Every effort moves you?\"",
+      "context_tokens_dropped": 0,
+      "candidates": [
+        {
+          "token_id": 198,
+          "text": "\n",
+          "bytes_hex": "0a",
+          "complete_utf8": true,
+          "rank": 1,
+          "probability": 0.9706637263298035,
+          "selected": true
+        },
+        {
+          "token_id": 632,
+          "text": " It",
+          "bytes_hex": "204974",
+          "complete_utf8": true,
+          "rank": 2,
+          "probability": 0.006131598260253668,
+          "selected": false
+        },
+        {
+          "token_id": 314,
+          "text": " I",
+          "bytes_hex": "2049",
+          "complete_utf8": true,
+          "rank": 3,
+          "probability": 0.0009682441013865173,
+          "selected": false
+        },
+        {
+          "token_id": 1114,
+          "text": " For",
+          "bytes_hex": "20466f72",
+          "complete_utf8": true,
+          "rank": 4,
+          "probability": 0.0007636677473783493,
+          "selected": false
+        },
+        {
+          "token_id": 1375,
+          "text": " She",
+          "bytes_hex": "20536865",
+          "complete_utf8": true,
+          "rank": 5,
+          "probability": 0.0005785869434475899,
+          "selected": false
+        }
+      ],
+      "selected_token_id": 198,
+      "displayed_probability_mass": 0.9791058233822696,
+      "other_probability_mass": 0.02089417661773041
+    },
+    {
+      "step": 3,
+      "context_token_ids": [
+        6109,
+        3626,
+        6100,
+        345,
+        1701,
+        198
+      ],
+      "context_text": "Every effort moves you?\"\n",
+      "context_tokens_dropped": 0,
+      "candidates": [
+        {
+          "token_id": 198,
+          "text": "\n",
+          "bytes_hex": "0a",
+          "complete_utf8": true,
+          "rank": 1,
+          "probability": 0.6929380297660828,
+          "selected": true
+        },
+        {
+          "token_id": 1,
+          "text": "\"",
+          "bytes_hex": "22",
+          "complete_utf8": true,
+          "rank": 2,
+          "probability": 0.11599542945623398,
+          "selected": false
+        },
+        {
+          "token_id": 1544,
+          "text": "He",
+          "bytes_hex": "4865",
+          "complete_utf8": true,
+          "rank": 3,
+          "probability": 0.04766630008816719,
+          "selected": false
+        },
+        {
+          "token_id": 6653,
+          "text": "His",
+          "bytes_hex": "486973",
+          "complete_utf8": true,
+          "rank": 4,
+          "probability": 0.0260753370821476,
+          "selected": false
+        },
+        {
+          "token_id": 5297,
+          "text": "Yes",
+          "bytes_hex": "596573",
+          "complete_utf8": true,
+          "rank": 5,
+          "probability": 0.008746284060180187,
+          "selected": false
+        }
+      ],
+      "selected_token_id": 198,
+      "displayed_probability_mass": 0.8914213804528117,
+      "other_probability_mass": 0.10857861954718828
+    },
+    {
+      "step": 4,
+      "context_token_ids": [
+        6109,
+        3626,
+        6100,
+        345,
+        1701,
+        198,
+        198
+      ],
+      "context_text": "Every effort moves you?\"\n\n",
+      "context_tokens_dropped": 0,
+      "candidates": [
+        {
+          "token_id": 1,
+          "text": "\"",
+          "bytes_hex": "22",
+          "complete_utf8": true,
+          "rank": 1,
+          "probability": 0.9467445015907288,
+          "selected": true
+        },
+        {
+          "token_id": 1544,
+          "text": "He",
+          "bytes_hex": "4865",
+          "complete_utf8": true,
+          "rank": 2,
+          "probability": 0.007276758085936308,
+          "selected": false
+        },
+        {
+          "token_id": 6653,
+          "text": "His",
+          "bytes_hex": "486973",
+          "complete_utf8": true,
+          "rank": 3,
+          "probability": 0.0029357345774769783,
+          "selected": false
+        },
+        {
+          "token_id": 1870,
+          "text": "And",
+          "bytes_hex": "416e64",
+          "complete_utf8": true,
+          "rank": 4,
+          "probability": 0.0016100710490718484,
+          "selected": false
+        },
+        {
+          "token_id": 40,
+          "text": "I",
+          "bytes_hex": "49",
+          "complete_utf8": true,
+          "rank": 5,
+          "probability": 0.0014925713185220957,
+          "selected": false
+        }
+      ],
+      "selected_token_id": 1,
+      "displayed_probability_mass": 0.960059636621736,
+      "other_probability_mass": 0.03994036337826401
+    },
+    {
+      "step": 5,
+      "context_token_ids": [
+        6109,
+        3626,
+        6100,
+        345,
+        1701,
+        198,
+        198,
+        1
+      ],
+      "context_text": "Every effort moves you?\"\n\n\"",
+      "context_tokens_dropped": 0,
+      "candidates": [
+        {
+          "token_id": 5297,
+          "text": "Yes",
+          "bytes_hex": "596573",
+          "complete_utf8": true,
+          "rank": 1,
+          "probability": 0.8262052536010742,
+          "selected": true
+        },
+        {
+          "token_id": 40,
+          "text": "I",
+          "bytes_hex": "49",
+          "complete_utf8": true,
+          "rank": 2,
+          "probability": 0.016069520264863968,
+          "selected": false
+        },
+        {
+          "token_id": 5812,
+          "text": "Oh",
+          "bytes_hex": "4f68",
+          "complete_utf8": true,
+          "rank": 3,
+          "probability": 0.009863574057817459,
+          "selected": false
+        },
+        {
+          "token_id": 257,
+          "text": " a",
+          "bytes_hex": "2061",
+          "complete_utf8": true,
+          "rank": 4,
+          "probability": 0.003581088501960039,
+          "selected": false
+        },
+        {
+          "token_id": 198,
+          "text": "\n",
+          "bytes_hex": "0a",
+          "complete_utf8": true,
+          "rank": 5,
+          "probability": 0.003257216652855277,
+          "selected": false
+        }
+      ],
+      "selected_token_id": 5297,
+      "displayed_probability_mass": 0.858976653078571,
+      "other_probability_mass": 0.14102334692142904
+    },
+    {
+      "step": 6,
+      "context_token_ids": [
+        6109,
+        3626,
+        6100,
+        345,
+        1701,
+        198,
+        198,
+        1,
+        5297
+      ],
+      "context_text": "Every effort moves you?\"\n\n\"Yes",
+      "context_tokens_dropped": 0,
+      "candidates": [
+        {
+          "token_id": 438,
+          "text": "--",
+          "bytes_hex": "2d2d",
+          "complete_utf8": true,
+          "rank": 1,
+          "probability": 0.9936490654945374,
+          "selected": true
+        },
+        {
+          "token_id": 7121,
+          "text": " pushed",
+          "bytes_hex": "20707573686564",
+          "complete_utf8": true,
+          "rank": 2,
+          "probability": 0.000254081969615072,
+          "selected": false
+        },
+        {
+          "token_id": 11,
+          "text": ",",
+          "bytes_hex": "2c",
+          "complete_utf8": true,
+          "rank": 3,
+          "probability": 0.0001232187496498227,
+          "selected": false
+        },
+        {
+          "token_id": 736,
+          "text": " back",
+          "bytes_hex": "206261636b",
+          "complete_utf8": true,
+          "rank": 4,
+          "probability": 0.00010782727622427046,
+          "selected": false
+        },
+        {
+          "token_id": 276,
+          "text": "ed",
+          "bytes_hex": "6564",
+          "complete_utf8": true,
+          "rank": 5,
+          "probability": 0.0001048266130965203,
+          "selected": false
+        }
+      ],
+      "selected_token_id": 438,
+      "displayed_probability_mass": 0.994239020103123,
+      "other_probability_mass": 0.005760979896876961
+    },
+    {
+      "step": 7,
+      "context_token_ids": [
+        6109,
+        3626,
+        6100,
+        345,
+        1701,
+        198,
+        198,
+        1,
+        5297,
+        438
+      ],
+      "context_text": "Every effort moves you?\"\n\n\"Yes--",
+      "context_tokens_dropped": 0,
+      "candidates": [
+        {
+          "token_id": 37121,
+          "text": "quite",
+          "bytes_hex": "7175697465",
+          "complete_utf8": true,
+          "rank": 1,
+          "probability": 0.7001448273658752,
+          "selected": true
+        },
+        {
+          "token_id": 292,
+          "text": "as",
+          "bytes_hex": "6173",
+          "complete_utf8": true,
+          "rank": 2,
+          "probability": 0.017802836373448372,
+          "selected": false
+        },
+        {
+          "token_id": 40,
+          "text": "I",
+          "bytes_hex": "49",
+          "complete_utf8": true,
+          "rank": 3,
+          "probability": 0.011558163911104202,
+          "selected": false
+        },
+        {
+          "token_id": 1165,
+          "text": " too",
+          "bytes_hex": "20746f6f",
+          "complete_utf8": true,
+          "rank": 4,
+          "probability": 0.009021896868944168,
+          "selected": false
+        },
+        {
+          "token_id": 392,
+          "text": "and",
+          "bytes_hex": "616e64",
+          "complete_utf8": true,
+          "rank": 5,
+          "probability": 0.008392980322241783,
+          "selected": false
+        }
+      ],
+      "selected_token_id": 37121,
+      "displayed_probability_mass": 0.7469207048416138,
+      "other_probability_mass": 0.25307929515838623
+    },
+    {
+      "step": 8,
+      "context_token_ids": [
+        6109,
+        3626,
+        6100,
+        345,
+        1701,
+        198,
+        198,
+        1,
+        5297,
+        438,
+        37121
+      ],
+      "context_text": "Every effort moves you?\"\n\n\"Yes--quite",
+      "context_tokens_dropped": 0,
+      "candidates": [
+        {
+          "token_id": 1035,
+          "text": " ins",
+          "bytes_hex": "20696e73",
+          "complete_utf8": true,
+          "rank": 1,
+          "probability": 0.8990852236747742,
+          "selected": true
+        },
+        {
+          "token_id": 1498,
+          "text": " able",
+          "bytes_hex": "2061626c65",
+          "complete_utf8": true,
+          "rank": 2,
+          "probability": 0.002237158128991723,
+          "selected": false
+        },
+        {
+          "token_id": 27846,
+          "text": " glanced",
+          "bytes_hex": "20676c616e636564",
+          "complete_utf8": true,
+          "rank": 3,
+          "probability": 0.002023625886067748,
+          "selected": false
+        },
+        {
+          "token_id": 416,
+          "text": " by",
+          "bytes_hex": "206279",
+          "complete_utf8": true,
+          "rank": 4,
+          "probability": 0.0015557467704638839,
+          "selected": false
+        },
+        {
+          "token_id": 329,
+          "text": " for",
+          "bytes_hex": "20666f72",
+          "complete_utf8": true,
+          "rank": 5,
+          "probability": 0.0012055087136104703,
+          "selected": false
+        }
+      ],
+      "selected_token_id": 1035,
+      "displayed_probability_mass": 0.906107263173908,
+      "other_probability_mass": 0.093892736826092
+    }
+  ],
+  "generated_token_ids": [
+    1701,
+    198,
+    198,
+    1,
+    5297,
+    438,
+    37121,
+    1035
+  ],
+  "generated_text": "?\"\n\n\"Yes--quite ins",
+  "all_token_ids": [
+    6109,
+    3626,
+    6100,
+    345,
+    1701,
+    198,
+    198,
+    1,
+    5297,
+    438,
+    37121,
+    1035
+  ],
+  "text": "Every effort moves you?\"\n\n\"Yes--quite ins",
+  "checkpoint": "/Users/bwu19/llm-training/runs/chapter-reproduction-20261025/port-runs/20261025T020735Z-8779a178/model.pt",
+  "checkpoint_sha256": "5d4af05ec41e69e3b9caa7c2e75827dc408f43bd779a22512ebd041211506489",
+  "optimizer_steps": 90,
+  "model_config": {
+    "vocab_size": 50257,
+    "context_length": 256,
+    "emb_dim": 768,
+    "n_heads": 12,
+    "n_layers": 12,
+    "drop_rate": 0.1,
+    "qkv_bias": false
+  },
+  "tokenizer_manifest": {
+    "encoding": "gpt2",
+    "files": {
+      "6d1cbeee0f20b3d9449abfede4726ed8212e3aee": "1ce1664773c50f3e0cc8842619a93edc4624525b728b188a9e0be33b7726adc5",
+      "6c7ea1a7e38e3a7f062df639a5b80947f075ffe6": "196139668be63f3b5d6574427317ae82f612a97c5d1cdaf36ed2256dbf636783"
+    }
+  },
+  "device": "cpu",
+  "num_threads": 4,
+  "torch": "2.14.1"
+}

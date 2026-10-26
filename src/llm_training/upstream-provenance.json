@@ -1,0 +1,116 @@
+{
+  "repository": "https://github.com/rasbt/LLMs-from-scratch",
+  "commit": "cdbd33e6d57a71e20ea31434841095fac50cecd8",
+  "source_status": " M requirements.txt\n",
+  "files": [
+    {
+      "source": "pkg/llms_from_scratch/ch03.py",
+      "symbols": [
+        "MultiHeadAttention"
+      ],
+      "destination": "src/llm_training/model/attention.py",
+      "sha256": "54d6710139851f5e1b25a074cfdd5b38e2bd70ec923bdf0984f9fc68ad7c7374",
+      "source_diff": ""
+    },
+    {
+      "source": "pkg/llms_from_scratch/ch04.py",
+      "symbols": [
+        "LayerNorm",
+        "GELU",
+        "FeedForward"
+      ],
+      "destination": "src/llm_training/model/layers.py",
+      "sha256": "6722b3ab5939c3218803be0de9153170c62ba5f02ab23fd6dcdce5ea6bf712f7",
+      "source_diff": ""
+    },
+    {
+      "source": "pkg/llms_from_scratch/ch04.py",
+      "symbols": [
+        "TransformerBlock",
+        "GPTModel"
+      ],
+      "destination": "src/llm_training/model/gpt.py",
+      "sha256": "6722b3ab5939c3218803be0de9153170c62ba5f02ab23fd6dcdce5ea6bf712f7",
+      "source_diff": ""
+    },
+    {
+      "source": "pkg/llms_from_scratch/ch04.py",
+      "symbols": [
+        "generate_text_simple"
+      ],
+      "destination": "src/llm_training/generation.py",
+      "sha256": "6722b3ab5939c3218803be0de9153170c62ba5f02ab23fd6dcdce5ea6bf712f7",
+      "source_diff": "",
+      "symbol_mapping": {
+        "generate_text_simple": "generate_greedy"
+      }
+    },
+    {
+      "source": "pkg/llms_from_scratch/ch02.py",
+      "symbols": [
+        "GPTDatasetV1"
+      ],
+      "destination": "src/llm_training/data/dataset.py",
+      "sha256": "c9c07a53713c1f40e388e2ac25f14ce57a7d83471ba735e4280546ea211af4ff",
+      "source_diff": "",
+      "symbol_mapping": {
+        "GPTDatasetV1": "SlidingWindowTokenDataset"
+      }
+    },
+    {
+      "source": "pkg/llms_from_scratch/ch05.py",
+      "symbols": [
+        "calc_loss_batch"
+      ],
+      "destination": "src/llm_training/training/loss.py",
+      "sha256": "60fccc9eacb42f7b3f9d6da629dcb2352b357ef997c9673e22301fa523b2e026",
+      "source_diff": "",
+      "symbol_mapping": {
+        "calc_loss_batch": "next_token_cross_entropy"
+      }
+    },
+    {
+      "source": "pkg/llms_from_scratch/ch05.py",
+      "symbols": [
+        "generate"
+      ],
+      "destination": "src/llm_training/generation.py",
+      "sha256": "60fccc9eacb42f7b3f9d6da629dcb2352b357ef997c9673e22301fa523b2e026",
+      "source_diff": "Added a `generator` argument; the multinomial draw runs on the CPU with that generator and the token is moved back to the input device. Formatting and one comment moved above its line.",
+      "symbol_mapping": {
+        "generate": "generate_sampled"
+      }
+    },
+    {
+      "source": "ch05/01_main-chapter-code/gpt_train.py",
+      "symbols": [
+        "calc_loss_loader",
+        "evaluate_model"
+      ],
+      "destination": "src/llm_training/training/monitoring.py",
+      "sha256": "54623631dd9e9d50f7be63df4fd83220431815e3001f6b7b8750b2b03984ec59",
+      "source_diff": "",
+      "symbol_mapping": {
+        "calc_loss_loader": "mean_batch_loss",
+        "evaluate_model": "evaluate_train_validation_loss"
+      }
+    }
+  ],
+  "reference": "tests/reference/baseline.py",
+  "reference_changes": "Selected definitions combined; unrelated imports omitted; original symbol bodies preserved before formatting.",
+  "training_loop_reference": {
+    "source": "ch05/01_main-chapter-code/gpt_train.py",
+    "sha256": "54623631dd9e9d50f7be63df4fd83220431815e3001f6b7b8750b2b03984ec59",
+    "symbols": [
+      "text_to_token_ids",
+      "token_ids_to_text",
+      "calc_loss_batch",
+      "calc_loss_loader",
+      "evaluate_model",
+      "generate_and_print_sample",
+      "train_model_simple"
+    ],
+    "destination": "tests/reference/training_loop.py",
+    "changes": "Selected definitions/imports and formatting only."
+  }
+}

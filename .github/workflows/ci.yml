@@ -1,0 +1,21 @@
+name: checks
+on: [push, pull_request]
+jobs:
+  cpu:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - run: uv python install 3.14.9
+      - run: uv sync --frozen
+      - run: uv run ruff check .
+      - run: uv run ruff format --check .
+      - run: uv run llm-training prepare --config configs/smoke.yaml
+      - run: uv run pytest -q
+        env:
+          LLM_TEST_TOKENIZER_CACHE: ${{ github.workspace }}/data/tokenizer
+      - run: uv build
+      - run: uv pip install --reinstall --no-deps dist/*.whl
+      - name: Import installed wheel outside checkout
+        working-directory: /tmp
+        run: '"$GITHUB_WORKSPACE/.venv/bin/llm-training" inspect'

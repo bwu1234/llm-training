@@ -1,0 +1,55 @@
+# GPT-2 small (124,439,808 parameters) recipe on a reduced token budget.
+#
+# Architecture follows OpenAI's GPT-2 small: 12 layers, width 768, 12 heads, context 1024,
+# QKV bias, tied embeddings. Optimization follows nanoGPT's reproduction recipe: AdamW
+# (0.9, 0.95), weight decay 0.1 on matrices only, global-norm clipping at 1.0, linear
+# warmup then cosine decay, dropout 0.
+#
+# PROVISIONAL, pending the throughput pilot (docs/gpt2-parity-gaps.md D6):
+#   - data.path: no corpus is selected yet (milestone M2); `prepare` will report it missing.
+#   - batch_size x grad_accum_steps x 1024 = 32,768 tokens per update (~0.5M is the
+#     nanoGPT scale); warmup_steps and the cosine length (the run's total update count,
+#     from num_epochs/max_steps) must be set from measured tokens/s and the chosen budget.
+# The 162M book preset (pretrain_gpt_162m.yaml) stays frozen as the source-parity reference.
+model:
+  vocab_size: 50257
+  context_length: 1024
+  emb_dim: 768
+  n_heads: 12
+  n_layers: 12
+  drop_rate: 0.0
+  qkv_bias: true
+  tie_embeddings: true
+  init: gpt2
+  residual_scaled_init: true
+  attn_impl: sdpa
+data:
+  path: ../data/corpus.txt
+  tokenizer_cache: ../data/tokenizer
+  train_ratio: 0.9
+training:
+  seed: 1337
+  batch_size: 4
+  grad_accum_steps: 8
+  num_epochs: 1
+  max_steps: null
+  learning_rate: 0.0006
+  min_lr: 0.00006
+  lr_schedule: cosine
+  warmup_steps: 100
+  beta1: 0.9
+  beta2: 0.95
+  weight_decay: 0.1
+  weight_decay_policy: matrices
+  grad_clip: 1.0
+  eval_freq: 250
+  eval_iter: 20
+  recipe: validation_only
+  checkpoint_every: 500
+runtime:
+  device: cpu
+  num_threads: 4
+output:
+  root: ../runs
+  prompt: Every effort moves you
+  sample_tokens: 50
