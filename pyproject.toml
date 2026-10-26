@@ -9,7 +9,13 @@ description = "Reproducible GPT training using implementations from LLMs-from-sc
 readme = "README.md"
 requires-python = ">=3.14.9,<3.15"
 license = {file = "LICENSE.txt"}
-dependencies = ["torch>=2.9,<3", "tiktoken>=0.12,<1", "numpy>=2.3,<3", "pyyaml>=6,<7"]
+dependencies = [
+    "torch>=2.9,<3",
+    "tiktoken>=0.12,<1",
+    "tokenizers>=0.23,<1",
+    "numpy>=2.3,<3",
+    "pyyaml>=6,<7",
+]
 
 [project.scripts]
 llm-training = "llm_training.cli:main"

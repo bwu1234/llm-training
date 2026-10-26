@@ -112,5 +112,82 @@
     ],
     "destination": "tests/reference/training_loop.py",
     "changes": "Selected definitions/imports and formatting only."
-  }
+  },
+  "additional_sources": [
+    {
+      "repository": "https://github.com/rasbt/reasoning-from-scratch",
+      "commit": "a788466dc85cfe8617b6c0b809ed4ab9084485de",
+      "source_status": " M ch02/01_main-chapter-code/ch02_main.ipynb\n?? ch02/01_main-chapter-code/ch02_test.ipynb\n",
+      "license": "src/llm_training/model/qwen3/LICENSE.txt",
+      "files": [
+        {
+          "source": "reasoning_from_scratch/qwen3.py",
+          "symbols": [
+            "QWEN_CONFIG_06_B",
+            "Qwen3Model",
+            "TransformerBlock",
+            "KVCache"
+          ],
+          "destination": "src/llm_training/model/qwen3/model.py",
+          "sha256": "873c3cbde81f80e2dfcadde57e8c314a85b138d68fba02a2681afe98bd43eb53",
+          "source_diff": "",
+          "symbol_mapping": {
+            "QWEN_CONFIG_06_B": "QWEN3_0_6B"
+          }
+        },
+        {
+          "source": "reasoning_from_scratch/qwen3.py",
+          "symbols": [
+            "GroupedQueryAttention"
+          ],
+          "destination": "src/llm_training/model/qwen3/attention.py",
+          "sha256": "873c3cbde81f80e2dfcadde57e8c314a85b138d68fba02a2681afe98bd43eb53",
+          "source_diff": ""
+        },
+        {
+          "source": "reasoning_from_scratch/qwen3.py",
+          "symbols": [
+            "FeedForward",
+            "RMSNorm"
+          ],
+          "destination": "src/llm_training/model/qwen3/layers.py",
+          "sha256": "873c3cbde81f80e2dfcadde57e8c314a85b138d68fba02a2681afe98bd43eb53",
+          "source_diff": ""
+        },
+        {
+          "source": "reasoning_from_scratch/qwen3.py",
+          "symbols": [
+            "compute_rope_params",
+            "apply_rope"
+          ],
+          "destination": "src/llm_training/model/qwen3/rope.py",
+          "sha256": "873c3cbde81f80e2dfcadde57e8c314a85b138d68fba02a2681afe98bd43eb53",
+          "source_diff": ""
+        },
+        {
+          "source": "reasoning_from_scratch/qwen3.py",
+          "symbols": [
+            "Qwen3Tokenizer"
+          ],
+          "destination": "src/llm_training/data/qwen3_tokenizer.py",
+          "sha256": "873c3cbde81f80e2dfcadde57e8c314a85b138d68fba02a2681afe98bd43eb53",
+          "source_diff": ""
+        }
+      ],
+      "local_changes": "No `dtype` config key or argument (float32 parameters; the output head no longer casts its input). Opt-in `tie_embeddings` (the 0.6B preset sets it, matching the official `tie_word_embeddings`) and `attn_impl: sdpa`; defaults keep the source computation.",
+      "reference": "tests/reference/qwen3_baseline.py",
+      "reference_changes": "Selected definitions combined; download/loading helpers omitted; original symbol bodies preserved before formatting.",
+      "pretrained_weights": {
+        "repository": "https://huggingface.co/rasbt/qwen3-from-scratch",
+        "revision": "8a3862bde98adf1c10e551bc4a400bf836f11e78",
+        "derived_from": "https://huggingface.co/Qwen/Qwen3-0.6B-Base at da87bfb608c14b7cf20ba1ce41287e8de496c0cd",
+        "files": {
+          "qwen3-0.6B-base.pth": "ff38e5cc1530161ca5d68f6284f9343e58d637358b2bee9cc37e781b1c440443",
+          "tokenizer-base.json": "c0382117ea329cdf097041132f6d735924b697924d6f6fc3945713e96ce87539"
+        },
+        "license": "apache-2.0",
+        "derived_from_verified": "2026-10-26: all 310 tensors bit-identical to official model.safetensors (sha256 cd2a512003e2f9f3cd3c32a9c3573f820bb28c940f73c57b1ddaa983d9223eba) after renaming; official file has no lm_head (tied)."
+      }
+    }
+  ]
 }

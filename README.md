@@ -272,7 +272,8 @@ uv run pytest tests/unit -q
 uv run python -m tests.reference.compare
 LLM_TEST_TOKENIZER_CACHE="$PWD/data/tokenizer" uv run pytest -q
 uv build
-# Opt-in: compare against the public GPT-2 124M weights (downloads ~550 MB once).
+# Opt-in: compare against the public GPT-2 124M weights (downloads ~550 MB once)
+# and run Qwen3-0.6B against Hugging Face Transformers (~1.5 GB once; see docs/qwen3.md).
 uv sync --group oracle && LLM_ORACLE=1 uv run pytest tests/oracle -q
 ```
 
@@ -291,9 +292,18 @@ logits, loss, gradients, and updated state at `atol=1e-6`, `rtol=1e-5`.
 See [initial evidence](docs/experiments/initial-baseline.md) for the original slice
 and [chapter/resume evidence](docs/experiments/chapter-reproduction.md) for this extension.
 
+## Qwen3-0.6B base model
+
+`llm_training.model.qwen3` ports Qwen3 from Raschka's *reasoning-from-scratch* as separate
+modules alongside the GPT ones. It loads the pinned Qwen3-0.6B base weights and tokenizer,
+which an oracle test checks against Hugging Face Transformers. Training and CLI integration
+are not wired up yet. See [the Qwen3 guide](docs/qwen3.md).
+
 ## Source and license
 
 See [upstream provenance](docs/upstream-provenance.md) for the source commit,
 symbol mapping, changes, and hashes. Derived code retains Sebastian Raschka's
-attribution and the [upstream license as shipped](LICENSE.txt). The package does
+attribution and the [upstream license as shipped](LICENSE.txt). The Qwen3 modules ship
+*reasoning-from-scratch*'s license, which is plain Apache 2.0 without the book exclusions,
+as [`model/qwen3/LICENSE.txt`](src/llm_training/model/qwen3/LICENSE.txt). The package does
 not depend on Jupyter, TensorFlow, or a sibling source directory.

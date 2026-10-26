@@ -64,3 +64,36 @@ including its wording about books and related images. Source headers are retaine
 and modified files are marked. No book prose, notebook narrative, or images were
 copied. Future upstream updates should refresh this mapping and run the parity
 checks before changing the frozen reference.
+
+## Qwen3 (reasoning-from-scratch)
+
+Source: [rasbt/reasoning-from-scratch](https://github.com/rasbt/reasoning-from-scratch),
+commit `a788466dc85cfe8617b6c0b809ed4ab9084485de`, file `reasoning_from_scratch/qwen3.py`
+(SHA256 `873c3cbd…`, no local diff at extraction). The manifest records it under
+`additional_sources`, and its license ships as
+[`model/qwen3/LICENSE.txt`](../src/llm_training/model/qwen3/LICENSE.txt). That file is plain
+Apache 2.0, without the book exclusions in this repository's `LICENSE.txt`.
+
+| New module | Selected implementation |
+| --- | --- |
+| `model/qwen3/model.py` | `QWEN_CONFIG_06_B` → `QWEN3_0_6B`, `Qwen3Model`, `TransformerBlock`, `KVCache` |
+| `model/qwen3/attention.py` | `GroupedQueryAttention` |
+| `model/qwen3/layers.py` | `FeedForward`, `RMSNorm` |
+| `model/qwen3/rope.py` | `compute_rope_params`, `apply_rope` |
+| `data/qwen3_tokenizer.py` | `Qwen3Tokenizer` |
+
+Changes:
+
+- The `dtype` config key and arguments are gone. Parameters are float32, and the output head
+  no longer casts its input.
+- Two opt-in additions:
+  - `tie_embeddings`, which the 0.6B preset sets to match the official
+    `tie_word_embeddings: true`;
+  - `attn_impl: sdpa`.
+- Otherwise the selected definitions are copied unchanged. The download and Hugging Face
+  name-mapping helpers were left out: the pinned weights already use these modules'
+  parameter names.
+
+`tests/reference/qwen3_baseline.py` freezes the selected definitions. Its unit test shows that
+the package's default path matches them bit for bit.
+

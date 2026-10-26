@@ -345,6 +345,7 @@ dependencies = [
     { name = "numpy" },
     { name = "pyyaml" },
     { name = "tiktoken" },
+    { name = "tokenizers" },
     { name = "torch" },
 ]
 
@@ -363,6 +364,7 @@ requires-dist = [
     { name = "numpy", specifier = ">=2.3,<3" },
     { name = "pyyaml", specifier = ">=6,<7" },
     { name = "tiktoken", specifier = ">=0.12,<1" },
+    { name = "tokenizers", specifier = ">=0.23,<1" },
     { name = "torch", specifier = ">=2.9,<3" },
 ]
 
