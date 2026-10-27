@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "deny": [
+      "Edit(/configs/pretrain_gpt_162m.yaml)"
+    ]
+  }
+}

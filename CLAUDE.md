@@ -1,7 +1,5 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
-
 A Python package that trains GPT-style models with the implementations from Sebastian Raschka's
 *LLMs-from-scratch* (GPT-2) and *reasoning-from-scratch* (Qwen3, GRPO). The README covers user
 workflows, run artifacts and measured costs. Read it before changing CLI behavior.
@@ -13,13 +11,11 @@ Python 3.14.9 is pinned in `.python-version`, and `uv` manages everything.
 
 ```bash
 uv sync --frozen                     # if uv lacks 3.14.9: uv venv --python "$(pyenv root)/versions/3.14.9/bin/python3.14" first
-uv run ruff check .                  # lint: E4/E7/E9/F/I, line length 100
+uv run ruff check .
 uv run ruff format --check .         # CI enforces formatting; `uv run ruff format .` to fix
 uv run pytest tests/unit -q          # ~6 s, synthetic tokens, no downloads
-uv run pytest tests/unit/test_families.py::test_family_declaration_is_consistent -q
-uv run pytest tests/unit -k fingerprint -q
+uv run pytest tests/unit/test_families.py -q   # one file
 uv run python -m tests.reference.compare   # numerical parity against the frozen upstream code
-uv build
 ```
 
 The full suite, as CI runs it, needs the GPT-2 tokenizer prepared first:
@@ -38,28 +34,13 @@ LLM_TEST_TOKENIZER_CACHE="$PWD/data/tokenizer" uv run pytest -q
   for GPT-2 and 1.5 GB for Qwen3.
 - `LLM_GPT2_HF_DIR`: also needed for `tests/oracle/test_gpt2_lineage.py`.
 
-CLI entry point: `uv run llm-training <cmd>`, defined in `src/llm_training/cli.py`.
-- Next-token commands: `prepare`, `train` (`--resume`, `--stop-after`), `inspect`, `predict`,
-  `generate`, `respond`.
-- GRPO commands: `grpo-prepare`, `grpo-train`, `math-eval`.
-
 Paths inside a config resolve relative to that config file.
 
 ## Architecture
 
-`src/llm_training/`:
-
-- `model/<family>/`: `gpt2/` and `qwen3/`. Each holds the model, its tokenizer, pretrained
-  loading, and a `family.py` that declares one `Family` (`model/family.py`).
-- `lm/`: the next-token trainer and its config, schedule, loss, evaluation and generation.
-  Pretraining, continued pretraining (`model.init_from`) and SFT (`data.format: instructions`)
-  all run through this one trainer.
-- `reasoning/`: GRPO and MATH evaluation. It is built on Qwen3 directly and does **not** go
-  through `Family`.
-- `training/`: checkpoint, optimizer-group and provenance code that `lm/` and `reasoning/`
-  share.
-- `data/`: sliding-window text datasets, memory-mapped token corpora (`corpus.py` `CORPORA`
-  registers pinned remote files), and instruction datasets.
+Code is under `src/llm_training/`. Pretraining, continued pretraining (`model.init_from`) and
+SFT (`data.format: instructions`) all run through the one next-token trainer in `lm/`.
+`reasoning/` (GRPO, MATH eval) is built on Qwen3 directly and does **not** go through `Family`.
 
 **The family rule.** Nothing outside `model/<name>/` branches on a family name. The trainer,
 `prepare`, `predict`, `generate` and `respond` go through the `Family` interface.
@@ -102,18 +83,16 @@ code. To add a family:
 - `tests/reference/` is a frozen, attributed copy of the upstream definitions and training
   loop. Keep it independent of production refactors: the parity tests depend on it not
   changing.
+- `.claude/settings.json` denies edits to both. If one is needed, stop and ask; the user
+  edits it by hand.
 - The chapter-5 reproduction matches the source in FP32 at `atol=1e-6`, `rtol=1e-5`, so a
   divergence there is a regression, not precision drift.
 - Fine-tuning and GRPO run in float32, while the books ran them in bfloat16. Their reported
   results (chapter 7/8 SFT losses, MATH-500 15.2% and 47.4%) can differ, possibly by a lot:
   many lr-1e-5 updates vanish in bfloat16.
 
-**Upstream provenance.**
-- Derived files keep Raschka's headers and are marked as modified.
-- When derived code or its mapping changes, update `docs/upstream-provenance.md` and
-  `src/llm_training/upstream-provenance.json`. The JSON ships in the wheel and is copied into
-  each run's provenance.
-- `model/qwen3/` carries its own `LICENSE.txt`, plain Apache 2.0.
+**Upstream provenance.** Before porting new code from Raschka's repositories, read
+`.claude/rules/upstream-provenance.md`. It loads by itself when you touch an already-derived file.
 
 ## Docs conventions
 
