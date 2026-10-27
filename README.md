@@ -16,16 +16,16 @@ See [the implementation plan](IMPLEMENTATION_PLAN.md) and
 For each model's structure, tensor flow, and preset dimensions, see the
 [GPT-2 guide](docs/gpt2.md) and the [Qwen3 guide](docs/qwen3.md).
 Prepared token files (`uint16`, or `uint32` for Qwen3's vocabulary) exist for registered
-corpora (TinyStories); AMP/`torch.compile`
-and distributed training remain future work.
-The runtime is single-process FP32 with `num_workers=0`.
+corpora (TinyStories). The runtime is single-process FP32 with `num_workers=0`.
+**Pending runs, unbuilt work, open decisions and next steps are in
+[the backlog](docs/backlog.md).**
 
 Two recipes share the trainer. `configs/pretrain_gpt_162m.yaml` reproduces the book's
 chapter-5 loop (PyTorch init, untied head, context 256, constant LR, no clipping) and is
 frozen as the source-parity reference. `configs/pretrain_gpt2_124m.yaml` is the GPT-2 small
-recipe (see below). A corpus, token shards, bf16/compile, and a measured budget are still
-missing, so **no GPT-2 pretraining run has been done**. The
-[GPT-2 parity gap register](docs/gpt2-parity-gaps.md) tracks what is built and what is not.
+recipe (see below). **No GPT-2 pretraining run has been done**; it waits on a corpus and a
+throughput pilot (see the backlog). The [GPT-2 parity gap register](docs/gpt2-parity-gaps.md)
+specifies each gap and records what was built.
 
 ## Quick start
 
@@ -322,8 +322,7 @@ uv run llm-training respond --checkpoint runs/sft/<run>/model.pt \
 `configs/sft_qwen3_0_6b_math_distill.yaml` is chapter 8's reasoning distillation (an
 estimated 18–22 hours). The two `cpt_*_tinystories.yaml` recipes are plumbing tests only: a
 long run on children's stories would erode the models' general skills. See
-[the fine-tuning guide](docs/finetuning.md) for measured costs, the book parity checks,
-and what is not built.
+[the fine-tuning guide](docs/finetuning.md) for measured costs and the book parity checks.
 
 ## Reasoning fine-tune: GRPO on MATH
 

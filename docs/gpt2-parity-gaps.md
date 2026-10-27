@@ -3,8 +3,11 @@
 Opened 2026-10-24; status updated 2026-10-25 (TinyStories additions 2026-10-26). Scope: what separates this repository from a
 proper from-scratch GPT-2 (124M) pretraining setup.
 
-**Reading this document:** the item tables below describe each gap *as found on 2026-10-24*.
-The [status table](#status) is authoritative for what has since been built. File paths follow
+**Reading this document:** this register is the specification for each gap: its evidence,
+fix and acceptance gate, *as found on 2026-10-24*, plus the record of what was done. Open
+work, its order, and the decisions it waits on are tracked only in
+[the backlog](backlog.md). The [status table](#status) is authoritative for what has been
+built. File paths follow
 the current layout (GPT-2 modules moved into `model/gpt2/` and `docs/model-architecture.md`
 became `docs/gpt2.md` on 2026-10-26); line numbers are as of 2026-10-24.
 
@@ -61,11 +64,8 @@ Verified 2026-10-25 with the full suite (69 passed, plus the opt-in oracle, 2 pa
 
 | Status | Items |
 | --- | --- |
-| **Done** (mechanism built and tested; preset values provisional) | A1 tie option; A2/A3 via the `pretrain_gpt2_124m.yaml` preset; A4 init (with residual-scaling flag); A5 SDPA (`attn_impl`); A6 GELU constant; B1 decay groups; B2 betas; B3 warmup/cosine; B4 clipping; B5 accumulation; B6 dropout 0 in the preset; C3 `uint16` plan correction; C2 `uint16` token files with a memory-mapped loader, for registered corpora (`data/corpus.py`); C5 EOS policy for token corpora (prepended `<|endoftext|>`, attention crosses documents, recorded in the manifest); E1 pretrained-weight oracle; F2 resume guard |
-| **Partial** | B7 (the per-parameter gradient sync is replaced by one norm, but `loss.item()` and `grad_norm.item()` still sync once per micro-batch/update); B8 (`grad_norm` and the real `learning_rate` are logged; tokens/s, step time, memory, MFU are not, because wall-clock values would break exact-resume history equality and need a separate non-compared log); F7 (the scheduler state is populated, the scaler is still null); A10 (temperature/top-k sampling and a `generate` command; no KV cache); D4 (MPS: resume on the 51M TinyStories preset matches an uninterrupted run to ~1e-7 with identical batches, the same as run-to-run MPS nondeterminism, so not bitwise; CUDA untested); D6 (TinyStories preset on an M2 Max: 4.41 s per 32,768-token update; no GPT-2 124M pilot yet) |
-| **Open, unblocked** | A7 non-persistent mask; A8 `F.layer_norm`; A9 padded vocab; A10 KV cache; B9 fused AdamW; D1 bf16 autocast; D2 `torch.compile`; D5 `device: auto`; E2 token-weighted monitoring; E4 reference-loss calibration on a chosen split; E5 `evaluate`/`export`; F1 commit; F3 checkpoint retention; F4 `Trainer` refactor; F5 relative paths in saved configs; F9 heartbeat |
-| **Open, blocked on the corpus decision** | C1 corpus (TinyStories is used for the readable-output demo only; the GPT-2-scale corpus is still undecided); C4 document-level split and dedup; C6 stateless sampler; C7 test split; C8 token budget; E3 benchmarks |
-| **Open, needs hardware** | D3 DDP; D4 on CUDA |
+| **Done** (mechanism built and tested; preset values provisional) | A1 tie option; A2/A3 via the `pretrain_gpt2_124m.yaml` preset; A4 init (with residual-scaling flag); A5 SDPA (`attn_impl`); A6 GELU constant; B1 decay groups; B2 betas; B3 warmup/cosine; B4 clipping; B5 accumulation; B6 dropout 0 in the preset; C3 `uint16` plan correction; C2 `uint16` token files with a memory-mapped loader, for registered corpora (`data/corpus.py`); C5 EOS policy for token corpora (prepended `<|endoftext|>`, attention crosses documents, recorded in the manifest); E1 pretrained-weight oracle; F1 repository committed (2026-10-25); F2 resume guard |
+| **Open or partial** | Tracked in [the backlog](backlog.md#gpt-2-pretraining-track), which holds their order and the decisions they wait on |
 
 ### What was verified for the Done items
 
@@ -195,27 +195,18 @@ new fields, clipping (scaled, untouched, small, non-finite), SDPA versus explici
 GELU exact equality, resume-guard fingerprint, preset parameter count, exact resume with every
 feature active (two accumulation shapes), accumulation versus full batch, and the drift guard.
 
-Still missing: `uint16` shard round trip (C3, no shards yet), a resume test with an active
-AMP scaler (F7, no scaler yet), any accelerator run (D4), and a relocated-checkpoint resume
-(F5). CI is CPU-only and does not run the oracle; skipping accelerators or the oracle there is
-not evidence they work.
+Added 2026-10-26: `uint16` token-file round trips (C2/C3) and `uint32` files for Qwen3. Tests
+still missing belong to open items in the backlog (F5 relocated checkpoint, F7 active scaler,
+D4 accelerators). CI is CPU-only and does not run the oracle; skipping accelerators or the
+oracle there is not evidence they work.
 
-## Recommended order
+## Order of work
 
-1. **Not done: commit the repository (F1).** The history is still empty.
-2. **Done (2026-10-25):** recipe core A1–A6, B1–B6 and the resume guard F2 behind
-   `pretrain_gpt2_124m.yaml`, with `pretrain_gpt_162m.yaml` frozen. The `train()` refactor (F4)
-   was deferred; the optimizer, schedule, and init code was extracted instead.
-3. **Done for L1:** the oracle (E1). **Next:** E4 calibration once a split exists.
-4. **Scale path (P1), next:** the throughput pilot D6 first, since it needs only synthetic
-   tokens and not the corpus, together with D1/D2 (bf16, compile), F3 (retention), and the
-   timing half of B8. Then, once the corpus is chosen, C1–C6 (corpus, `uint16` shards,
-   document splits, stateless sampler).
-5. **Reproduction (P2):** pick a budget from the pilot (C8), run it, evaluate (E3).
-   DDP (D3) only if the pilot shows a single device cannot reach the budget.
-
-Plan changes implied: speed features (M5) should move before the M4 run rather than after it,
-because they decide whether M4 is feasible. The `uint32` statement is corrected.
+The order of the remaining items is kept in [the backlog](backlog.md#5-recommended-next-steps).
+Done so far: the recipe core (A1–A6, B1–B6) and the resume guard (F2) behind
+`pretrain_gpt2_124m.yaml`, with `pretrain_gpt_162m.yaml` frozen (2026-10-25); the pretrained
+oracle (E1); `uint16` token files for registered corpora (C2, C5); and the repository's first
+commit (F1, 2026-10-25).
 
 ## Decisions
 
@@ -224,7 +215,8 @@ Resolved 2026-10-25:
 - **Pretrained GPT-2 weights as a test oracle only (E1): yes.** Implemented in
   `tests/reference/gpt2_weights.py`, behind the optional `oracle` dependency group
   (`uv sync --group oracle`) and an opt-in environment variable. Training code does not
-  import it and no run starts from pretrained weights.
+  import it. (Since 2026-10-26, fine-tuning starts from released GPT-2 weights through
+  `model/gpt2/pretrained.py`; this mapping checks that those files are OpenAI's.)
 - **Residual-scaled init (A4): a flag, defaulting to nanoGPT's scaling.**
   `model.residual_scaled_init` (default `true` under `init: gpt2`). nanoGPT also uses 0.02 for
   the position table, where OpenAI's released code uses 0.01; this follows nanoGPT.
@@ -232,8 +224,5 @@ Resolved 2026-10-25:
   (about 4 days on 8×A100 per nGPT-r). The budget is not yet chosen; it must be set from the
   throughput pilot (D6) and declared, together with the target loss, before the run.
 
-Still open:
+The open decision, which corpus to pretrain on, is D1 in [the backlog](backlog.md#4-open-decisions).
 
-- **Which corpus (C1)?** Blocks C1, C2, C4–C8, and E3. Constraints to weigh: license, size
-  that fits the budget, and an existing public loss number for pretrained GPT-2 on that split
-  (E4), so the result has an anchor.

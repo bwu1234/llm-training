@@ -114,7 +114,7 @@ Estimated from those rates (decoding dominates, so time scales with answer lengt
 | `--limit 100` evaluation of a trained snapshot | about 25–30 min |
 
 Decoding is unbatched (one sequence at a time), as in the book's main chapter. Batched
-rollouts and evaluation would be the main speedup and are not built.
+rollouts and evaluation would be the main speedup and are not built ([backlog](backlog.md)).
 
 ## Run directory
 

@@ -96,7 +96,7 @@ forgetting. Before a real run:
 - **Choose the corpus.** Use text from the domain the model should improve at, and mix in
   some general text so the older skills keep getting used. Corpora are registered in
   `data/corpus.py` (`CORPORA`: pinned URLs, sizes and SHA-256). Registering local files and
-  mixing corpora are not built yet.
+  mixing corpora are not built yet ([backlog](backlog.md)).
 - **Measure forgetting.** Track validation loss on the old domain as well as the new one,
   before and after. The starting losses above are the baseline for TinyStories.
 - **Treat the learning rates as provisional.** Neither book has a continued-pretraining
@@ -155,7 +155,8 @@ uv run llm-training generate --checkpoint runs/cpt/<run>/model.pt --prompt "Once
 
 `respond` follows chapter 7. It decodes greedily from `format_input` until end-of-text,
 writes the model's response next to the reference, and skips recorded examples when rerun.
-Chapter 7 then has a larger model grade the responses; that grading step is not built.
+Chapter 7 then has a larger model grade the responses; that grading step is not built
+([backlog](backlog.md)).
 
 ## Tokenizers
 
@@ -166,14 +167,8 @@ becomes ordinary tokens rather than the control token, as tiktoken's `encode_ord
 `data.tokenizer_cache` is the directory holding the family's tokenizer assets:
 `data/tokenizer` for GPT-2, and the Qwen3 weights directory for Qwen3.
 
-## Not built
+## What is not built
 
-- **Training Qwen3 from random weights.** A Qwen3 recipe must set `init_from`.
-- **Domain corpora.** Registering local corpus files and mixing corpora.
-- **Grading `respond` output.** Chapter 7 scores responses with an LLM judge.
-- **GRPO from an SFT model.** `grpo-train` still starts from the pinned base files only.
-- **Chapter 8's chat-template variant.** Its `--use_think_tokens` mode: reasoning tokenizer
-  with `<think>` tags.
-- **Faster generation.** `respond` and `generate` recompute the whole context for each token
-  and decode one sequence at a time.
-- **bfloat16 training.** Both books train their models in lower precision.
+Unbuilt pieces (domain corpora, response grading, GRPO from an SFT model, Qwen3 from random
+weights, bfloat16, faster generation) and the pending runs of these recipes are tracked in
+[the backlog](backlog.md).

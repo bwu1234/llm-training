@@ -22,8 +22,7 @@ clipping, accumulation, and a code-drift-aware resume guard, in `configs/pretrai
 The recipe's values are provisional (tokens per update, warmup, schedule length) until the
 throughput pilot and corpus choice, so L2 is not frozen.
 Decisions recorded: the pretrained-weight oracle is allowed as a test only; the target is GPT-2
-small on a reduced budget. Still open: the corpus, shards (M2), a throughput pilot, bf16/compile,
-and the budget. The gap register's status table lists each item.
+small on a reduced budget. Open work is tracked in [the backlog](docs/backlog.md).
 
 ## 1. Goal and scope
 
@@ -284,13 +283,7 @@ upstream weights, optimizer/RNG state, monitored losses, and epoch samples exact
 CPU FP32 was used on the local 64 GiB arm64 host; accelerator execution remains
 unverified. See the experiment report for the exact runtime and measured scope.
 
-The next implementation slice is **M2**: corpus manifests, document-level
-deduplication/splits, pretokenized shards, and offline loaders. Decisions still to
-resolve are the larger corpus snapshot, acceptable training time/cost, and whether
-later work needs a custom tokenizer, distributed training, or instruction tuning.
+Later slices (the GPT-2 recipe, TinyStories, Qwen3, GRPO, continued pretraining and SFT) are
+described in the README and guides. What remains, in recommended order, is in
+[the backlog](docs/backlog.md).
 
-Per the [gap register](docs/gpt2-parity-gaps.md): the `gpt2_124m` recipe, the relaxed
-resume guard, and the test-only oracle are done (2026-10-25). Remaining before or alongside M2:
-commit the repository; run a throughput pilot on synthetic tokens (it does not need a corpus)
-and add bf16/`torch.compile`, which decide whether the M4 run is feasible; split `train()` into a
-testable trainer; and choose the corpus, which unblocks shards, document splits, and the budget.

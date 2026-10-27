@@ -11,7 +11,7 @@ against Hugging Face Transformers. Two ways to fine-tune it exist: GRPO on MATH,
 commands ([GRPO guide](grpo.md)), and the next-token `train` command with `model.arch: qwen3`
 and `model.init_from: qwen3-0.6b-base`, for continued pretraining on `uint32` token files or
 supervised fine-tuning ([fine-tuning guide](finetuning.md)). `predict` and `generate` load
-either family. Training Qwen3 from random weights is not built.
+either family. Training Qwen3 from random weights is not built ([backlog](backlog.md)).
 
 ## Usage
 
