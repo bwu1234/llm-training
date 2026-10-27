@@ -20,7 +20,9 @@ Mac GPU (MPS). The source checkout is not needed to install or run this project.
 Two full-length runs are complete: the chapter-5 reproduction
 ([evidence](docs/experiments/chapter-reproduction.md)) and the 51M-parameter TinyStories
 model (below). For each model's structure, tensor flow and preset dimensions, see the
-[GPT-2 guide](docs/gpt2.md) and the [Qwen3 guide](docs/qwen3.md).
+[GPT-2 guide](docs/gpt2.md) and the [Qwen3 guide](docs/qwen3.md). To explore them side by
+side, open [`docs/architecture/index.html`](docs/architecture/index.html) in a browser: every
+module that runs, its shapes, parameters and source, traced from the code (see below).
 **Pending runs, unbuilt work, open decisions and next steps are in
 [the backlog](docs/backlog.md).** [`IMPLEMENTATION_PLAN.md`](IMPLEMENTATION_PLAN.md) is the
 original plan, kept for history.
@@ -320,7 +322,38 @@ must match. To add one, write `model/<name>/` with that file, then add the name 
 in `model/registry.py` and its releases to `PRETRAINED`. `tests/unit/test_families.py` checks
 the declaration, and `tests/unit/test_fingerprint_scope.py` checks that the resume fingerprint
 covers the family's code and nothing from another family. GRPO (`reasoning/`) is built on
-Qwen3 directly and is not covered by this.
+Qwen3 directly and is not covered by this. To show the new family in the architecture
+explorer, add a preset and notes for its module classes to `docs/architecture/explainer.json`
+(below).
+
+## Architecture explorer
+
+[`docs/architecture/index.html`](docs/architecture/index.html) puts two presets side by side,
+such as GPT-2 small and Qwen3-0.6B. Each row is a module that runs in the forward pass, in the
+order it runs, with its output shape (`B` batch, `T` tokens) and parameter count. Selecting a
+row shows what it does, its own tensors, its `forward` source with a link to the file, and the
+module at the same path in the other model. It needs no server: open the file in a browser.
+
+The page's data, `docs/architecture/spec.js`, is generated from the models themselves:
+
+```bash
+uv run python -m llm_training.explain
+```
+
+`llm_training.explain` builds each preset listed in `docs/architecture/explainer.json` on
+PyTorch's `meta` device (shapes without storage, so Qwen3 needs no 2.4 GB allocation). It runs
+one forward pass with module hooks and records each call's input and output shapes. A second
+pass with a different batch and length names the dimensions that changed. The prose for each
+module class lives in `explainer.json`, so `src/` holds no family-specific text.
+`tests/unit/test_explain.py` fails when:
+
+- `spec.js` is stale, for example after an edit to a model's `forward`;
+- a documented parameter count changes;
+- a module class has no note, or a note names a module that no longer exists.
+
+Residual additions, RoPE, the head split and the SwiGLU product are plain code rather than
+modules, so they appear in each module's source rather than as rows. The explainer is outside
+every resume fingerprint, so changing it never affects `train --resume`.
 
 ## Continued pretraining and SFT from released weights
 

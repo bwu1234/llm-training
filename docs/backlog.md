@@ -85,6 +85,32 @@ Open:
 - **Tests that wait on those items:** a resume from a relocated checkpoint (F5), a resume with
   an active scaler (F7), and any accelerator run in CI (D4).
 
+### Educational material
+
+Graphics and guides that teach the two architectures from this repo's own code. Their
+advantage over generic visualizers such as
+[Transformer Explainer](https://poloclub.github.io/transformer-explainer/) is that every box
+links to the module that implements it, and GPT-2 and Qwen3 sit side by side. The
+architecture explorer (`docs/architecture/`, described in the README) is built; these
+items extend it.
+
+| Item | Why it matters | Notes |
+| --- | --- | --- |
+| Qwen3 Mermaid diagrams | `gpt2.md` has model and block diagrams; `qwen3.md` has only the comparison table | Model flow, and a block showing RMSNorm, GQA with RoPE and QK-norm, and SwiGLU. Optionally one diagram of the differences from GPT-2. About an hour; GitHub renders them |
+| Show functional steps in the explorer | Residual adds, RoPE, the head split, the causal mask and the SwiGLU product are code, not modules, so they appear only in each module's source | Record them with `torch.overrides.TorchFunctionMode` during the traced pass, filtered to the ops that teach something (`add`, `softmax`, `matmul`, the RoPE rotation). The filter must stay generic, not per family |
+| Host the explorer | It's only a local file today | Waits on D5 |
+| Live views on real weights | Attention heatmaps, logit lens, GQA head sharing, RoPE rotation | Uses the weights already in `data/`; could extend the explorer's traced pass with real inputs. Plotting or notebook dependencies go in an optional group, as `IMPLEMENTATION_PLAN.md` requires. Several days |
+| A guided learning path (`docs/learn.md`) | The guides say what each part does but not what order to read the code in | Tokenizer → embeddings → attention → block → training loop → GRPO, each linked to its book chapter and to the graphics. About half a day |
+
+Constraints for all of them:
+
+- **Keep the code outside the resume hash.** Put it in `src/llm_training/explain/` (where
+  the explorer is) or in `scripts/`. Never put it in `model/<arch>/`, `lm/`, `data/` or
+  `training/`, and don't add a describe method to `Family` or the models. Either would make
+  every existing checkpoint need `--allow-code-drift`.
+- **Introspect generically.** Use `named_modules()`, parameters and forward hooks. Branching
+  on a family name would break the family rule.
+
 ### Repository structure
 
 - **No remote.** All work is on `main` (renamed from `tinystories-run` on 2026-10-26).
@@ -115,6 +141,7 @@ Open:
 | D2 | Domain for continued pretraining, and the general text to mix in | A real continued-pretraining run, corpus registration |
 | D3 | Go/no-go for R1–R7 | Results for every built stage |
 | D4 | float32 versus bfloat16 as the default for fine-tuning runs | Comparability with the books' numbers; memory headroom |
+| D5 | Where the architecture explorer is hosted: GitHub Pages (needs a remote, which the repo doesn't have yet), a local HTML file, or a shared Artifact. GitHub doesn't render HTML/JS stored in the repo | Publishing the architecture explorer |
 
 ## 5. Recommended next steps
 

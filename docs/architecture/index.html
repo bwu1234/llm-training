@@ -1,0 +1,420 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Model Architecture Explorer</title>
+<meta name="description" content="GPT-2 and Qwen3 side by side, traced from this repository's model code: every module that runs, its tensor shapes, parameters and source.">
+<style>
+:root {
+  --bg: #f7f7f5;
+  --surface: #ffffff;
+  --surface-2: #f0f0ed;
+  --text: #1c1c1a;
+  --muted: #64645f;
+  --border: #dcdcd6;
+  --accent: #2f5fd0;
+  --accent-soft: #e6edfb;
+  --match: #b8860b;
+  --match-soft: #fbf3dc;
+  --code-bg: #f4f4f1;
+  --comment: #7a7a72;
+  --seg-1: #2f5fd0;
+  --seg-2: #2a9d8f;
+  --seg-3: #c76b29;
+  --seg-4: #8a5cc2;
+  --seg-5: #c2456b;
+  --shadow: 0 10px 40px rgba(0, 0, 0, 0.12);
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #141413;
+    --surface: #1d1d1b;
+    --surface-2: #262623;
+    --text: #ecece8;
+    --muted: #a0a098;
+    --border: #3a3a36;
+    --accent: #7ea2f5;
+    --accent-soft: #23304d;
+    --match: #e3b341;
+    --match-soft: #3a3120;
+    --code-bg: #191917;
+    --comment: #8d8d84;
+    --seg-1: #7ea2f5;
+    --seg-2: #4fc1b2;
+    --seg-3: #e39257;
+    --seg-4: #b48ce6;
+    --seg-5: #e57397;
+    --shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #141413;
+  --surface: #1d1d1b;
+  --surface-2: #262623;
+  --text: #ecece8;
+  --muted: #a0a098;
+  --border: #3a3a36;
+  --accent: #7ea2f5;
+  --accent-soft: #23304d;
+  --match: #e3b341;
+  --match-soft: #3a3120;
+  --code-bg: #191917;
+  --comment: #8d8d84;
+  --seg-1: #7ea2f5;
+  --seg-2: #4fc1b2;
+  --seg-3: #e39257;
+  --seg-4: #b48ce6;
+  --seg-5: #e57397;
+  --shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+code, pre, .mono { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: 0.86em; }
+a { color: var(--accent); }
+header, main, footer { max-width: 1280px; margin: 0 auto; padding: 0 16px; }
+header { padding-top: 28px; }
+h1 { font-size: 1.6rem; margin: 0 0 6px; letter-spacing: -0.01em; }
+.lede { color: var(--muted); max-width: 72ch; margin: 0 0 14px; }
+.notes { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 10px; margin: 0 0 20px; }
+.notes div { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; font-size: 0.88rem; color: var(--muted); }
+.notes strong { color: var(--text); display: block; margin-bottom: 2px; }
+.panes { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: start; }
+@media (max-width: 900px) { .panes { grid-template-columns: 1fr; } }
+.pane { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px; min-width: 0; }
+.pane select { width: 100%; font: inherit; font-weight: 600; padding: 7px 8px; border-radius: 6px; border: 1px solid var(--border); background: var(--surface-2); color: var(--text); }
+.summary { color: var(--muted); font-size: 0.88rem; margin: 8px 0 10px; }
+.total { font-size: 1.3rem; font-weight: 650; font-variant-numeric: tabular-nums; }
+.total span { font-size: 0.85rem; font-weight: 400; color: var(--muted); }
+.config { display: flex; flex-wrap: wrap; gap: 4px; margin: 8px 0 12px; }
+.config span { background: var(--surface-2); border-radius: 4px; padding: 1px 6px; font-size: 0.78rem; color: var(--muted); }
+.config b { color: var(--text); font-weight: 600; }
+.bar { display: flex; height: 12px; border-radius: 6px; overflow: hidden; background: var(--surface-2); }
+.bar div { height: 100%; min-width: 2px; }
+.bar div + div { border-left: 2px solid var(--surface); }
+.legend { list-style: none; padding: 0; margin: 8px 0 14px; display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 0.8rem; color: var(--muted); }
+.legend i { display: inline-block; width: 9px; height: 9px; border-radius: 2px; margin-right: 5px; vertical-align: baseline; }
+.legend b { color: var(--text); font-weight: 600; font-variant-numeric: tabular-nums; }
+.tree, .tree ul { list-style: none; margin: 0; padding: 0; }
+.tree ul { margin-left: 13px; padding-left: 10px; border-left: 1px solid var(--border); }
+.tree li.closed > ul { display: none; }
+.row { display: flex; align-items: center; gap: 6px; width: 100%; text-align: left; font: inherit; color: inherit; background: none; border: 1px solid transparent; border-radius: 6px; padding: 3px 6px; cursor: pointer; min-width: 0; }
+.row:hover { background: var(--surface-2); }
+.row.selected { background: var(--accent-soft); border-color: var(--accent); }
+.row.match { background: var(--match-soft); border-color: var(--match); }
+.row:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.toggle { flex: none; width: 18px; height: 18px; display: grid; place-items: center; border-radius: 4px; color: var(--muted); font-size: 0.7rem; transition: transform 0.15s; }
+.toggle.leaf { visibility: hidden; }
+li:not(.closed) > .row .toggle { transform: rotate(90deg); }
+.name { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: 0.85rem; font-weight: 600; white-space: nowrap; }
+.cls { font-size: 0.75rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.times { flex: none; font-size: 0.72rem; font-weight: 700; color: var(--accent); background: var(--accent-soft); border-radius: 10px; padding: 0 7px; }
+.shape { margin-left: auto; flex: none; font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: 0.75rem; color: var(--muted); white-space: nowrap; }
+.count { flex: none; width: 5.2em; text-align: right; font-size: 0.78rem; font-variant-numeric: tabular-nums; }
+.count.zero { color: var(--muted); }
+.tied { flex: none; font-size: 0.7rem; color: var(--match); border: 1px solid var(--match); border-radius: 10px; padding: 0 6px; }
+.name { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+@media (max-width: 520px) {
+  .cls { display: none; }
+  .tree ul { margin-left: 8px; padding-left: 6px; }
+  .row { flex-wrap: wrap; row-gap: 0; }
+  .count { margin-left: auto; order: 1; }
+  .shape { order: 2; flex-basis: 100%; margin-left: 24px; }
+}
+aside { position: fixed; top: 0; right: 0; bottom: 0; width: min(560px, 100vw); background: var(--surface); border-left: 1px solid var(--border); box-shadow: var(--shadow); transform: translateX(100%); transition: transform 0.2s ease; overflow-y: auto; padding: 18px 18px 40px; z-index: 10; }
+aside.open { transform: none; }
+aside h2 { font-size: 1.15rem; margin: 0 30px 2px 0; }
+aside .sub { color: var(--muted); font-size: 0.85rem; margin: 0 0 14px; }
+aside h3 { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin: 18px 0 6px; }
+aside p { margin: 0 0 10px; }
+aside .role { border-left: 3px solid var(--accent); padding-left: 10px; }
+.close { position: absolute; top: 12px; right: 12px; width: 32px; height: 32px; border-radius: 6px; border: 1px solid var(--border); background: var(--surface-2); color: var(--text); font-size: 1rem; cursor: pointer; }
+.io { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: 0.85rem; background: var(--surface-2); border-radius: 6px; padding: 6px 10px; }
+table { border-collapse: collapse; width: 100%; font-size: 0.82rem; }
+td, th { text-align: left; padding: 4px 6px; border-bottom: 1px solid var(--border); }
+th { color: var(--muted); font-weight: 500; }
+td.num { text-align: right; font-variant-numeric: tabular-nums; }
+pre { background: var(--code-bg); border: 1px solid var(--border); border-radius: 6px; padding: 10px 0; overflow-x: auto; margin: 0; line-height: 1.45; }
+pre .ln { display: inline-block; width: 3.2em; padding-right: 10px; text-align: right; color: var(--comment); user-select: none; }
+pre .c { color: var(--comment); font-style: italic; }
+details { margin-top: 8px; font-size: 0.8rem; color: var(--muted); }
+details pre { font-size: 0.75rem; }
+footer { color: var(--muted); font-size: 0.8rem; padding-top: 24px; padding-bottom: 32px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Model architecture explorer</h1>
+  <p class="lede">GPT-2 and Qwen3 side by side, traced from this repository's own model code. Each row is a module that actually runs in one forward pass, in the order it runs, with its output shape and parameter count. Select a row to read what it does, its parameters and its <code>forward</code> source. Selecting a row also highlights the module at the same path in the other model.</p>
+  <div class="notes">
+    <div><strong>Shapes</strong><code>B</code> is the batch size and <code>T</code> the number of tokens. Every other dimension is the preset's own number.</div>
+    <div><strong>What isn't a box</strong>Residual additions, the head split, RoPE, causal masking and the SwiGLU multiply are plain code inside a module's <code>forward</code>, so they appear in its source, not as rows.</div>
+    <div><strong>Where this comes from</strong>Each model is built on PyTorch's <code>meta</code> device and traced with module hooks. Regenerate with <code>uv run python -m llm_training.explain</code>.</div>
+  </div>
+</header>
+<main>
+  <div class="panes">
+    <section class="pane" id="pane-a" aria-label="Left model"></section>
+    <section class="pane" id="pane-b" aria-label="Right model"></section>
+  </div>
+</main>
+<aside id="detail" aria-label="Module details" aria-hidden="true">
+  <button class="close" id="close" aria-label="Close details">✕</button>
+  <div id="detail-body"></div>
+</aside>
+<footer>
+  The model code is derived from Sebastian Raschka's
+  <a href="https://github.com/rasbt/LLMs-from-scratch">LLMs-from-scratch</a> and
+  <a href="https://github.com/rasbt/reasoning-from-scratch">reasoning-from-scratch</a>
+  (Apache License 2.0). Each source excerpt shows its file's license header.
+</footer>
+<script src="spec.js"></script>
+<script>
+(() => {
+  const SPEC = window.ARCHITECTURE;
+  const ROOT = "../../";
+  const presets = new Map(SPEC.presets.map((p) => [p.id, p]));
+  const sides = { a: SPEC.presets[0].id, b: SPEC.presets[1].id };
+  let selected = null;
+
+  try {
+    const hash = new URLSearchParams(location.hash.slice(1));
+    for (const side of ["a", "b"]) if (presets.has(hash.get(side))) sides[side] = hash.get(side);
+  } catch (e) { /* keep defaults */ }
+
+  const el = (tag, attrs = {}, ...kids) => {
+    const node = document.createElement(tag);
+    for (const [k, v] of Object.entries(attrs)) {
+      if (k === "class") node.className = v;
+      else if (k === "text") node.textContent = v;
+      else if (k.startsWith("on")) node.addEventListener(k.slice(2), v);
+      else node.setAttribute(k, v);
+    }
+    for (const kid of kids) if (kid != null) node.append(kid);
+    return node;
+  };
+  const esc = (s) => s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+  const prose = (text) => text.split("\n\n").map((para) => {
+    const p = document.createElement("p");
+    p.innerHTML = esc(para).replace(/`([^`]+)`/g, "<code>$1</code>");
+    return p;
+  });
+  const full = (n) => n.toLocaleString("en-US");
+  const short = (n) => n >= 1e6 ? (n / 1e6).toFixed(1) + "M" : n >= 1e4 ? (n / 1e3).toFixed(1) + "K" : full(n);
+  const shape = (s) => s ? "[" + s.join(", ") + "]" : "—";
+  const rel = (node, parent) => parent && parent.module ? node.module.slice(parent.module.length + 1) : node.module;
+  // The same module in any block, with layer indices dropped, to match rows across models.
+  const path = (node) => node.module.replace(/(^|\.)\d+(?=\.|$)/g, "");
+  const role = (node, parent) => {
+    if (!parent) return null;
+    const attr = rel(node, parent).replace(/(^|\.)\d+$/, "");
+    return attr ? SPEC.roles[parent.class + "." + attr] : null;
+  };
+  const cls = (key) => SPEC.classes[key];
+  const seg = (i) => `var(--seg-${(i % 5) + 1})`;
+
+  function label(node, parent) {
+    if (!parent) return cls(node.class).name;
+    const name = rel(node, parent);
+    return node.repeat > 1 ? `${name} … ${node.last.split(".").pop()}` : name;
+  }
+
+  function render(side) {
+    const preset = presets.get(sides[side]);
+    const pane = document.getElementById("pane-" + side);
+    pane.replaceChildren();
+
+    const select = el("select", { "aria-label": "Model preset", onchange: (e) => {
+      sides[side] = e.target.value;
+      try { history.replaceState(null, "", `#a=${sides.a}&b=${sides.b}`); } catch (err) { /* file:// */ }
+      selected = null;
+      closeDetail();
+      render(side);
+    } });
+    for (const p of SPEC.presets) select.append(el("option", { value: p.id, text: p.label }));
+    select.value = preset.id;
+
+    const config = el("div", { class: "config" });
+    for (const [k, v] of Object.entries(preset.config)) {
+      const span = el("span", {}, k + " ");
+      span.append(el("b", { text: typeof v === "number" ? full(v) : String(v) }));
+      config.append(span);
+    }
+
+    const parts = preset.tree.children
+      .map((c) => ({ node: c, name: label(c, preset.tree), n: c.total * c.repeat }))
+      .filter((p) => p.n > 0);
+    const bar = el("div", { class: "bar", role: "img", "aria-label": "Parameter share by component" });
+    const legend = el("ul", { class: "legend" });
+    parts.forEach((p, i) => {
+      const pct = (100 * p.n / preset.total);
+      bar.append(el("div", { style: `width:${pct}%;background:${seg(i)}`, title: `${p.name}: ${full(p.n)} (${pct.toFixed(1)}%)` }));
+      const item = el("li", {}, el("i", { style: `background:${seg(i)}` }), p.name + " ");
+      item.append(el("b", { text: pct >= 1 ? pct.toFixed(0) + "%" : pct >= 0.01 ? pct.toFixed(2) + "%" : "<0.01%" }));
+      legend.append(item);
+    });
+
+    const tied = [];
+    walk(preset.tree, (n) => n.params.forEach((p) => p.tied_to && tied.push(`${n.module}.${p.name} = ${p.tied_to}`)));
+
+    pane.append(
+      select,
+      el("p", { class: "summary", text: preset.summary }),
+      el("div", { class: "total" }, full(preset.total) + " ", el("span", { text: "parameters" + (tied.length ? " · tied: " + tied.join(", ") : "") })),
+      config,
+      bar,
+      legend,
+      el("ul", { class: "tree" }, item(preset.tree, null, 0, side)),
+    );
+  }
+
+  function walk(node, fn) { fn(node); node.children.forEach((c) => walk(c, fn)); }
+
+  function item(node, parent, depth, side) {
+    const kids = node.children;
+    const li = el("li", { class: depth < 2 || node.repeat > 1 ? "" : "closed" });
+    const tied = node.params.some((p) => p.tied_to);
+    const count = node.total * (node.repeat || 1);
+    const row = el("button", {
+      class: "row", type: "button", "data-path": path(node), "data-side": side,
+      title: `${shape(node.in)} → ${shape(node.out)}`,
+      onclick: (e) => {
+        if (e.target.closest(".toggle") && kids.length) { li.classList.toggle("closed"); return; }
+        choose(row, node, parent, side);
+      },
+      onkeydown: (e) => {
+        if (!kids.length) return;
+        if (e.key === "ArrowRight") li.classList.remove("closed");
+        if (e.key === "ArrowLeft") li.classList.add("closed");
+      },
+    },
+      el("span", { class: "toggle" + (kids.length ? "" : " leaf"), "aria-hidden": "true", text: "▶" }),
+      el("span", { class: "name", text: label(node, parent) }),
+      parent ? el("span", { class: "cls", text: cls(node.class).name }) : null,
+      node.repeat > 1 ? el("span", { class: "times", text: "× " + node.repeat }) : null,
+      tied ? el("span", { class: "tied", text: "tied" }) : null,
+      el("span", { class: "shape", text: shape(node.out) }),
+      el("span", { class: "count" + (count ? "" : " zero"), text: count ? short(count) : "—" }),
+    );
+    li.append(row);
+    if (kids.length) li.append(el("ul", {}, ...kids.map((k) => item(k, node, depth + 1, side))));
+    return li;
+  }
+
+  function choose(row, node, parent, side) {
+    document.querySelectorAll(".row.selected, .row.match").forEach((r) => r.classList.remove("selected", "match"));
+    row.classList.add("selected");
+    const other = side === "a" ? "b" : "a";
+    document.querySelectorAll(`.row[data-side="${other}"]`).forEach((r) => {
+      if (r.dataset.path === path(node)) {
+        r.classList.add("match");
+        r.closest("li").parentElement.closest("li")?.classList.remove("closed");
+      }
+    });
+    selected = row;
+    showDetail(node, parent);
+  }
+
+  function showDetail(node, parent) {
+    const info = cls(node.class);
+    const body = document.getElementById("detail-body");
+    body.replaceChildren();
+    body.append(
+      el("h2", { class: "mono", text: parent ? node.module || info.name : info.name }),
+      el("p", { class: "sub", text: info.name + (node.repeat > 1 ? ` · repeated × ${node.repeat} (${node.module} … ${node.last})` : "") }),
+    );
+    const r = role(node, parent);
+    if (r) body.append(el("div", { class: "role" }, ...prose(r)));
+    if (info.note) {
+      body.append(el("h3", { text: info.note.title }), ...prose(info.note.text));
+      if (info.note.see) {
+        const see = el("p", {}, "See ");
+        info.note.see.forEach((s, i) => {
+          if (i) see.append(", ");
+          see.append(el("a", { href: ROOT + s, text: s }));
+        });
+        body.append(see);
+      }
+    }
+
+    body.append(el("h3", { text: "Shapes" }), el("div", { class: "io", text: `${shape(node.in)}  →  ${shape(node.out)}` }));
+
+    const per = node.total;
+    body.append(el("h3", { text: "Parameters" }));
+    body.append(el("p", { text: node.repeat > 1
+      ? `${full(per)} per copy × ${node.repeat} = ${full(per * node.repeat)}`
+      : `${full(per)} in this module and everything inside it` }));
+    if (node.params.length || node.buffers.length) {
+      const table = el("table", {}, el("tr", {}, el("th", { text: "Own tensor" }), el("th", { text: "Shape" }), el("th", { class: "num", text: "Values" })));
+      for (const p of node.params) {
+        table.append(el("tr", {},
+          el("td", { class: "mono", text: p.name + (p.tied_to ? ` (shared with ${p.tied_to})` : "") }),
+          el("td", { class: "mono", text: shape(p.shape) }),
+          el("td", { class: "num", text: p.tied_to ? "0 new" : full(p.count) })));
+      }
+      for (const b of node.buffers) {
+        table.append(el("tr", {},
+          el("td", { class: "mono", text: `${b.name} (buffer${b.persistent ? ", saved in checkpoints" : ""})` }),
+          el("td", { class: "mono", text: shape(b.shape) }),
+          el("td", { class: "num", text: full(b.shape.reduce((a, x) => a * x, 1)) })));
+      }
+      body.append(table);
+    }
+
+    body.append(el("h3", { text: "Code" }));
+    if (info.docs) {
+      body.append(el("p", {}, "A PyTorch module: ", el("a", { href: info.docs, text: "torch.nn." + info.name })));
+    } else {
+      body.append(el("p", {}, el("a", { href: `${ROOT}${info.path}#L${info.line}`, class: "mono", text: `${info.path}:${info.line}` })));
+      const pre = el("pre");
+      pre.innerHTML = info.forward.code.replace(/\n$/, "").split("\n").map((line, i) =>
+        `<span class="ln">${info.forward.line + i}</span>${highlight(line)}`).join("\n");
+      body.append(pre);
+      if (info.header.length) {
+        const header = el("details", {}, el("summary", { text: "File license header" }), el("pre", { text: info.header.join("\n") }));
+        body.append(header);
+      }
+    }
+    const aside = document.getElementById("detail");
+    aside.classList.add("open");
+    aside.setAttribute("aria-hidden", "false");
+    aside.scrollTop = 0;
+  }
+
+  // Grey out a trailing comment: the first `#` outside a string literal.
+  function highlight(line) {
+    let quote = null;
+    for (let i = 0; i < line.length; i++) {
+      const c = line[i];
+      if (quote) { if (c === quote && line[i - 1] !== "\\") quote = null; }
+      else if (c === '"' || c === "'") quote = c;
+      else if (c === "#") return esc(line.slice(0, i)) + `<span class="c">${esc(line.slice(i))}</span>`;
+    }
+    return esc(line);
+  }
+
+  function closeDetail() {
+    const aside = document.getElementById("detail");
+    aside.classList.remove("open");
+    aside.setAttribute("aria-hidden", "true");
+    document.querySelectorAll(".row.selected, .row.match").forEach((r) => r.classList.remove("selected", "match"));
+    selected?.focus();
+    selected = null;
+  }
+
+  document.getElementById("close").addEventListener("click", closeDetail);
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeDetail(); });
+  render("a");
+  render("b");
+})();
+</script>
+</body>
+</html>

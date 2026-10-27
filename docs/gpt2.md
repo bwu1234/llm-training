@@ -13,6 +13,9 @@ OpenAI's released GPT-2 small or medium weights (see the
 [fine-tuning guide](finetuning.md)), which the `pytorch`/`gpt2` initialization then does not
 affect.
 
+The [architecture explorer](architecture/index.html) shows every preset's modules, shapes,
+parameter counts and source, side by side with Qwen3.
+
 ## Data flow
 
 For an input sequence of token IDs, the model performs these steps:

@@ -16,6 +16,7 @@ uv run ruff format --check .         # CI enforces formatting; `uv run ruff form
 uv run pytest tests/unit -q          # ~6 s, synthetic tokens, no downloads
 uv run pytest tests/unit/test_families.py -q   # one file
 uv run python -m tests.reference.compare   # numerical parity against the frozen upstream code
+uv run python -m llm_training.explain      # after editing model code or a preset recipe; the unit tests fail until spec.js is regenerated
 ```
 
 The full suite, as CI runs it, needs the GPT-2 tokenizer prepared first:

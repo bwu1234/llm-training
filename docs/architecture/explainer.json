@@ -1,0 +1,152 @@
+{
+ "presets": [
+  {
+   "id": "gpt2-124m",
+   "label": "GPT-2 small (124M)",
+   "recipe": "../../configs/pretrain_gpt2_124m.yaml",
+   "summary": "The GPT-2 small recipe: context 1,024, QKV biases, and an output head tied to the token embedding. Its logits match OpenAI's released 124M weights."
+  },
+  {
+   "id": "qwen3-0.6b",
+   "label": "Qwen3-0.6B, as released",
+   "recipe": "../../configs/cpt_qwen3_0_6b_tinystories.yaml",
+   "overrides": {"tie_embeddings": true},
+   "summary": "Qwen3-0.6B base with the tied output head of the released checkpoint. The recipe's untied head is overridden here to show the released architecture."
+  },
+  {
+   "id": "gpt-162m",
+   "label": "Book chapter 5 (162M)",
+   "recipe": "../../configs/pretrain_gpt_162m.yaml",
+   "summary": "The book's chapter-5 model: GPT-2 small's 12 layers × 768, but with context 256, an untied output head and no QKV biases. It uses the explicit attention kernel, so the attention-weight dropout and the T × T score matrix appear here."
+  },
+  {
+   "id": "tinystories-51m",
+   "label": "TinyStories (51M)",
+   "recipe": "../../configs/tinystories_51m.yaml",
+   "summary": "The model this repo trained for 17.5 hours on TinyStories: the GPT-2 block design scaled down to 8 layers × 512."
+  },
+  {
+   "id": "gpt2-medium-355m",
+   "label": "GPT-2 medium (355M)",
+   "recipe": "../../configs/sft_gpt2_medium_alpaca.yaml",
+   "summary": "OpenAI's GPT-2 medium (24 layers × 1,024) as chapter 7 fine-tunes it on Alpaca-style instructions."
+  },
+  {
+   "id": "qwen3-0.6b-untied",
+   "label": "Qwen3-0.6B, untied head",
+   "recipe": "../../configs/cpt_qwen3_0_6b_tinystories.yaml",
+   "summary": "Qwen3-0.6B as this repo's continued-pretraining and SFT recipes train it, with a separate output head as the book's chapters 6 and 8 train it. The second 151,936 × 1,024 matrix adds 155,582,464 parameters."
+  },
+  {
+   "id": "smoke",
+   "label": "Smoke test (3M)",
+   "recipe": "../../configs/smoke.yaml",
+   "summary": "The CPU execution check: 2 layers × 32. Almost every parameter is in the embedding and the output head, because the 50,257-token vocabulary stays full size while everything else shrinks."
+  }
+ ],
+ "classes": {
+  "llm_training.model.gpt2.model.GPTModel": {
+   "title": "GPT model",
+   "text": "Turns token IDs into next-token logits. A token embedding and a learned position embedding are added together, the sum passes through `n_layers` identical transformer blocks, and a final LayerNorm and a linear head give one score per vocabulary entry at every position.\n\nThe logits at position t predict token t + 1. Causal masking inside each attention layer stops position t from seeing later tokens.",
+   "see": ["docs/gpt2.md"]
+  },
+  "llm_training.model.gpt2.model.TransformerBlock": {
+   "title": "GPT-2 transformer block",
+   "text": "Two sublayers, each pre-normalized and wrapped in a residual connection: `x = x + drop(att(norm1(x)))`, then `x = x + drop(ff(norm2(x)))`. The additions aren't modules, so they don't appear as boxes; they're the `x + shortcut` lines in the code below.\n\nThe residual stream keeps the same width from the first block to the last. Each sublayer reads a normalized copy and writes back an update.",
+   "see": ["docs/gpt2.md#attention-and-block-details"]
+  },
+  "llm_training.model.gpt2.attention.MultiHeadAttention": {
+   "title": "Causal multi-head attention",
+   "text": "Queries, keys and values come from three separate linear maps. Each is split into `n_heads` heads of width `emb_dim / n_heads`. Every head scores each query against every earlier key with `Q Kᵀ / √head_dim`; a causal mask sets later positions to −∞ before the softmax. The weighted sum of values goes back through `out_proj`.\n\nThe split into heads is a reshape and a transpose (`view`, `transpose`), not a module, so it shows in the code rather than as a box. With `attn_impl: sdpa`, PyTorch's fused kernel does the scoring without materializing the T × T matrix; the explicit path builds it and applies dropout to it.\n\nThe `mask` buffer is `context_length × context_length` and persistent, so it is saved in every checkpoint. Making it non-persistent is backlog item A7.",
+   "see": ["docs/gpt2.md#attention-and-block-details"]
+  },
+  "llm_training.model.gpt2.layers.LayerNorm": {
+   "title": "LayerNorm",
+   "text": "For each token, subtracts the mean across the embedding dimension, divides by the standard deviation (with eps 1e-5), then applies a learned per-channel `scale` and `shift`. Two vectors of width `emb_dim`."
+  },
+  "llm_training.model.gpt2.layers.GELU": {
+   "title": "GELU (tanh approximation)",
+   "text": "A smooth ReLU: `0.5 x (1 + tanh(√(2/π) (x + 0.044715 x³)))`, the approximation GPT-2 used. It has no parameters; its buffer is the constant √(2/π), kept so it isn't rebuilt every call."
+  },
+  "llm_training.model.gpt2.layers.FeedForward": {
+   "title": "GPT-2 feed-forward network",
+   "text": "Applied to each token independently: expand from `emb_dim` to 4 × `emb_dim`, apply GELU, project back. About two thirds of each block's parameters are here.",
+   "see": ["docs/gpt2.md#attention-and-block-details"]
+  },
+  "llm_training.model.qwen3.model.Qwen3Model": {
+   "title": "Qwen3 model",
+   "text": "The same outline as GPT: embed, run `n_layers` blocks, normalize, project to the vocabulary. But there's no position embedding. Position enters inside attention instead, by rotating queries and keys (RoPE), and the rotation tables `cos` and `sin` are the buffers on this model, computed once for all `context_length` positions.\n\nThe causal mask is built once here and passed to every block, along with the RoPE tables. That's why each block takes `(x, mask, cos, sin)` rather than just `x`.",
+   "see": ["docs/qwen3.md", "src/llm_training/model/qwen3/rope.py"]
+  },
+  "llm_training.model.qwen3.model.TransformerBlock": {
+   "title": "Qwen3 transformer block",
+   "text": "The same pre-norm residual pattern as GPT-2: `x = x + att(norm1(x))`, then `x = x + ff(norm2(x))`. Each piece differs: RMSNorm instead of LayerNorm, grouped-query attention with RoPE, SwiGLU instead of GELU, and no dropout anywhere.\n\nThe attention also returns a key/value cache for fast decoding. This repo's generation doesn't use it yet.",
+   "see": ["docs/qwen3.md#how-it-differs-from-the-gpt-model"]
+  },
+  "llm_training.model.qwen3.attention.GroupedQueryAttention": {
+   "title": "Grouped-query attention with RoPE and QK-norm",
+   "text": "There are 16 query heads but only 8 key/value heads. Each K/V head is shared by a group of 2 query heads, via `repeat_interleave`, which halves the K and V projections and the KV cache. Compare the output widths: `W_query` produces 16 × 128 = 2,048 channels, while `W_key` and `W_value` produce 8 × 128 = 1,024.\n\n`head_dim` is 128 and set independently of `emb_dim`, so the heads together are wider (2,048) than the residual stream (1,024); `out_proj` maps back down.\n\nAfter splitting into heads, queries and keys are RMS-normalized per head (QK-norm, which keeps attention logits in range), then rotated by RoPE. Rotating q and k by an angle proportional to their position makes their dot product depend on the distance between them. RoPE is a function call (`apply_rope`), not a module, so it appears in the code, not as a box.",
+   "see": ["docs/qwen3.md#how-it-differs-from-the-gpt-model", "src/llm_training/model/qwen3/rope.py"]
+  },
+  "llm_training.model.qwen3.layers.RMSNorm": {
+   "title": "RMSNorm",
+   "text": "Divides each vector by its root-mean-square (with eps 1e-6) and applies a learned per-channel `scale`. Unlike LayerNorm it neither subtracts the mean nor adds a shift: one vector instead of two, and slightly less work. It computes in float32 whatever the input type."
+  },
+  "llm_training.model.qwen3.layers.FeedForward": {
+   "title": "SwiGLU feed-forward network",
+   "text": "`fc3(silu(fc1(x)) * fc2(x))`. Two parallel projections up to `hidden_dim` (3,072): one goes through SiLU and acts as a gate on the other, multiplied element by element; then `fc3` projects back. Three matrices rather than GPT-2's two, and no biases. The multiply is in the code, not a module."
+  },
+  "torch.nn.Embedding": {
+   "title": "Embedding",
+   "text": "A lookup table: row i of `weight` is the vector for index i. No arithmetic happens: the backward pass gives a nonzero gradient only to the rows that were looked up."
+  },
+  "torch.nn.Linear": {
+   "title": "Linear",
+   "text": "`y = x Wᵀ + b`, applied to the last dimension. `weight` is stored as `[out, in]`, which is why its shape reads backwards against the arrow."
+  },
+  "torch.nn.Dropout": {
+   "title": "Dropout",
+   "text": "During training, zeroes each value with probability `drop_rate` and scales the rest by 1 / (1 − p). It does nothing in evaluation mode. In this repo, recipes that start from released GPT-2 weights default to a rate of 0, as chapter 7 does."
+  },
+  "torch.nn.Sequential": {
+   "title": "Sequential",
+   "text": "Calls its children in order, passing each output to the next. It holds no parameters of its own."
+  }
+ },
+ "roles": {
+  "llm_training.model.gpt2.model.GPTModel.tok_emb": "One learned vector per vocabulary entry: 50,257 rows of width `emb_dim`.",
+  "llm_training.model.gpt2.model.GPTModel.pos_emb": "One learned vector per position, up to `context_length`. It's looked up with `arange(T)`, so its input has no batch dimension; broadcasting adds the same position vectors to every sequence.",
+  "llm_training.model.gpt2.model.GPTModel.drop_emb": "Dropout on the summed token and position embeddings.",
+  "llm_training.model.gpt2.model.GPTModel.trf_blocks": "`n_layers` blocks with identical structure and separate weights, in an `nn.Sequential`.",
+  "llm_training.model.gpt2.model.GPTModel.final_norm": "One last normalization of the residual stream before the vocabulary projection.",
+  "llm_training.model.gpt2.model.GPTModel.out_head": "Projects each position to one logit per vocabulary entry. With `tie_embeddings`, it reuses the token embedding matrix (GPT-2 does), saving `vocab × emb_dim` parameters; the book's chapter-5 model keeps a separate matrix.",
+  "llm_training.model.gpt2.model.TransformerBlock.norm1": "Normalizes the attention sublayer's input; the residual path itself stays unnormalized.",
+  "llm_training.model.gpt2.model.TransformerBlock.att": "Mixes information between positions: the only place one token sees another.",
+  "llm_training.model.gpt2.model.TransformerBlock.drop_resid": "Called twice per block, after attention and after the feed-forward network, before each residual add. One module serves both because dropout has no parameters.",
+  "llm_training.model.gpt2.model.TransformerBlock.norm2": "Normalizes the feed-forward sublayer's input.",
+  "llm_training.model.gpt2.model.TransformerBlock.ff": "Processes each position on its own, with no mixing between tokens.",
+  "llm_training.model.gpt2.attention.MultiHeadAttention.W_query": "What each position is looking for.",
+  "llm_training.model.gpt2.attention.MultiHeadAttention.W_key": "What each position offers to be matched against.",
+  "llm_training.model.gpt2.attention.MultiHeadAttention.W_value": "What each position contributes when it's attended to.",
+  "llm_training.model.gpt2.attention.MultiHeadAttention.dropout": "Dropout on the attention weights. Its input is the full `[B, heads, T, T]` matrix, which is why explicit attention's memory grows with the square of the context.",
+  "llm_training.model.gpt2.attention.MultiHeadAttention.out_proj": "Mixes the concatenated head outputs back into the residual stream.",
+  "llm_training.model.gpt2.layers.FeedForward.layers": "Expand ×4, GELU, project back.",
+  "llm_training.model.qwen3.model.Qwen3Model.tok_emb": "151,936 rows of width 1,024: about a quarter of the released model's parameters.",
+  "llm_training.model.qwen3.model.Qwen3Model.trf_blocks": "28 blocks with identical structure and separate weights. They're in an `nn.ModuleList` that the forward loop iterates, so the list itself is never called and has no box.",
+  "llm_training.model.qwen3.model.Qwen3Model.final_norm": "One last RMSNorm before the vocabulary projection.",
+  "llm_training.model.qwen3.model.Qwen3Model.out_head": "Projects to 151,936 logits. The released model ties it to `tok_emb`; this repo's fine-tuning recipes train a separate copy, as the book does.",
+  "llm_training.model.qwen3.model.TransformerBlock.norm1": "RMSNorm on the attention input.",
+  "llm_training.model.qwen3.model.TransformerBlock.att": "Grouped-query attention: where tokens exchange information, and where position (RoPE) enters the model.",
+  "llm_training.model.qwen3.model.TransformerBlock.norm2": "RMSNorm on the feed-forward input.",
+  "llm_training.model.qwen3.model.TransformerBlock.ff": "SwiGLU, per position.",
+  "llm_training.model.qwen3.attention.GroupedQueryAttention.W_query": "16 heads × 128 = 2,048 outputs: wider than the 1,024-wide residual stream.",
+  "llm_training.model.qwen3.attention.GroupedQueryAttention.W_key": "Only 8 heads × 128 = 1,024 outputs: each key head serves two query heads. (That this equals `emb_dim` is a coincidence.)",
+  "llm_training.model.qwen3.attention.GroupedQueryAttention.W_value": "8 value heads, shared the same way as the keys.",
+  "llm_training.model.qwen3.attention.GroupedQueryAttention.q_norm": "RMSNorm over each query head's 128 channels. Its input is already split into heads: `[B, 16, T, 128]`.",
+  "llm_training.model.qwen3.attention.GroupedQueryAttention.k_norm": "RMSNorm over each key head: `[B, 8, T, 128]`, half the heads of the queries.",
+  "llm_training.model.qwen3.attention.GroupedQueryAttention.out_proj": "2,048 concatenated head channels back down to the 1,024-wide residual stream.",
+  "llm_training.model.qwen3.layers.FeedForward.fc1": "The gate branch: its output goes through SiLU.",
+  "llm_training.model.qwen3.layers.FeedForward.fc2": "The value branch, multiplied by the gate.",
+  "llm_training.model.qwen3.layers.FeedForward.fc3": "Projects the gated 3,072 channels back to 1,024."
+ }
+}

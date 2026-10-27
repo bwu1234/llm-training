@@ -10,6 +10,10 @@ installed with the wheel:
 
 Each derived file's header names its license file.
 
+`docs/architecture/spec.js`, the architecture explorer's generated data, also holds copies of
+the derived classes' `forward` methods. Each copy keeps its file's header, which the page
+shows with the excerpt. It isn't installed with the wheel.
+
 ## GPT-2 (LLMs-from-scratch)
 
 Source: [rasbt/LLMs-from-scratch](https://github.com/rasbt/LLMs-from-scratch),

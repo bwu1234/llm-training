@@ -42,7 +42,9 @@ component is different:
 | Output head | optionally tied | tied to the token embedding |
 
 The preset `QWEN3_0_6B` has 596,049,920 parameters: 28 layers, `emb_dim` 1024, and a
-151,936-token vocabulary.
+151,936-token vocabulary. The fine-tuning recipes untie the output head, as the book's
+chapters 6 and 8 do, which adds a second 151,936 × 1,024 matrix: 751,632,384 parameters.
+The [architecture explorer](architecture/index.html) shows both side by side with GPT-2.
 
 ## Modules
 
