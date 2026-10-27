@@ -89,7 +89,7 @@ Open:
 
 ### Repository structure
 
-- **No `main` branch and no remote.** All work is on `tinystories-run`.
+- **No remote.** All work is on `main` (renamed from `tinystories-run` on 2026-10-26).
 
 ### Deferred by choice
 
