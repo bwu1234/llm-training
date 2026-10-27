@@ -128,9 +128,11 @@ li:not(.closed) > .row .toggle { transform: rotate(90deg); }
 .cls { flex: 1 1 0; min-width: 0; }
 .row.step .name, .row.function .name { flex: none; font-weight: 500; color: var(--step); }
 .row.step .cls { color: var(--text); }
+.row.step .name { max-width: 35%; overflow: hidden; text-overflow: ellipsis; }  /* the label says more */
 .row.step .code { margin-left: 8px; color: var(--muted); }
 .row.step .code { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: 0.72rem; }
 .row.buffer .name { font-weight: 500; color: var(--muted); }
+.kind.unused { border-style: dashed; }
 .kind { flex: none; font-size: 0.68rem; color: var(--muted); border: 1px solid var(--border); border-radius: 10px; padding: 0 6px; }
 pre .hl { background: var(--accent-soft); display: inline-block; min-width: 100%; }
 .row.source { box-shadow: inset 4px 0 0 var(--seg-2); }
@@ -324,8 +326,10 @@ footer { color: var(--muted); font-size: 0.8rem; padding-top: 24px; padding-bott
     const buffers = isModule(node) ? node.buffers : [];
     const expandable = kids.length + buffers.length > 0;
     // Open the top of the tree and the repeated blocks, but not modules made only of steps;
-    // also open any module that calls a function, so calls such as `apply_rope` are visible.
-    const open = ((depth < 2 || node.repeat > 1) && kids.some(isModule)) || (isModule(node) && kids.some((k) => k.function));
+    // also open any module that calls a function or stores a buffer, so `apply_rope` and
+    // attention's causal mask are visible.
+    const open = ((depth < 2 || node.repeat > 1) && kids.some(isModule))
+      || (isModule(node) && (kids.some((k) => k.function) || buffers.length > 0));
     const li = el("li", { class: open ? "" : "closed" });
     const kind = node.op ? "step" : node.function ? "function" : "module";
     const count = isModule(node) ? node.total * (node.repeat || 1) : 0;
@@ -349,6 +353,7 @@ footer { color: var(--muted); font-size: 0.8rem; padding-top: 24px; padding-bott
         : node.function ? el("span", { class: "cls", text: SPEC.functions[node.function].note?.title || "" })
         : owner ? el("span", { class: "cls", text: [role(node, owner)?.label, cls(node.class).name].filter(Boolean).join(" · ") }) : null,
       node.function ? el("span", { class: "kind", text: "function" }) : null,
+      node.op && flows[side].unused(node) ? unusedTag() : null,
       node.repeat > 1 ? el("span", { class: "times", text: "× " + node.repeat }) : null,
       tied ? el("span", { class: "tied", text: "tied" }) : null,
       el("span", { class: "shape", text: shape(node.out) }),
@@ -381,6 +386,7 @@ footer { color: var(--muted); font-size: 0.8rem; padding-top: 24px; padding-bott
       el("span", { class: "name", text: buffer.name }),
       el("span", { class: "cls", text: SPEC.buffers[`${owner.class}.${buffer.name}`]?.label || "" }),
       el("span", { class: "kind", text: "buffer" }),
+      flows[side].read.has(owner.module ? `${owner.module}.${buffer.name}` : buffer.name) ? null : unusedTag(),
       el("span", { class: "shape", text: shape(buffer.shape) }),
       el("span", { class: "count zero", text: "" }),
     );
@@ -394,15 +400,28 @@ footer { color: var(--muted); font-size: 0.8rem; padding-top: 24px; padding-bott
   }
 
   // Each node's inputs name the node they came from; invert that to find who reads a node.
+  // A step, a function or a leaf PyTorch module (`nn.Linear`) computes with a tensor;
+  // this package's modules and containers only pass it on to what's inside them.
+  const computes = (n) => !isModule(n) || (cls(n.class).docs && !n.children.some(isModule));
+
   function graph(tree) {
-    const nodes = new Map(), readers = new Map(), buffers = new Set();
+    const nodes = new Map(), readers = new Map(), buffers = new Set(), read = new Set();
     (function visit(n) {
       nodes.set(n.id, n);
       if (isModule(n)) n.buffers.forEach((b) => buffers.add(n.module ? `${n.module}.${b.name}` : b.name));
-      for (const s of n.inputs) if ("from" in s) readers.set(s.from, [...(readers.get(s.from) || []), n]);
+      for (const s of n.inputs) {
+        if ("from" in s) readers.set(s.from, [...(readers.get(s.from) || []), n]);
+        if (s.tensor && computes(n)) read.add(s.tensor);
+      }
       n.children.forEach(visit);
     })(tree);
-    return { tree, nodes, readers, buffers, row: new Map() };
+    // A step whose output nothing computes with: passed into modules that never use it.
+    const unused = (n) => !("returned_by" in n) && !n.unchanged && !(readers.get(n.id) || []).some(computes);
+    return { tree, nodes, readers, buffers, read, unused, row: new Map() };
+  }
+
+  function unusedTag() {
+    return el("span", { class: "kind unused", text: "not read here", title: "Nothing in this preset computes with it; select the row to see why." });
   }
 
   function title(n) {
@@ -436,9 +455,6 @@ footer { color: var(--muted); font-size: 0.8rem; padding-top: 24px; padding-bott
     });
     const readers = g.readers.get(node.id) || [];
     readers.forEach((n) => g.row.get(n.id)?.classList.add("reader"));
-    // A step, a function or a leaf PyTorch module (`nn.Linear`) computes with the tensor;
-    // this package's modules and containers only pass it on to what's inside them.
-    const computes = (n) => !isModule(n) || (cls(n.class).docs && !n.children.some(isModule));
     const into = readers.filter((n) => !computes(n)), steps = readers.filter(computes);
     const out = [];
     if (into.length) out.push(el("p", {}, "Passed into ", ...links(into, side), "."));
@@ -641,8 +657,16 @@ footer { color: var(--muted); font-size: 0.8rem; padding-top: 24px; padding-bott
 
   document.getElementById("close").addEventListener("click", closeDetail);
   document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeDetail(); });
-  render("a");
-  render("b");
+  try {
+    render("a");
+    render("b");
+  } catch (error) {
+    // Most likely a cached spec.js from an older deploy that this script can't read.
+    document.querySelector(".panes").replaceChildren(el("p", { class: "lede" },
+      "The explorer couldn't draw its data. Reload the page, bypassing the cache (Shift-reload), and if that doesn't help, regenerate spec.js. ",
+      el("code", { text: String(error) })));
+    throw error;
+  }
 })();
 </script>
 </body>

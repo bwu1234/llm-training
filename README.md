@@ -343,7 +343,9 @@ listed under the module that stores them, with links to the steps that read them
 row shows what it does and its source, with the line it runs highlighted, and its data flow:
 where each input came from and what reads its output, marked in the tree. That shows, for
 example, that Qwen3 adds nothing to its token embedding: the causal mask and the RoPE tables
-go to every block as separate arguments. A
+go to every block as separate arguments. A tensor that a preset builds or stores but never
+computes with is tagged "not read here": under `attn_impl: sdpa`, `is_causal=True` masks
+inside the fused kernel, so GPT-2's `mask` buffer and Qwen3's built mask go unread. A
 selected module also highlights the module at the same path in the other model. The
 `attn_impl: explicit` presets show attention's scores, mask, scaling and softmax as separate
 steps; with `sdpa` they are one fused call.

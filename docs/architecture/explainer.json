@@ -295,7 +295,7 @@
     "matmul": "Weighted sum of values",
     "transpose": "Merge heads"
    },
-   "scaled_dot_product_attention(": "Fused attention: scores, mask, softmax, weighted sum",
+   "scaled_dot_product_attention(": "Causal attention, fused",
    ").transpose(1, 2)": "Merge heads",
    "context_vec.reshape(": "Merge heads"
   },
@@ -329,7 +329,7 @@
    "values_new = values.view(": "Split values into heads",
    "keys.repeat_interleave(": "Share each key head with its query group",
    "values.repeat_interleave(": "Share each value head with its query group",
-   "scaled_dot_product_attention(": "Fused attention: scores, mask, softmax, weighted sum",
+   "scaled_dot_product_attention(": "Causal attention, fused",
    "context = context.transpose(1, 2).reshape(": "Merge heads",
    "queries @ keys.transpose(2, 3)": "Attention scores Q·Kᵀ",
    "masked_fill(mask": "Causal mask",
