@@ -124,19 +124,36 @@ li:not(.closed) > .row .toggle { transform: rotate(90deg); }
 .count { flex: none; width: 5.2em; text-align: right; font-size: 0.78rem; font-variant-numeric: tabular-nums; }
 .count.zero { color: var(--muted); }
 .tied { flex: none; font-size: 0.7rem; color: var(--match); border: 1px solid var(--match); border-radius: 10px; padding: 0 6px; }
-.name { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.name { flex: none; }
+.cls { flex: 1 1 0; min-width: 0; }
 .row.step .name, .row.function .name { flex: none; font-weight: 500; color: var(--step); }
-.row.step .cls { flex: 1 1 0; }
-.row.step .cls { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: 0.72rem; }
+.row.step .cls { color: var(--text); }
+.row.step .code { margin-left: 8px; color: var(--muted); }
+.row.step .code { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: 0.72rem; }
 .row.buffer .name { font-weight: 500; color: var(--muted); }
 .kind { flex: none; font-size: 0.68rem; color: var(--muted); border: 1px solid var(--border); border-radius: 10px; padding: 0 6px; }
 pre .hl { background: var(--accent-soft); display: inline-block; min-width: 100%; }
+.row.source { box-shadow: inset 4px 0 0 var(--seg-2); }
+.row.reader { box-shadow: inset 4px 0 0 var(--seg-3); }
+.flow { font-size: 0.85rem; }
+ul.flow { list-style: none; padding: 0; margin: 0; }
+ul.flow li { padding: 2px 0; }
+ul.flow .note { color: var(--muted); font-size: 0.78rem; margin-left: 1em; }
+.flow .muted { color: var(--muted); font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: 0.78rem; }
+aside h3:has(+ .flow.from)::before, aside h3:has(+ .flow.to)::before { content: ""; display: inline-block; width: 4px; height: 0.9em; margin-right: 6px; vertical-align: -0.1em; }
+aside h3:has(+ .flow.from)::before { background: var(--seg-2); }
+aside h3:has(+ .flow.to)::before { background: var(--seg-3); }
+.readers { list-style: none; padding: 0; margin: 0; font-size: 0.82rem; }
+.readers li { padding: 5px 0; border-bottom: 1px solid var(--border); }
+.readers .muted { color: var(--muted); font-size: 0.75rem; white-space: pre-wrap; overflow-wrap: anywhere; }
+.link { background: none; border: 0; padding: 0; font: inherit; color: var(--accent); cursor: pointer; text-align: left; text-decoration: underline; }
 @media (max-width: 520px) {
-  .cls { display: none; }
+  .cls { order: 2; flex-basis: 100%; margin-left: 24px; white-space: normal; }
+  .row.step .code { display: none; }
   .tree ul { margin-left: 8px; padding-left: 6px; }
   .row { flex-wrap: wrap; row-gap: 0; }
   .count { margin-left: auto; order: 1; }
-  .shape { order: 2; flex-basis: 100%; margin-left: 24px; }
+  .shape { order: 3; flex-basis: 100%; margin-left: 24px; }
 }
 aside { position: fixed; top: 0; right: 0; bottom: 0; width: min(560px, 100vw); background: var(--surface); border-left: 1px solid var(--border); box-shadow: var(--shadow); transform: translateX(100%); transition: transform 0.2s ease; overflow-y: auto; padding: 18px 18px 40px; z-index: 10; }
 aside.open { transform: none; }
@@ -165,7 +182,7 @@ footer { color: var(--muted); font-size: 0.8rem; padding-top: 24px; padding-bott
   <p class="lede">GPT-2 and Qwen3 side by side, traced from this repository's own model code. Each row is something that actually runs in one forward pass, in the order it runs: a module, a function such as RoPE's <code>apply_rope</code>, or a single tensor operation, with its output shape and parameter count. Select a row to read what it does and the code that does it. Selecting a module also highlights the module at the same path in the other model.</p>
   <div class="notes">
     <div><strong>Shapes</strong><code>B</code> is the batch size and <code>T</code> the number of tokens. Every other dimension is the preset's own number.</div>
-    <div><strong>Steps</strong>Rows in <span style="color: var(--step)">this colour</span> are operations the repo's own code performs: residual additions, the head split, RoPE, causal masking, the SwiGLU multiply. Inside a PyTorch module such as <code>Linear</code>, the module row is the step. Buffers, such as RoPE's <code>cos</code> and <code>sin</code> tables, are listed under the module that stores them.</div>
+    <div><strong>Steps</strong>Rows in <span style="color: var(--step)">this colour</span> are operations the repo's own code performs: residual additions, the head split, RoPE, causal masking, the SwiGLU multiply. Inside a PyTorch module such as <code>Linear</code>, the module row is the step. Buffers, such as RoPE's <code>cos</code> and <code>sin</code> tables, are listed under the module that stores them. Selecting a row marks where its inputs come from (<span style="color: var(--seg-2)">teal edge</span>) and what reads its output (<span style="color: var(--seg-3)">orange edge</span>).</div>
     <div><strong>Where this comes from</strong>Each model is built on PyTorch's <code>meta</code> device and traced with module hooks, Python's <code>sys.monitoring</code> for function calls, and PyTorch's function and dispatch modes. Generation fails if any kernel runs outside a recorded step or module, so no step is left out. Regenerate with <code>uv run python -m llm_training.explain</code>.</div>
   </div>
 </header>
@@ -198,6 +215,10 @@ footer { color: var(--muted); font-size: 0.8rem; padding-top: 24px; padding-bott
   const presets = new Map(SPEC.presets.map((p) => [p.id, p]));
   const sides = { a: SPEC.presets[0].id, b: SPEC.presets[1].id };
   let selected = null;
+  // Per pane: each tree node to a function that reveals and selects its row.
+  const rows = { a: new Map(), b: new Map() };
+  // Per pane: the data flow between the tree's nodes (see `graph`).
+  const flows = { a: null, b: null };
 
   try {
     const hash = new URLSearchParams(location.hash.slice(1));
@@ -227,11 +248,7 @@ footer { color: var(--muted); font-size: 0.8rem; padding-top: 24px; padding-bott
   const rel = (node, parent) => parent && parent.module ? node.module.slice(parent.module.length + 1) : node.module;
   // The same module in any block, with layer indices dropped, to match rows across models.
   const path = (node) => node.module.replace(/(^|\.)\d+(?=\.|$)/g, "");
-  const role = (node, parent) => {
-    if (!parent) return null;
-    const attr = rel(node, parent).replace(/(^|\.)\d+$/, "");
-    return attr ? SPEC.roles[parent.class + "." + attr] : null;
-  };
+  const role = (node) => (node.role ? SPEC.roles[node.role] : null);
   const cls = (key) => SPEC.classes[key];
   const isModule = (node) => "module" in node;
   const seg = (i) => `var(--seg-${(i % 5) + 1})`;
@@ -248,6 +265,8 @@ footer { color: var(--muted); font-size: 0.8rem; padding-top: 24px; padding-bott
   function render(side) {
     const preset = presets.get(sides[side]);
     const pane = document.getElementById("pane-" + side);
+    rows[side].clear();
+    flows[side] = graph(preset.tree);
     pane.replaceChildren();
 
     const select = el("select", { "aria-label": "Model preset", onchange: (e) => {
@@ -304,8 +323,9 @@ footer { color: var(--muted); font-size: 0.8rem; padding-top: 24px; padding-bott
     const kids = node.children;
     const buffers = isModule(node) ? node.buffers : [];
     const expandable = kids.length + buffers.length > 0;
-    // Open the top of the tree and the repeated blocks, but not modules made only of steps.
-    const open = (depth < 2 || node.repeat > 1) && kids.some(isModule);
+    // Open the top of the tree and the repeated blocks, but not modules made only of steps;
+    // also open any module that calls a function, so calls such as `apply_rope` are visible.
+    const open = ((depth < 2 || node.repeat > 1) && kids.some(isModule)) || (isModule(node) && kids.some((k) => k.function));
     const li = el("li", { class: open ? "" : "closed" });
     const kind = node.op ? "step" : node.function ? "function" : "module";
     const count = isModule(node) ? node.total * (node.repeat || 1) : 0;
@@ -325,15 +345,22 @@ footer { color: var(--muted); font-size: 0.8rem; padding-top: 24px; padding-bott
     },
       el("span", { class: "toggle" + (expandable ? "" : " leaf"), "aria-hidden": "true", text: "▶" }),
       el("span", { class: "name", text: label(node, owner) }),
-      node.op ? el("span", { class: "cls", text: node.code })
-        : node.function ? el("span", { class: "kind", text: "function" })
-        : owner ? el("span", { class: "cls", text: cls(node.class).name }) : null,
+      node.op ? el("span", { class: "cls" }, node.label || "", el("span", { class: "code", text: node.code }))
+        : node.function ? el("span", { class: "cls", text: SPEC.functions[node.function].note?.title || "" })
+        : owner ? el("span", { class: "cls", text: [role(node, owner)?.label, cls(node.class).name].filter(Boolean).join(" · ") }) : null,
+      node.function ? el("span", { class: "kind", text: "function" }) : null,
       node.repeat > 1 ? el("span", { class: "times", text: "× " + node.repeat }) : null,
       tied ? el("span", { class: "tied", text: "tied" }) : null,
       el("span", { class: "shape", text: shape(node.out) }),
       el("span", { class: "count" + (count ? "" : " zero"), text: count ? short(count) : isModule(node) ? "—" : "" }),
     );
     if (isModule(node)) row.dataset.path = path(node);
+    flows[side].row.set(node.id, row);
+    rows[side].set(node, () => {
+      for (let up = li.parentElement?.closest("li"); up; up = up.parentElement?.closest("li")) up.classList.remove("closed");
+      row.scrollIntoView({ block: "center" });
+      choose(row, node, owner, container, side, times);
+    });
     li.append(row);
     if (expandable) {
       const nextOwner = isModule(node) ? node : owner;
@@ -348,10 +375,11 @@ footer { color: var(--muted); font-size: 0.8rem; padding-top: 24px; padding-bott
   function bufferItem(buffer, owner, side) {
     const row = el("button", { class: "row buffer", type: "button", "data-side": side, onclick: () => {
       select(row);
-      showBuffer(buffer, owner);
+      showBuffer(buffer, owner, side);
     } },
       el("span", { class: "toggle leaf", "aria-hidden": "true", text: "▶" }),
       el("span", { class: "name", text: buffer.name }),
+      el("span", { class: "cls", text: SPEC.buffers[`${owner.class}.${buffer.name}`]?.label || "" }),
       el("span", { class: "kind", text: "buffer" }),
       el("span", { class: "shape", text: shape(buffer.shape) }),
       el("span", { class: "count zero", text: "" }),
@@ -360,15 +388,81 @@ footer { color: var(--muted); font-size: 0.8rem; padding-top: 24px; padding-bott
   }
 
   function select(row) {
-    document.querySelectorAll(".row.selected, .row.match").forEach((r) => r.classList.remove("selected", "match"));
+    document.querySelectorAll(".row.selected, .row.match, .row.source, .row.reader").forEach((r) => r.classList.remove("selected", "match", "source", "reader"));
     row.classList.add("selected");
     selected = row;
   }
 
+  // Each node's inputs name the node they came from; invert that to find who reads a node.
+  function graph(tree) {
+    const nodes = new Map(), readers = new Map(), buffers = new Set();
+    (function visit(n) {
+      nodes.set(n.id, n);
+      if (isModule(n)) n.buffers.forEach((b) => buffers.add(n.module ? `${n.module}.${b.name}` : b.name));
+      for (const s of n.inputs) if ("from" in s) readers.set(s.from, [...(readers.get(s.from) || []), n]);
+      n.children.forEach(visit);
+    })(tree);
+    return { tree, nodes, readers, buffers, row: new Map() };
+  }
+
+  function title(n) {
+    if (n.op) return `${n.label || SPEC.ops[n.op].name} (${SPEC.ops[n.op].name})`;
+    if (n.function) return SPEC.functions[n.function].name + "()";
+    const name = !n.module ? cls(n.class).name : n.repeat > 1 ? `${n.module} … ${n.last.split(".").pop()}` : n.module;
+    return role(n) ? `${name} (${role(n).label})` : name;
+  }
+
+  function jump(n, side) {
+    return el("button", { type: "button", class: "link", onclick: () => rows[side].get(n)() }, title(n));
+  }
+
+  function links(nodes, side) {
+    return nodes.flatMap((n, i) => [i ? ", " : "", jump(n, side)]);
+  }
+
+  // Where a node's inputs come from and where its output goes, with the matching rows marked.
+  function flow(node, side) {
+    const g = flows[side];
+    const sources = node.inputs.map((s) => {
+      const arg = s.name ? el("span", { class: "mono", text: `${s.name} ← ` }) : null;
+      if ("from" in s) {
+        const from = g.nodes.get(s.from);
+        g.row.get(from.id)?.classList.add("source");
+        return el("li", {}, arg, jump(from, side), el("span", { class: "muted", text: "  " + shape(from.out) }),
+          s.first_copy ? el("div", { class: "note", text: "In the first copy. Each later copy reads the previous copy's output here instead." }) : null);
+      }
+      if (s.tensor) return el("li", {}, arg, el("span", { class: "mono", text: s.tensor }), g.buffers.has(s.tensor) ? " (buffer)" : " (parameter)");
+      return el("li", {}, arg, "the token IDs, the model's input");
+    });
+    const readers = g.readers.get(node.id) || [];
+    readers.forEach((n) => g.row.get(n.id)?.classList.add("reader"));
+    // A step, a function or a leaf PyTorch module (`nn.Linear`) computes with the tensor;
+    // this package's modules and containers only pass it on to what's inside them.
+    const computes = (n) => !isModule(n) || (cls(n.class).docs && !n.children.some(isModule));
+    const into = readers.filter((n) => !computes(n)), steps = readers.filter(computes);
+    const out = [];
+    if (into.length) out.push(el("p", {}, "Passed into ", ...links(into, side), "."));
+    if (steps.length) out.push(el("p", {}, "Read by ", ...links(steps, side), "."));
+    else if (into.length) out.push(el("p", { text: "No step reads it: in this preset, nothing inside those modules uses it." }));
+    if ("returned_by" in node) {
+      const by = g.nodes.get(node.returned_by);
+      g.row.get(by.id)?.classList.add("reader");
+      out.push(el("p", {}, "Returned as the output of ", jump(by, side), by === g.tree ? ": the model's output, one logit per vocabulary entry." : "."));
+    }
+    if (node.unchanged) out.push(el("p", { text: "It returns its input itself: in this float32 model the cast changes nothing, so later steps read the original tensor." }));
+    if (!out.length) out.push(el("p", { text: node === g.tree ? "The model's output." : "Nothing later in the forward pass reads it." }));
+    return [
+      el("h3", { text: "Inputs" }),
+      sources.length ? el("ul", { class: "flow from" }, ...sources) : el("p", { text: "None: it creates its output from sizes alone." }),
+      el("h3", { text: "Output goes to" }),
+      el("div", { class: "flow to" }, ...out),
+    ];
+  }
+
   function choose(row, node, owner, container, side, times) {
     select(row);
-    if (node.op) return showStep(node, container, times);
-    if (node.function) return showFunction(node);
+    if (node.op) return showStep(node, container, times, side);
+    if (node.function) return showFunction(node, side);
     const other = side === "a" ? "b" : "a";
     document.querySelectorAll(`.row[data-side="${other}"]`).forEach((r) => {
       if (r.dataset.path === path(node)) {
@@ -376,7 +470,7 @@ footer { color: var(--muted); font-size: 0.8rem; padding-top: 24px; padding-bott
         r.closest("li").parentElement.closest("li")?.classList.remove("closed");
       }
     });
-    showModule(node, owner);
+    showModule(node, owner, side);
   }
 
   function detail(...nodes) {
@@ -426,23 +520,23 @@ footer { color: var(--muted); font-size: 0.8rem; padding-top: 24px; padding-bott
     return { name: container.module || info.name, file: info.path, line: info.forward.line, code: info.forward.code, header: info.header };
   }
 
-  function showStep(node, container, times) {
+  function showStep(node, container, times, side) {
     const info = SPEC.ops[node.op];
     const where = code(container);
     detail(
-      el("h2", { text: info.note ? info.note.title : info.name }),
+      el("h2", { text: node.label || info.name }),
       el("p", { class: "sub" }, el("span", { class: "mono", text: node.op }), ` · a step in ${where.name}` + (times > 1 ? `, run ${times} times per forward pass` : "")),
-      info.note ? prose(info.note.text) : [],
+      info.note ? [el("h3", { text: info.note.title }), ...prose(info.note.text)] : [],
       info.docs ? el("p", {}, "PyTorch reference: ", el("a", { href: info.docs, text: node.op })) : null,
       el("h3", { text: "Shapes" }),
       el("div", { class: "io", text: `${node.in.map(shape).join(", ") || "no tensor inputs"}  →  ${shape(node.out)}` }),
-      node.uses.length ? [el("h3", { text: "Reads" }), el("p", { class: "mono", text: node.uses.join(", ") })] : null,
+      flow(node, side),
       el("h3", { text: "Code" }),
       source(where.file, where.line, where.code, where.header, node.line),
     );
   }
 
-  function showFunction(node) {
+  function showFunction(node, side) {
     const f = SPEC.functions[node.function];
     detail(
       el("h2", { class: "mono", text: f.name + "()" }),
@@ -450,36 +544,41 @@ footer { color: var(--muted); font-size: 0.8rem; padding-top: 24px; padding-bott
       note(f.note),
       el("h3", { text: "Shapes" }),
       el("div", { class: "io", text: `${shape(node.in)}  →  ${shape(node.out)}` }),
+      flow(node, side),
       el("h3", { text: "Code" }),
       source(f.path, f.line, f.code, f.header),
     );
   }
 
-  function showBuffer(buffer, owner) {
+  function showBuffer(buffer, owner, side) {
     const name = owner.module ? `${owner.module}.${buffer.name}` : buffer.name;
-    const readers = new Map();
-    (function visit(n, module) {
-      if (n.op && n.uses.some((u) => u === name || `${module.module}.${u}` === name)) {
-        const key = `${SPEC.ops[n.op].name} · line ${n.line}: ${n.code}`;
-        readers.set(key, (readers.get(key) || 0) + 1);
-      }
-      n.children.forEach((c) => visit(c, isModule(n) ? n : module));
-    })(owner, owner);
-    const list = el("ul", {}, ...[...readers].map(([k, n]) => el("li", { class: "mono", text: n > 1 ? `${k}  (× ${n})` : k })));
+    const info = SPEC.buffers[`${owner.class}.${buffer.name}`];
+    // Each step that reads the buffer, with the module or function it runs in.
+    const readers = [];
+    (function visit(n, module, where) {
+      if (n.op && n.uses.some((u) => u === name || `${module.module}.${u}` === name)) readers.push({ node: n, where });
+      const inner = n.function ? `${SPEC.functions[n.function].name}() called at line ${n.line}` : isModule(n) ? n.module || cls(n.class).name : where;
+      n.children.forEach((c) => visit(c, isModule(n) ? n : module, inner));
+    })(owner, owner, "");
+    const list = el("ul", { class: "readers" }, ...readers.map(({ node, where }) => el("li", {},
+      el("button", { type: "button", class: "link mono", onclick: () => rows[side].get(node)() },
+        `${node.label} (${SPEC.ops[node.op].name}) in ${where}, line ${node.line}`),
+      el("div", { class: "mono muted", text: node.code }))));
     detail(
       el("h2", { class: "mono", text: name }),
       el("p", { class: "sub", text: `A buffer of ${owner.module || cls(owner.class).name}: a fixed tensor, not a learned parameter.` }),
+      info ? [el("h3", { text: info.label }), ...prose(info.text)] : null,
       el("p", { text: buffer.persistent
         ? "Persistent: saved in every checkpoint with the parameters."
         : "Not persistent: rebuilt when the model is built, and not saved in checkpoints." }),
       el("h3", { text: "Shape" }),
       el("div", { class: "io", text: `${shape(buffer.shape)} · ${full(buffer.shape.reduce((a, x) => a * x, 1))} values` }),
       el("h3", { text: "Read by" }),
-      readers.size ? list : el("p", { text: "No traced step reads it directly." }),
+      readers.length ? list : el("p", { text: "No traced step in this preset reads it." }),
     );
   }
 
-  function showModule(node, owner) {
+  function showModule(node, owner, side) {
     const info = cls(node.class);
     const r = role(node, owner);
     const per = node.total;
@@ -502,10 +601,11 @@ footer { color: var(--muted); font-size: 0.8rem; padding-top: 24px; padding-bott
     detail(
       el("h2", { class: "mono", text: owner ? node.module || info.name : info.name }),
       el("p", { class: "sub", text: info.name + (node.repeat > 1 ? ` · repeated × ${node.repeat} (${node.module} … ${node.last})` : "") }),
-      r ? el("div", { class: "role" }, ...prose(r)) : null,
+      r ? el("div", { class: "role" }, el("strong", { text: r.label }), ...prose(r.text)) : null,
       note(info.note),
       el("h3", { text: "Shapes" }),
       el("div", { class: "io", text: `${shape(node.in)}  →  ${shape(node.out)}` }),
+      flow(node, side),
       el("h3", { text: "Parameters" }),
       el("p", { text: node.repeat > 1
         ? `${full(per)} per copy × ${node.repeat} = ${full(per * node.repeat)}`

@@ -11,6 +11,9 @@ forward pass records, in order:
   a softmax), with a `TorchFunctionMode`. Operations inside a PyTorch module such as
   `nn.Linear` belong to that module's row instead.
 
+Each call and operation also records where its tensor inputs came from: an earlier node, a
+parameter or buffer, or the token IDs. That is the data flow the page draws.
+
 A `TorchDispatchMode` checks that nothing is missed: every kernel that runs must belong to a
 recorded operation or to a PyTorch module, or the trace fails.
 
@@ -21,6 +24,7 @@ resume fingerprint, and no trainer imports it.
 
 import functools
 import inspect
+import itertools
 import json
 import linecache
 import re
@@ -62,11 +66,14 @@ def build_spec(content_path=CONTENT):
     base = Path(content_path).parent
     found = {"classes": {}, "functions": {}, "ops": {}}
     presets = [_preset(entry, base, found) for entry in content["presets"]]
+    for preset in presets:
+        _label_steps(preset["tree"], content["steps"])
+        _role_keys(preset["tree"])
     for kind, entries in found.items():
         for key, info in entries.items():
             if note := content[kind].get(key):
                 info["note"] = note
-    return {"presets": presets, **found, "roles": content["roles"]}
+    return {"presets": presets, **found, "roles": content["roles"], "buffers": content["buffers"]}
 
 
 def render(spec):
@@ -99,6 +106,9 @@ def _preset(entry, base, found):
     tree = _merge(*traces)
     owners = _owners(model)
     _annotate(tree, dict(model.named_modules()), owners, found)
+    alias = {}
+    tree = _collapse(tree, alias)
+    _redirect(tree, alias)
     keys = model_family.architecture_keys + model_family.inherited_build_keys
     return {
         "id": entry["id"],
@@ -109,7 +119,7 @@ def _preset(entry, base, found):
         "family": model_family.name,
         "config": {key: model_config[key] for key in keys if key in model_config},
         "total": sum(p.numel() for p in model.parameters()),
-        "tree": _collapse(tree),
+        "tree": tree,
     }
 
 
@@ -117,7 +127,10 @@ def trace(model, batch, tokens):
     """One meta forward pass; returns the root call with its nested calls and steps.
 
     Each node is a module call (`module`), a call to a function of this package (`function`),
-    or a tensor operation (`op`), and `children` lists what ran inside it, in order.
+    or a tensor operation (`op`), and `children` lists what ran inside it, in order. Every node
+    has an `id`, numbered in the order the nodes start, and `inputs`: for each tensor it was
+    given, the `id` of the node that produced it (`from`), the parameter or buffer (`tensor`),
+    or the model's token IDs (`input`).
     """
     names = {module: name for name, module in model.named_modules()}
     tensors = {id(t): n for n, t in [*model.named_buffers(), *model.named_parameters()]}
@@ -127,18 +140,57 @@ def trace(model, batch, tokens):
     modules = [("", True)]
     inside_op = [0]  # > 0 while a recorded operation runs
     kernels = [0]  # kernels dispatched so far
+    ids = itertools.count()
+    token_ids = torch.zeros(batch, tokens, dtype=torch.long, device="meta")
+    producers = {}  # id(tensor) -> the id of the node that last returned it
+    produced = []  # keeps those tensors alive, so their `id` isn't reused
+    started = {}  # node id -> node
 
     def recording():
         return modules[-1][1] and not inside_op[0]
 
-    def before(module, args):
-        call = {"module": names[module], "in": _shape(args), "children": []}
+    def source(tensor, name=None):
+        entry = {"name": name} if name else {}
+        if id(tensor) in producers:
+            entry["from"] = producers[id(tensor)]
+        elif id(tensor) in tensors:
+            entry["tensor"] = tensors[id(tensor)]
+        elif tensor is token_ids:
+            entry["input"] = True
+        return entry
+
+    def produce(node, value, passed=()):
+        """Record `node` as the source of the tensors in `value`, except those in `passed`.
+
+        A call that returns what a node inside it produced marks that node `returned_by` it.
+        """
+        started[node["id"]] = node
+        for t in _tensors(value):
+            if any(t is p for p in passed):
+                continue
+            inner = producers.get(id(t))
+            if inner is not None and inner > node["id"]:  # started after `node`: inside it
+                started[inner]["returned_by"] = node["id"]
+            producers[id(t)] = node["id"]
+            produced.append(t)
+
+    def before(module, args, kwargs):
+        named = _arguments(type(module), args, kwargs)
+        call = {
+            "module": names[module],
+            "id": next(ids),
+            "in": _shape(args),
+            "inputs": [source(v, n) for n, v in named if isinstance(v, torch.Tensor)],
+            "children": [],
+        }
         stack[-1]["children"].append(call)
         stack.append(call)
         modules.append((call["module"], _ours(type(module).forward)))
 
-    def after(module, args, output):
-        stack.pop()["out"] = _shape(output)
+    def after(module, args, kwargs, output):
+        call = stack.pop()
+        call["out"] = _shape(output)
+        produce(call, output)
         modules.pop()
 
     def skip(code):
@@ -150,10 +202,13 @@ def trace(model, batch, tokens):
         if skip(code):
             return sys.monitoring.DISABLE
         frame = sys._getframe(1)
+        named = [(v, frame.f_locals[v]) for v in code.co_varnames[: code.co_argcount]]
         call = {
             "function": _function_key(frame),
+            "id": next(ids),
             "line": frame.f_back.f_lineno,
-            "in": _shape([frame.f_locals[v] for v in code.co_varnames[: code.co_argcount]]),
+            "in": _shape([v for _, v in named]),
+            "inputs": [source(v, n) for n, v in named if isinstance(v, torch.Tensor)],
             "children": [],
             "frame": frame,
         }
@@ -167,6 +222,7 @@ def trace(model, batch, tokens):
             call = stack.pop()
             del call["frame"]
             call["out"] = _shape(value)
+            produce(call, value)
 
     class Steps(TorchFunctionMode):
         def __torch_function__(self, func, types, args=(), kwargs=None):
@@ -181,20 +237,27 @@ def trace(model, batch, tokens):
             computes = _shape(out) is not None or kernels[0] > before
             if record and computes and _ours(caller.f_code):
                 prefix = modules[-1][0] + "." if modules[-1][0] else ""
+                inputs = list(_tensors((args, kwargs)))
                 step = {
                     "op": _op_key(func),
+                    "id": next(ids),
                     "line": caller.f_lineno,
                     "code": linecache.getline(caller.f_code.co_filename, caller.f_lineno).strip(),
-                    "in": [list(t.shape) for t in _tensors((args, kwargs))],
+                    "in": [list(t.shape) for t in inputs],
                     "out": _shape(out),
                     "uses": [
-                        tensors[id(t)].removeprefix(prefix)
-                        for t in _tensors((args, kwargs))
-                        if id(t) in tensors
+                        tensors[id(t)].removeprefix(prefix) for t in inputs if id(t) in tensors
                     ],
+                    "inputs": [source(t) for t in inputs],
                     "children": [],
                 }
                 stack[-1]["children"].append(step)
+                # `x.to(torch.float32)` on a float32 tensor returns `x` itself: the value is
+                # unchanged, so its source stays. An in-place op (`masked_fill_`) changes it.
+                passed = () if step["op"].endswith("_") else inputs
+                if any(t is p for t in _tensors(out) for p in passed):
+                    step["unchanged"] = True
+                produce(step, out, passed)
             return out
 
     class Unrecorded(TorchDispatchMode):
@@ -206,9 +269,8 @@ def trace(model, batch, tokens):
 
     handles = []
     for module in model.modules():
-        handles.append(module.register_forward_pre_hook(before))
-        handles.append(module.register_forward_hook(after))
-    token_ids = torch.zeros(batch, tokens, dtype=torch.long, device="meta")
+        handles.append(module.register_forward_pre_hook(before, with_kwargs=True))
+        handles.append(module.register_forward_hook(after, with_kwargs=True))
     tool = _monitoring_tool()
     events = sys.monitoring.events
     sys.monitoring.register_callback(tool, events.PY_START, start)
@@ -224,6 +286,20 @@ def trace(model, batch, tokens):
             handle.remove()
     (root,) = stack[0]["children"]
     return root
+
+
+def _arguments(cls, args, kwargs):
+    """A module call's arguments as (parameter name, value) pairs."""
+    try:
+        bound = _forward_signature(cls).bind(None, *args, **kwargs)
+    except TypeError:
+        return [(None, v) for v in [*args, *kwargs.values()]]
+    return list(bound.arguments.items())[1:]
+
+
+@functools.cache
+def _forward_signature(cls):
+    return inspect.signature(cls.forward)
 
 
 def _monitoring_tool():
@@ -427,17 +503,100 @@ def _leading_comments(lines):
         yield line
 
 
-def _collapse(call):
-    """Fold consecutive identical numbered siblings (`blocks.0`, `blocks.1`, …) into one."""
+def _label_steps(node, labels, container=None):
+    """Give each operation the label `explainer.json` gives its source line.
+
+    `labels` maps a class or function to fragments of its source lines; a fragment's label is
+    a string, or a mapping from operation name for lines that do several things.
+    """
+    if "op" in node:
+        for fragment, label in labels.get(container, {}).items():
+            if fragment in node["code"]:
+                label = (
+                    label.get(node["op"].rsplit(".", 1)[1]) if isinstance(label, dict) else label
+                )
+                if label:
+                    node["label"] = label
+                break
+    inner = node["class"] if "module" in node else node.get("function", container)
+    for child in node["children"]:
+        _label_steps(child, labels, inner)
+
+
+def _role_keys(node, anchor=None):
+    """Key each module call's role by its path from the nearest module of this package.
+
+    `ff.layers.0` inside a GPT-2 `FeedForward` becomes `…FeedForward.layers.0`: its parent, an
+    `nn.Sequential`, says nothing about it. A folded run of blocks drops its index.
+    """
+    if "module" in node and anchor is not None:
+        prefix = anchor["module"] + "." if anchor["module"] else ""
+        path = node["module"].removeprefix(prefix)
+        if node.get("repeat", 1) > 1:
+            path = NUMBERED.match(path)[1].rstrip(".")
+        node["role"] = f"{anchor['class']}.{path}"
+    if "module" in node and not node["class"].startswith("torch.nn."):
+        anchor = node
+    for child in node["children"]:
+        _role_keys(child, anchor)
+
+
+def _collapse(call, alias):
+    """Fold consecutive identical numbered siblings (`blocks.0`, `blocks.1`, …) into one.
+
+    `alias` maps the id of every node folded away to the id of the node that now stands for it.
+    """
     children = []
-    for child in map(_collapse, call["children"]):
+    for child in [_collapse(c, alias) for c in call["children"]]:
         previous = children[-1] if children else None
         if previous and _next_in_run(previous, child):
             previous["repeat"] += 1
             previous["last"] = child["module"]
+            _alias(child, previous, alias)
+            _mark_first_copy(child, previous, alias, previous["id"])
+            if "returned_by" in child:  # an `nn.Sequential` returns its last block's output
+                previous["returned_by"] = child["returned_by"]
         else:
             children.append(child | {"repeat": 1})
     return call | {"children": children}
+
+
+def _alias(folded, kept, alias):
+    alias[folded["id"]] = kept["id"]
+    for a, b in zip(folded["children"], kept["children"], strict=True):
+        _alias(a, b, alias)
+
+
+def _mark_first_copy(folded, kept, alias, run):
+    """Mark inputs that only the first copy reads, because later copies read the copy before.
+
+    In a run of blocks, block 0's residual input is the embedding and block k's is block k − 1,
+    whose id `alias` maps to the run's id.
+    """
+    for a, b in zip(folded["children"], kept["children"], strict=True):
+        _mark_first_copy(a, b, alias, run)
+    for a, b in zip(folded["inputs"], kept["inputs"], strict=True):
+        source = alias.get(a["from"], a["from"]) if "from" in a else None
+        if source is None or source == b.get("from"):
+            continue
+        if source != run:
+            raise ValueError(f"copies of a folded run read different sources: {a}, {b}")
+        b["first_copy"] = True
+
+
+def _redirect(node, alias):
+    """Point inputs that came from a folded node at the node that stands for it."""
+    for entry in node["inputs"]:
+        if "from" in entry:
+            entry["from"] = alias.get(entry["from"], entry["from"])
+    if "returned_by" in node:
+        node["returned_by"] = alias.get(node["returned_by"], node["returned_by"])
+    for child in node["children"]:
+        _redirect(child, alias)
+
+
+def _last_id(node):
+    return max([node["id"], *(_last_id(c) for c in node["children"])])
 
 
 def _next_in_run(previous, child):
@@ -455,10 +614,26 @@ def _next_in_run(previous, child):
 
 def _signature(call):
     """A call's structure with its own name factored out, so repeated blocks compare equal."""
-    own = call["module"]
+    own, first, last = call["module"], call["id"], _last_id(call)
+
+    def ref(i):
+        return i - first if first <= i <= last else "outside"
+
+    def entry(e):
+        """An input with ids relative to the call; the block before differs, so it's elided."""
+        e = {k: v for k, v in e.items() if k != "first_copy"}  # set while folding this run
+        if "from" in e:
+            e = e | {"from": ref(e["from"])}
+        if "tensor" in e:
+            e = e | {"tensor": e["tensor"].removeprefix(own + ".")}
+        return e
 
     def strip(node):
         stripped = node | {"children": [strip(c) for c in node["children"]]}
+        stripped["id"] = node["id"] - first
+        stripped["inputs"] = [entry(e) for e in node["inputs"]]
+        if "returned_by" in node:
+            stripped["returned_by"] = ref(node["returned_by"])
         for key in ("module", "last"):
             if key in node:
                 stripped[key] = node[key].removeprefix(own)
@@ -468,6 +643,7 @@ def _signature(call):
             ]
         return stripped
 
-    # `repeat` and `last` are the run's own bookkeeping, set on `previous` but not on `child`.
-    top = {k: v for k, v in strip(call).items() if k not in ("repeat", "last")}
+    # `repeat` and `last` are the run's own bookkeeping, set on `previous` but not on `child`;
+    # `returned_by` is about the caller, which returns only the last block's output.
+    top = {k: v for k, v in strip(call).items() if k not in ("repeat", "last", "returned_by")}
     return json.dumps(top)
