@@ -46,6 +46,94 @@ The preset `QWEN3_0_6B` has 596,049,920 parameters: 28 layers, `emb_dim` 1024, a
 chapters 6 and 8 do, which adds a second 151,936 × 1,024 matrix: 751,632,384 parameters.
 The [architecture explorer](architecture/index.html) shows both side by side with GPT-2.
 
+## Data flow
+
+The outline matches GPT's: embed the tokens, run the blocks, normalize, project to the
+vocabulary. Shapes below are for the 0.6B preset; `B` is the batch size and `T` the number of
+tokens.
+
+1. **Token embedding.** Each token ID becomes a 1,024-wide vector. There is no position
+   table and no dropout: position enters inside attention, through RoPE.
+2. **Shared inputs for every block.** The forward pass builds one causal mask, a `[T, T]`
+   boolean that is true above the diagonal. Every block receives it, together with the RoPE
+   tables `cos` and `sin`. Those are `[context_length, head_dim]` buffers computed once,
+   when the model is built.
+3. **28 transformer blocks**, the same structure with separate weights.
+4. **Final RMSNorm and vocabulary projection** to 151,936 logits per position. The released
+   model ties the projection to the token embedding.
+
+```mermaid
+flowchart TD
+    A["Token IDs [B, T]"] --> B["Token embedding: 151,936 × 1,024"]
+    B --> F["Transformer blocks: 28"]
+    M["Causal mask, built once per forward pass"] --> F
+    R["RoPE tables cos and sin: 40,960 × 128, built with the model"] --> F
+    F --> G["Final RMSNorm"]
+    G --> H["Vocabulary projection, tied to the token embedding"]
+    H --> I["Next-token logits [B, T, 151,936]"]
+```
+
+Each block is pre-normalized, like GPT-2's, with a residual connection around each of its two
+sublayers. The feed-forward sublayer is SwiGLU: two parallel projections up to 3,072. One
+passes through SiLU and gates the other by element-wise multiplication, then `fc3` projects
+back. No sublayer has dropout or biases.
+
+```mermaid
+flowchart TD
+    X["Input x [B, T, 1,024]"] --> N1["RMSNorm"]
+    N1 --> A["Grouped-query attention, given the mask and RoPE tables"]
+    X --> R1["Add residual"]
+    A --> R1
+    R1 --> N2["RMSNorm"]
+    N2 --> F1["fc1: 1,024 to 3,072"]
+    N2 --> F2["fc2: 1,024 to 3,072"]
+    F1 --> S["SiLU"]
+    S --> MUL["Multiply element-wise"]
+    F2 --> MUL
+    MUL --> F3["fc3: 3,072 to 1,024"]
+    R1 --> R2["Add residual"]
+    F3 --> R2
+    R2 --> Y["Output [B, T, 1,024]"]
+```
+
+Inside attention, queries get 16 heads but keys and values only 8, each 128 wide.
+
+- **QK-norm.** After the split into heads, queries and keys are RMS-normalized per head, over
+  their 128 channels.
+- **RoPE.** Then both are rotated by position. `compute_rope_params` gives position `m` and
+  channel pair `i` the angle `m · θ^(−2i/128)`, with θ = 1,000,000. `apply_rope` uses the
+  split-halves layout, the same as Hugging Face Transformers: it rotates channel `i` together
+  with channel `i + 64`, computing `x · cos + (−x₂, x₁) · sin`. Rotating a query at position
+  `m` and a key at position `n` this way makes their dot product depend only on `m − n`.
+- **Sharing K and V.** `repeat_interleave` then copies each key and value head for the 2
+  query heads it serves, and attention proceeds as in GPT-2.
+- **Width.** The joined heads are 2,048 wide, wider than the 1,024-wide residual stream, so
+  `out_proj` maps them back down.
+
+```mermaid
+flowchart TD
+    X["Normalized input [B, T, 1,024]"] --> Q["W_query: to 16 heads × 128"]
+    X --> K["W_key: to 8 heads × 128"]
+    X --> V["W_value: to 8 heads × 128"]
+    Q --> QN["RMSNorm per query head"]
+    K --> KN["RMSNorm per key head"]
+    QN --> QR["RoPE: rotate by position"]
+    KN --> KR["RoPE: rotate by position"]
+    KR --> KE["Repeat each key head for its 2 query heads"]
+    V --> VE["Repeat each value head for its 2 query heads"]
+    QR --> S["Scores Q Kᵀ, causal mask, softmax of scores / √128"]
+    KE --> S
+    S --> C["Attention weights × values"]
+    VE --> C
+    C --> J["Join 16 heads: [B, T, 2,048]"]
+    J --> O["out_proj: 2,048 to 1,024"]
+```
+
+With `attn_impl: sdpa`, the default in the recipes, PyTorch's fused kernel computes the scores,
+mask, softmax and weighted sum in one call, without materializing the `[T, T]` matrix. During
+cached decoding, the new keys and values are appended to the cache before the K/V heads are
+repeated.
+
 ## Modules
 
 | Module | Contents |

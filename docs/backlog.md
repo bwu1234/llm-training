@@ -96,7 +96,6 @@ items extend it.
 
 | Item | Why it matters | Notes |
 | --- | --- | --- |
-| Qwen3 Mermaid diagrams | `gpt2.md` has model and block diagrams; `qwen3.md` has only the comparison table | Model flow, and a block showing RMSNorm, GQA with RoPE and QK-norm, and SwiGLU. Optionally one diagram of the differences from GPT-2. About an hour; GitHub renders them |
 | Show functional steps in the explorer | Residual adds, RoPE, the head split, the causal mask and the SwiGLU product are code, not modules, so they appear only in each module's source | Record them with `torch.overrides.TorchFunctionMode` during the traced pass, filtered to the ops that teach something (`add`, `softmax`, `matmul`, the RoPE rotation). The filter must stay generic, not per family |
 | Host the explorer | It's only a local file today | Waits on D5 |
 | Live views on real weights | Attention heatmaps, logit lens, GQA head sharing, RoPE rotation | Uses the weights already in `data/`; could extend the explorer's traced pass with real inputs. Plotting or notebook dependencies go in an optional group, as `IMPLEMENTATION_PLAN.md` requires. Several days |
