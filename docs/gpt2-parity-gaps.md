@@ -65,7 +65,7 @@ Verified 2026-10-25 with the full suite (69 passed, plus the opt-in oracle, 2 pa
 
 | Status | Items |
 | --- | --- |
-| **Done** (mechanism built and tested; preset values provisional) | A1 tie option; A2/A3 via the `pretrain_gpt2_124m.yaml` preset; A4 init (with residual-scaling flag); A5 SDPA (`attn_impl`); A6 GELU constant; B1 decay groups; B2 betas; B3 warmup/cosine; B4 clipping; B5 accumulation; B6 dropout 0 in the preset; C3 `uint16` plan correction; C2 `uint16` token files with a memory-mapped loader, for registered corpora (`data/corpus.py`); C5 EOS policy for token corpora (prepended `<|endoftext|>`, attention crosses documents, recorded in the manifest); E1 pretrained-weight oracle; F1 repository committed (2026-10-25); F2 resume guard |
+| **Done** (mechanism built and tested; preset values provisional) | A1 tie option; A2/A3 via the `pretrain_gpt2_124m.yaml` preset; A4 init (with residual-scaling flag); A5 SDPA (`attn_impl`); A6 GELU constant; B1 decay groups; B2 betas; B3 warmup/cosine; B4 clipping; B5 accumulation; B6 dropout 0 in the preset; C3 `uint16` plan correction; C2 `uint16` token files with a memory-mapped loader, for registered corpora (`data/corpus.py`); C5 EOS policy for token corpora (prepended `<|endoftext|>`, attention crosses documents, recorded in the manifest); E1 pretrained-weight oracle; F1 repository committed (2026-10-25); F2 resume guard; F4 `Trainer` class (2026-10-26) |
 | **Open or partial** | Tracked in [the backlog](backlog.md#gpt-2-pretraining-track), which holds their order and the decisions they wait on |
 
 ### What was verified for the Done items
@@ -94,8 +94,9 @@ Verified 2026-10-25 with the full suite (69 passed, plus the opt-in oracle, 2 pa
 - All checks are CPU FP32 on one machine. SDPA, bf16, MPS, and CUDA behavior are unvalidated.
 - The resume guard is exact only for unchanged executable code; with `--allow-code-drift`
   nothing is guaranteed, and the child run records the override.
-- `train()` is still one large function (F4). The new logic lives in `lm/optim.py`, `training/optim.py`,
-  `lm/schedule.py`, and `model/gpt2/init.py`, but the accumulation loop is inside `train()`.
+- The training loop is `lm/trainer.py`'s `Trainer` (F4): `step` (one update, with accumulation,
+  schedule, and clipping), `evaluate`, and `checkpoint`. The recipe logic it calls lives in
+  `lm/optim.py`, `training/optim.py`, `lm/schedule.py`, and `model/gpt2/init.py`.
 - The preset's data path, warmup, evaluation cadence, and token budget are placeholders.
 
 ## Priority key

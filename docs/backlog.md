@@ -80,8 +80,6 @@ Open:
   reference-loss calibration, E5 `evaluate` and `export` commands.
 - **Operations:**
   - F3 checkpoint retention (a Qwen3 `last.pt` is ~9 GB, a GPT-2 one ~1.5 GB);
-  - F4 split `train()` into a `Trainer` (it now also handles instructions and initial
-    weights);
   - F5 relative paths in saved configs, F9 heartbeat file (hangs are currently invisible).
 - **Hardware:** D3 DDP, D4 CUDA validation.
 - **Tests that wait on those items:** a resume from a relocated checkpoint (F5), a resume with
