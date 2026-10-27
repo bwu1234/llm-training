@@ -7,11 +7,10 @@ modules in `model/gpt2/`; each family keeps its architecture, weights, and token
 package.
 
 **Status:** the architecture, pinned weight loading, and tokenizer are in place and checked
-against Hugging Face Transformers. These are not wired up yet:
-
-- the `model.arch` config field and trainer/CLI/`predict` dispatch;
-- the fine-tuning recipe;
-- token-file storage for the 151,936-token vocabulary, which `uint16` cannot hold.
+against Hugging Face Transformers. The fine-tuning recipe is GRPO on MATH, with its own
+commands; see [the GRPO guide](grpo.md). The next-token `train`, `predict`, and `generate`
+commands remain GPT-2 only. Continued pretraining of Qwen3 on text would need token files
+wider than `uint16` (the vocabulary has 151,936 tokens) and is not built.
 
 ## Usage
 

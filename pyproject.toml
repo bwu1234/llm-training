@@ -15,6 +15,7 @@ dependencies = [
     "tokenizers>=0.23,<1",
     "numpy>=2.3,<3",
     "pyyaml>=6,<7",
+    "sympy>=1.14,<2",
 ]
 
 [project.scripts]

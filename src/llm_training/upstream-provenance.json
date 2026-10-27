@@ -172,6 +172,71 @@
           "destination": "src/llm_training/model/qwen3/tokenizer.py",
           "sha256": "873c3cbde81f80e2dfcadde57e8c314a85b138d68fba02a2681afe98bd43eb53",
           "source_diff": ""
+        },
+        {
+          "source": "reasoning_from_scratch/ch03.py",
+          "symbols": [
+            "RE_NUMBER",
+            "LATEX_FIXES",
+            "RE_SPECIAL",
+            "SUPERSCRIPT_MAP",
+            "get_last_boxed",
+            "extract_final_candidate",
+            "normalize_text",
+            "sympy_parser",
+            "equality_check",
+            "split_into_parts",
+            "grade_answer",
+            "render_prompt"
+          ],
+          "destination": "src/llm_training/reasoning/grading.py",
+          "sha256": "0400d66ee84a26fd269696bb9e1abf4969828c923f1477a5ba34cc8f45a5e76e",
+          "source_diff": ""
+        },
+        {
+          "source": "reasoning_from_scratch/ch04.py",
+          "symbols": [
+            "top_p_filter"
+          ],
+          "destination": "src/llm_training/reasoning/grpo.py",
+          "sha256": "849c49ca4f9cfd24ad9760097a904a8cf975f9f875a303a43d51392584defd8d",
+          "source_diff": ""
+        },
+        {
+          "source": "reasoning_from_scratch/ch06.py",
+          "symbols": [
+            "sample_response",
+            "reward_rlvr",
+            "sequence_logprob",
+            "compute_grpo_loss"
+          ],
+          "destination": "src/llm_training/reasoning/grpo.py",
+          "sha256": "cf3a432633dc23859841989d9587c369e649a86ca7b5907d876e70121cbbda81",
+          "source_diff": "",
+          "symbol_mapping": {
+            "compute_grpo_loss": "grpo_step"
+          }
+        },
+        {
+          "source": "reasoning_from_scratch/ch02.py",
+          "symbols": [
+            "generate_text_basic_stream_cache"
+          ],
+          "destination": "src/llm_training/reasoning/grpo.py",
+          "sha256": "8d990a418936c82f56d6a24389de418866536bc8d709dd06f8f13c0c53c1e746",
+          "source_diff": "",
+          "symbol_mapping": {
+            "generate_text_basic_stream_cache": "generate_greedy_ids"
+          }
+        },
+        {
+          "source": "ch06/02_rlvr_grpo_scripts_intro/rlvr_grpo_original_no_kl.py",
+          "symbols": [
+            "train_rlvr_grpo (recipe and skip_zero_advantage_updates)"
+          ],
+          "destination": "src/llm_training/reasoning/trainer.py",
+          "sha256": "bdc09ff7241e10cd4d64034dd2da7a3cb7c7b170cbdb4a99dbba2750365e4548",
+          "source_diff": ""
         }
       ],
       "local_changes": "No `dtype` config key or argument (float32 parameters; the output head no longer casts its input). Opt-in `tie_embeddings` (the 0.6B preset sets it, matching the official `tie_word_embeddings`) and `attn_impl: sdpa`; defaults keep the source computation.",
@@ -187,7 +252,9 @@
         },
         "license": "apache-2.0",
         "derived_from_verified": "2026-10-26: all 310 tensors bit-identical to official model.safetensors (sha256 cd2a512003e2f9f3cd3c32a9c3573f820bb28c940f73c57b1ddaa983d9223eba) after renaming; official file has no lm_head (tied)."
-      }
+      },
+      "reasoning_reference": "tests/reference/reasoning_baseline.py",
+      "reasoning_local_changes": "Grading runs in a time-limited worker process (TimeLimitedGrader); timeouts and grader exceptions score 0 and are recorded. Rollouts sample on the model's device from an explicit, checkpointed generator. grpo_step backpropagates each rollout separately (same gradient as the source's mean loss) and, when all rewards are equal, sets zero gradients without the forward/backward pass. Training is float32 with SDPA attention; the source holds parameters and AdamW state in bfloat16. MATH data is pinned by commit URL and SHA-256."
     }
   ]
 }

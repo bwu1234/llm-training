@@ -298,8 +298,24 @@ and [chapter/resume evidence](docs/experiments/chapter-reproduction.md) for this
 
 `llm_training.model.qwen3` ports Qwen3 from Raschka's *reasoning-from-scratch* as separate
 modules alongside the GPT ones. It loads the pinned Qwen3-0.6B base weights and tokenizer,
-which an oracle test checks against Hugging Face Transformers. Training and CLI integration
-are not wired up yet. See [the Qwen3 guide](docs/qwen3.md).
+which an oracle test checks against Hugging Face Transformers. See
+[the Qwen3 guide](docs/qwen3.md).
+
+## Reasoning fine-tune: GRPO on MATH
+
+`llm_training.reasoning` ports chapter 6 of *Build a Reasoning Model (From Scratch)*: GRPO
+with verifiable rewards turns the Qwen3-0.6B base model into a step-by-step math solver. The
+book reports MATH-500 going from 15.2% to 47.4% after 50 steps.
+
+```bash
+uv run llm-training grpo-prepare --config configs/grpo_qwen3_0_6b_math.yaml
+uv run llm-training grpo-train --config configs/grpo_qwen3_0_6b_math.yaml
+uv run llm-training math-eval --snapshot runs/grpo/<run>/snapshots/step00050.pt --limit 100
+```
+
+On an M2 Max a 50-step run takes about 1–1.5 hours, and a full MATH-500 evaluation of a
+trained model about 2 hours. Longer GRPO training can lower the score, so score the saved
+snapshots and keep the best. See [the GRPO guide](docs/grpo.md).
 
 ## Source and license
 

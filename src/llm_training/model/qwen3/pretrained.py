@@ -59,13 +59,18 @@ def verify_qwen3_base(path):
             )
 
 
-def load_qwen3_base(path, device="cpu", attn_impl="explicit"):
-    """Return (model, tokenizer): the float32 Qwen3-0.6B base model in eval mode."""
+def load_qwen3_base(path, device="cpu", attn_impl="explicit", tie_embeddings=True):
+    """Return (model, tokenizer): the float32 Qwen3-0.6B base model in eval mode.
+
+    The pinned file stores the head and the embedding as equal tensors, so it loads either
+    way. `tie_embeddings=False` builds them as separate parameters, as the source's
+    `Qwen3Model` does, which lets fine-tuning move them apart.
+    """
     path = Path(path)
     verify_qwen3_base(path)
     # mmap reads tensors from the file on demand instead of first copying all 1.5 GB to RAM.
     state = torch.load(path / WEIGHTS, map_location="cpu", weights_only=True, mmap=True)
-    model = Qwen3Model(QWEN3_0_6B | {"attn_impl": attn_impl})
+    model = Qwen3Model(QWEN3_0_6B | {"attn_impl": attn_impl, "tie_embeddings": tie_embeddings})
     load_qwen3_state(model, state)
     return model.to(device).eval(), Qwen3Tokenizer(str(path / TOKENIZER))
 

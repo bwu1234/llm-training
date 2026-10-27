@@ -48,8 +48,67 @@ def main():
     generation.add_argument("--num-samples", type=int, default=1, help="Seeds seed..seed+n-1")
     generation.add_argument("--device", choices=["cpu", "mps", "cuda"], default="cpu")
     generation.add_argument("--num-threads", type=int, default=1)
+    grpo_prepare = commands.add_parser(
+        "grpo-prepare", help="Fetch the pinned Qwen3-0.6B base files and MATH problem sets"
+    )
+    grpo_prepare.add_argument("--config", type=Path, required=True)
+    grpo_training = commands.add_parser(
+        "grpo-train", help="GRPO fine-tuning of Qwen3-0.6B base on MATH (verifiable rewards)"
+    )
+    grpo_inputs = grpo_training.add_mutually_exclusive_group(required=True)
+    grpo_inputs.add_argument("--config", type=Path)
+    grpo_inputs.add_argument("--resume", type=Path)
+    grpo_training.add_argument(
+        "--stop-after", type=int, help="Stop safely at this absolute completed step count"
+    )
+    grpo_training.add_argument(
+        "--allow-code-drift",
+        action="store_true",
+        help="Resume even though GRPO code differs from the checkpoint's (recorded)",
+    )
+    math_eval = commands.add_parser(
+        "math-eval", help="MATH-500 accuracy of the base model or a GRPO snapshot"
+    )
+    evaluated = math_eval.add_mutually_exclusive_group(required=True)
+    evaluated.add_argument("--snapshot", type=Path, help="A GRPO snapshots/stepNNNNN.pt file")
+    evaluated.add_argument("--base", action="store_true", help="The untrained base model")
+    math_eval.add_argument("--weights", type=Path, default=Path("data/qwen3-0.6b-base"))
+    math_eval.add_argument("--data", type=Path, default=Path("data/math"))
+    math_eval.add_argument("--limit", type=int, default=500, help="Score the first N problems")
+    math_eval.add_argument("--max-new-tokens", type=int, default=2048)
+    math_eval.add_argument("--grade-timeout", type=float, default=30.0)
+    math_eval.add_argument("--device", choices=["cpu", "mps", "cuda"], default="mps")
+    math_eval.add_argument(
+        "--output",
+        type=Path,
+        help="JSONL records; reruns skip recorded problems (default: beside the snapshot)",
+    )
     args = parser.parse_args()
     try:
+        if args.command == "grpo-prepare":
+            from .model.qwen3.pretrained import prepare_qwen3_base
+            from .reasoning.config import load_grpo_config
+            from .reasoning.math_data import prepare_math_data
+
+            cfg = load_grpo_config(args.config)
+            prepare_qwen3_base(cfg.model.weights)
+            prepare_math_data(cfg.data.path)
+            print(f"Prepared Qwen3-0.6B base in {cfg.model.weights} and MATH in {cfg.data.path}")
+            return
+        if args.command == "grpo-train":
+            from .reasoning.config import load_grpo_config
+            from .reasoning.trainer import train_grpo
+
+            train_grpo(
+                load_grpo_config(args.config) if args.config else None,
+                resume=args.resume,
+                stop_after=args.stop_after,
+                allow_code_drift=args.allow_code_drift,
+            )
+            return
+        if args.command == "math-eval":
+            _math_eval(args)
+            return
         if args.command == "inspect":
             from .training.provenance import collect_runtime_metadata
 
@@ -132,3 +191,35 @@ def main():
     except (ValueError, OSError) as exc:
         print(f"Error: {exc}", file=sys.stderr)
         raise SystemExit(1) from exc
+
+
+def _math_eval(args):
+    from .model.qwen3.pretrained import load_qwen3_base
+    from .reasoning.evaluate import evaluate_math500, load_snapshot
+    from .reasoning.grading import TimeLimitedGrader
+    from .reasoning.math_data import load_math_data
+
+    if not 1 <= args.limit <= 500:
+        raise ValueError("--limit must be between 1 and 500")
+    if args.max_new_tokens <= 0:
+        raise ValueError("--max-new-tokens must be positive")
+    problems = load_math_data(args.data, "math500")[: args.limit]
+    if args.snapshot:
+        model, tokenizer, meta = load_snapshot(args.snapshot, args.weights, args.device)
+        output = args.output or args.snapshot.with_name(
+            f"{args.snapshot.stem}.math500-first{args.limit}.jsonl"
+        )
+        evaluated = {"snapshot": str(args.snapshot.resolve()), "step": meta["step"]}
+    else:
+        if args.output is None:
+            raise ValueError("--base needs --output")
+        model, tokenizer = load_qwen3_base(args.weights, device=args.device, attn_impl="sdpa")
+        output = args.output
+        evaluated = {"base": str(args.weights.resolve())}
+    with TimeLimitedGrader(args.grade_timeout) as grader:
+        summary = evaluate_math500(
+            model, tokenizer, problems, grader, args.device, output, args.max_new_tokens
+        )
+    summary = evaluated | summary
+    output.with_suffix(".summary.json").write_text(json.dumps(summary, indent=2) + "\n")
+    print(json.dumps(summary, indent=2))

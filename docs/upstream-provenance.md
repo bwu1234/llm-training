@@ -97,3 +97,37 @@ Changes:
 `tests/reference/qwen3_baseline.py` freezes the selected definitions. Its unit test shows that
 the package's default path matches them bit for bit.
 
+
+## GRPO on MATH (reasoning-from-scratch, chapters 2–6)
+
+Same repository and commit as the Qwen3 port, no local diff at extraction. The license is the
+same plain Apache 2.0 file.
+
+| New module | Source | Selected implementation |
+| --- | --- | --- |
+| `reasoning/grading.py` | `reasoning_from_scratch/ch03.py` | `get_last_boxed`, `extract_final_candidate`, `normalize_text`, `sympy_parser`, `equality_check`, `split_into_parts`, `grade_answer`, `render_prompt`, and their constants |
+| `reasoning/grpo.py` | `reasoning_from_scratch/ch04.py` | `top_p_filter` |
+| `reasoning/grpo.py` | `reasoning_from_scratch/ch06.py` | `sample_response`, `reward_rlvr`, `sequence_logprob`, `compute_grpo_loss` → `grpo_step` |
+| `reasoning/grpo.py` | `reasoning_from_scratch/ch02.py` | `generate_text_basic_stream_cache` → `generate_greedy_ids` |
+| `reasoning/trainer.py` | `ch06/02_rlvr_grpo_scripts_intro/rlvr_grpo_original_no_kl.py` | the training-loop recipe and `--skip-zero-advantage-updates` |
+
+The grading functions are copied unchanged (AST-identical before formatting). Changes elsewhere:
+
+- `TimeLimitedGrader` (new) runs `grade_answer` in a worker process with a time limit. SymPy
+  parses with `evaluate=True`, so a 7-character answer such as `9^9^9^9` starts an integer
+  power that runs indefinitely inline (checked: still running after 20 s). Timeouts and
+  grader exceptions score 0 and are recorded per rollout.
+- Rollouts sample on the model's device, as the bonus script does, from an explicit generator
+  whose state every checkpoint saves.
+- `grpo_step` backpropagates each rollout as soon as its log-probability is computed instead
+  of holding all rollouts' graphs for one `mean` loss. The gradient is the same (unit test
+  against the frozen source, `rtol=1e-5`), with one rollout's activations in memory at a time.
+  When all rewards are equal the advantages are exactly zero, so it sets zero gradients
+  without the forward/backward pass; the optimizer still steps, as upstream does by default.
+- Training is float32 with SDPA attention. Upstream holds parameters and AdamW state in
+  bfloat16, where many lr-1e-5 updates round away, so the two runs are not numerically
+  comparable step for step.
+- Data is pinned by commit URL and SHA-256 (`reasoning/math_data.py`); upstream reads `main`.
+
+`tests/reference/reasoning_baseline.py` freezes the selected definitions, with the frozen
+`KVCache` from `qwen3_baseline.py`.
