@@ -19,7 +19,8 @@ def evaluate(model, loader, device, max_batches=None):
                     model(inputs).flatten(0, 1), targets.flatten(), reduction="sum"
                 )
                 total_nll += nll.item()
-                tokens += targets.numel()
+                # cross_entropy skips ignored targets (-100: padding, masked prompts).
+                tokens += (targets != -100).sum().item()
     finally:
         model.train(was_training)
     if not tokens:

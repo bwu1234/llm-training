@@ -23,8 +23,9 @@ class CharTokenizer:
 
     eot_token = EOT
 
-    def __init__(self, offset=0):
+    def __init__(self, offset=0, n_vocab=50257):
         self.offset = offset
+        self.n_vocab = n_vocab
 
     def encode_ordinary_batch(self, texts):
         return [[ord(c) + self.offset for c in text] for text in texts]
@@ -95,6 +96,16 @@ def test_ids_that_do_not_fit_uint16_are_rejected(tmp_path):
     with pytest.raises(ValueError, match="uint16"):
         build(tmp_path, "a", tokenizer=CharTokenizer(offset=70000))
     assert not (tmp_path / "corpus/manifest.json").exists()
+
+
+def test_wide_vocabularies_use_uint32_files_that_verify_and_load(tmp_path):
+    # Qwen3's 151,936-token vocabulary: ids above 65,535 must survive the round trip.
+    out, manifest = build(tmp_path, "abc", tokenizer=CharTokenizer(offset=100_000, n_vocab=151_936))
+    assert manifest["dtype"] == "uint32"
+    assert (out / "train.bin").stat().st_size == 4 * manifest["splits"]["train"]["tokens"]
+    load_token_corpus(out, "tinystories", TOKENIZER_MANIFEST)
+    windows = TokenWindowDataset(out / "train.bin", 2, 2, manifest["dtype"])
+    assert windows[0][0].tolist() == [EOT, 100_000 + ord("a")]
 
 
 def test_verification_rejects_corruption_tokenizer_and_corpus_mismatch(tmp_path):

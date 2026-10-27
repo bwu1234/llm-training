@@ -1,0 +1,54 @@
+# PLUMBING TEST for continued pretraining: OpenAI's GPT-2 small (124M) trained further on
+# TinyStories. It exercises the path (released weights -> token corpus -> next-token loss ->
+# model.pt) on data that is already prepared. It is not a recipe to run long: hours on
+# children's stories would mostly teach GPT-2 to write children's stories and erode what it
+# knew before (catastrophic forgetting). For a real run, register a corpus from the domain
+# you want the model to improve at, mix in general text, and compare validation loss on the
+# old domain before and after. See docs/finetuning.md.
+#
+# Neither book has a continued-pretraining recipe. The values below are provisional choices:
+# re-warm to 10% of GPT-2 small's pretraining peak (6e-4 -> 6e-5), cosine to 10% of that,
+# nanoGPT's optimizer settings, and a 200-update budget (6.6M tokens) sized for a check.
+#
+#   uv run llm-training prepare --config configs/cpt_gpt2_small_tinystories.yaml  # ~0.7 GB
+#   uv run llm-training train --config configs/cpt_gpt2_small_tinystories.yaml
+model:
+  init_from: gpt2-small-124m
+  weights_dir: ../data/gpt2-small-124m
+  tie_embeddings: true
+  attn_impl: sdpa
+data:
+  format: tokens
+  corpus: tinystories
+  path: ../data/tinystories
+  tokenizer_cache: ../data/tokenizer
+  max_length: 1024
+training:
+  seed: 1337
+  batch_size: 8
+  grad_accum_steps: 4  # 8 x 1024 x 4 = 32,768 tokens per update
+  num_epochs: 1
+  max_steps: 200
+  learning_rate: 0.00006
+  min_lr: 0.000006
+  lr_schedule: cosine
+  warmup_steps: 20
+  beta1: 0.9
+  beta2: 0.95
+  weight_decay: 0.1
+  weight_decay_policy: matrices
+  grad_clip: 1.0
+  eval_freq: 50
+  eval_iter: 20
+  recipe: validation_only
+  checkpoint_every: 50
+runtime:
+  device: mps
+  num_threads: 4
+output:
+  root: ../runs/cpt
+  prompt: Once upon a time
+  sample_tokens: 60
+  temperature: 0.8
+  top_k: 50
+  sample_every: 50

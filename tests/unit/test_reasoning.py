@@ -326,4 +326,5 @@ def test_grpo_fingerprint_covers_qwen3_but_not_gpt2():
     package = Path(trainer.__file__).parent.parent
     trainer.implementation_fingerprint(package, trainer.GRPO_CODE)  # every listed path exists
     assert "model/qwen3" in trainer.GRPO_CODE
+    assert "model/assets.py" in trainer.GRPO_CODE  # imported by model/qwen3/pretrained.py
     assert not any(entry.startswith(("model/gpt2", "data")) for entry in trainer.GRPO_CODE)

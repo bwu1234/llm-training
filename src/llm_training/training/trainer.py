@@ -1,6 +1,7 @@
 """Single-process FP32 training with periodic loss monitoring and full-state recovery."""
 
 import hashlib
+import importlib.metadata
 import json
 import math
 import random
@@ -9,6 +10,7 @@ import signal
 import time
 from dataclasses import asdict
 from datetime import UTC, datetime
+from functools import partial
 from pathlib import Path
 from uuid import uuid4
 
@@ -17,14 +19,22 @@ import torch
 import yaml
 from torch.utils.data import DataLoader
 
-from llm_training.config import Config, config_from_dict
+from llm_training.config import Config, config_from_dict, window_length
 from llm_training.data.corpus import SPLITS, load_token_corpus
 from llm_training.data.dataset import SlidingWindowTokenDataset
 from llm_training.data.token_dataset import TokenWindowDataset
 from llm_training.evaluation import evaluate
 from llm_training.generation import generate_greedy, generate_sampled
-from llm_training.model.gpt2.model import GPTModel
-from llm_training.model.gpt2.tokenizer import load_tokenizer
+from llm_training.model.registry import (
+    ARCHITECTURE_KEYS,
+    MODEL_FILE_FORMAT,
+    PRETRAINED,
+    build_model,
+    load_tokenizer,
+    load_weights,
+    pretrained_state,
+    read_model_file,
+)
 from llm_training.training.checkpoint import (
     FORMAT_VERSION,
     atomic_save,
@@ -53,9 +63,19 @@ def _sample(model, tokenizer, cfg, device, step=0):
         prompt = tokenizer.encode(cfg.output.prompt) or [tokenizer.eot_token]
         idx = torch.tensor([prompt], device=device)
         if cfg.output.temperature == 0 and cfg.output.top_k is None:
-            ids = generate_greedy(model, idx, cfg.output.sample_tokens, cfg.model.context_length)[
-                0
-            ].tolist()
+            if cfg.data.format == "instructions":
+                # A fine-tuned response ends at end-of-text; the book's text-only greedy loop
+                # (kept below for its parity test) would keep generating past it.
+                ids = generate_sampled(
+                    model,
+                    idx,
+                    cfg.output.sample_tokens,
+                    window_length(cfg),
+                    eos_id=tokenizer.eot_token,
+                )
+            else:
+                ids = generate_greedy(model, idx, cfg.output.sample_tokens, window_length(cfg))
+            ids = ids[0].tolist()
             return {
                 "prompt": cfg.output.prompt,
                 "text": tokenizer.decode(ids),
@@ -70,7 +90,7 @@ def _sample(model, tokenizer, cfg, device, step=0):
             model,
             idx,
             cfg.output.sample_tokens,
-            cfg.model.context_length,
+            window_length(cfg),
             temperature=cfg.output.temperature,
             top_k=cfg.output.top_k,
             eos_id=tokenizer.eot_token,
@@ -91,11 +111,40 @@ def _sample(model, tokenizer, cfg, device, step=0):
 
 def _load_datasets(cfg, tokenizer, tokenizer_manifest):
     """Return (train, validation) datasets, the data digest, and data-manifest fields."""
-    length = cfg.model.context_length
+    length = window_length(cfg)
+    if cfg.data.format == "instructions":
+        from llm_training.data.instructions import (
+            DATASETS,
+            InstructionDataset,
+            load_instructions,
+            split_instructions,
+        )
+
+        rows, digest = load_instructions(cfg.data.dataset, cfg.data.path)
+        splits, dropped = split_instructions(
+            cfg.data.dataset, rows, tokenizer, length, cfg.data.limit
+        )
+        spec = DATASETS[cfg.data.dataset]
+        fields = {
+            "format": "instructions",
+            "dataset": cfg.data.dataset,
+            "source": {k: spec[k] for k in ("description", "license", "url", "sha256")},
+            "split_policy": spec["split"],
+            "examples": {split: len(examples) for split, examples in splits.items()},
+            "dropped": dropped,
+            "max_length": length,
+            "mask_prompt": cfg.data.mask_prompt,
+            "limit": cfg.data.limit,
+        }
+        datasets = [InstructionDataset(splits[s]) for s in ("train", "validation")]
+        return datasets, digest, fields
     if cfg.data.format == "tokens":
         path = Path(cfg.data.path)
         manifest, digest = load_token_corpus(path, cfg.data.corpus, tokenizer_manifest)
-        datasets = [TokenWindowDataset(path / f"{split}.bin", length, length) for split in SPLITS]
+        datasets = [
+            TokenWindowDataset(path / f"{split}.bin", length, length, manifest["dtype"])
+            for split in SPLITS
+        ]
         fields = {
             "format": "tokens",
             "corpus": manifest["provenance"],
@@ -128,15 +177,28 @@ def _batch_hash(batches):
     return hashlib.sha256(b"".join(b.numpy().tobytes() for b in batches)).hexdigest()
 
 
-# The code a GPT-2 language-model run executes; see implementation_fingerprint.
-LM_TRAINING_CODE = (
-    "config.py",
-    "evaluation.py",
-    "generation.py",
-    "data",
-    "model/gpt2",
-    "training",
-)
+def lm_training_code(cfg):
+    """The package paths a next-token run executes, for `implementation_fingerprint`.
+
+    Only the run's own model family counts, so editing Qwen3 never blocks resuming a GPT-2
+    run, and the reasoning modules count only when the math-distill prompt uses them.
+    """
+    code = [
+        "config.py",
+        "evaluation.py",
+        "generation.py",
+        "data",
+        "model/assets.py",
+        "model/registry.py",
+        f"model/{cfg.model.arch}",
+        "training",
+    ]
+    if cfg.data.format == "instructions":
+        from llm_training.data.instructions import DATASETS
+
+        if DATASETS[cfg.data.dataset]["prompt"] == "math":
+            code += ["reasoning/distill.py", "reasoning/grading.py"]
+    return tuple(code)
 
 
 def _same_environment(saved, current, allow_code_drift=False):
@@ -145,6 +207,7 @@ def _same_environment(saved, current, allow_code_drift=False):
         "torch",
         "numpy",
         "tiktoken",
+        "tokenizers",
         "platform",
         "machine",
         "device",
@@ -165,6 +228,28 @@ def _same_environment(saved, current, allow_code_drift=False):
             "Pass --allow-code-drift to resume anyway; the run records the override."
         )
     return drifted
+
+
+def _load_initial_weights(model, model_cfg):
+    """Load the run's starting weights; return a provenance record of their source."""
+    source = model_cfg.init_from
+    if source in PRETRAINED:
+        state, record = pretrained_state(source, model_cfg.weights_dir)
+    else:
+        saved = read_model_file(source)
+        if saved["arch"] != model_cfg.arch:
+            raise ValueError(f"{source} holds a {saved['arch']} model, not {model_cfg.arch}")
+        for key in ARCHITECTURE_KEYS[model_cfg.arch]:
+            if saved["model_config"][key] != getattr(model_cfg, key):
+                raise ValueError(f"model.{key} differs from the weights in {source}")
+        state = saved["model_state_dict"]
+        with open(source, "rb") as file:
+            record = {
+                "model_file": source,
+                "sha256": hashlib.file_digest(file, "sha256").hexdigest(),
+            }
+    load_weights(model, model_cfg.arch, state)
+    return record
 
 
 def train(
@@ -197,8 +282,10 @@ def train(
         "deterministic_algorithms": torch.are_deterministic_algorithms_enabled(),
         "matmul_precision": torch.get_float32_matmul_precision(),
     }
+    if cfg.model.arch == "qwen3":
+        env["tokenizers"] = importlib.metadata.version("tokenizers")
     package = Path(__file__).parent.parent
-    env["implementation_sha256"] = implementation_fingerprint(package, LM_TRAINING_CODE)
+    env["implementation_sha256"] = implementation_fingerprint(package, lm_training_code(cfg))
     if device == "cuda" and not env["cuda_available"]:
         raise ValueError("CUDA was requested but is unavailable")
     if device == "mps" and not env["mps_available"]:
@@ -208,21 +295,43 @@ def train(
     torch.manual_seed(cfg.training.seed)
     random.seed(cfg.training.seed)
     np.random.seed(cfg.training.seed)
-    tokenizer = load_tokenizer(Path(cfg.data.tokenizer_cache))
-    tokenizer_manifest = json.loads((Path(cfg.data.tokenizer_cache) / "manifest.json").read_text())
+    tokenizer, tokenizer_manifest = load_tokenizer(cfg.model.arch, cfg.data.tokenizer_cache)
     datasets, digest, data_fields = _load_datasets(cfg, tokenizer, tokenizer_manifest)
     identity = {"sha256": digest, "tokenizer_manifest": tokenizer_manifest}
     if saved and saved["data_identity"] != identity:
         raise ValueError("Dataset/tokenizer identity differs from the checkpoint")
     if len(datasets[0]) < cfg.training.batch_size or not len(datasets[1]):
         raise ValueError("Insufficient data: need a full training batch and a validation window")
+    collate = None
+    if cfg.data.format == "instructions":
+        from llm_training.data.instructions import collate_instructions
+
+        collate = partial(
+            collate_instructions,
+            pad_token_id=tokenizer.eot_token,
+            mask_prompt=cfg.data.mask_prompt,
+        )
     train_loader = DataLoader(
-        datasets[0], batch_size=cfg.training.batch_size, shuffle=True, drop_last=True, num_workers=0
+        datasets[0],
+        batch_size=cfg.training.batch_size,
+        shuffle=True,
+        drop_last=True,
+        num_workers=0,
+        collate_fn=collate,
     )
     val_loader = DataLoader(
-        datasets[1], batch_size=cfg.training.batch_size, shuffle=False, num_workers=0
+        datasets[1],
+        batch_size=cfg.training.batch_size,
+        shuffle=False,
+        num_workers=0,
+        collate_fn=collate,
     )
-    model = GPTModel(asdict(cfg.model)).to(device)
+    model = build_model(asdict(cfg.model))
+    # A resumed run reports the weights its lineage started from, kept in the checkpoint.
+    initial_weights = saved.get("initial_weights") if saved else None
+    if cfg.model.init_from is not None and not saved:
+        initial_weights = _load_initial_weights(model, cfg.model)
+    model.to(device)
     optimizer = build_optimizer(model, cfg.training)
     accum = cfg.training.grad_accum_steps
     # A final partial group (epoch length not divisible by `accum`) still updates, averaged
@@ -287,6 +396,7 @@ def train(
             "parent_implementation_sha256": saved["environment"].get("implementation_sha256")
             if saved
             else None,
+            "initial_weights": initial_weights,
         },
     )
     write_json(
@@ -294,7 +404,7 @@ def train(
         identity
         | {
             "path": cfg.data.path,
-            "tokenizer": "gpt2 (reused, not trained)",
+            "tokenizer": f"{cfg.model.arch} (reused, not trained)",
             **data_fields,
             "windows": {"train": len(datasets[0]), "validation": len(datasets[1])},
         },
@@ -345,6 +455,7 @@ def train(
             "initial_evaluation": initial,
             "best_validation": best_validation,
             "best_step": best_step,
+            "initial_weights": initial_weights,
         }
         atomic_save(run / "checkpoints/last.pt", state)
         if improved:
@@ -406,7 +517,7 @@ def train(
                         (loss / group if group > 1 else loss).backward()
                         loss_sum += loss.item()
                         batches.append(inputs)
-                        group_tokens += targets.numel()
+                        group_tokens += (targets != -100).sum().item()
                     grad_norm = clip_and_measure(model, cfg.training.grad_clip)
                     if not torch.isfinite(grad_norm):
                         raise ValueError("Nonfinite gradients; resume the previous safe checkpoint")
@@ -487,10 +598,12 @@ def train(
             atomic_save(
                 run / "model.pt",
                 {
-                    "format_version": 1,
+                    "format_version": MODEL_FILE_FORMAT,
+                    "arch": cfg.model.arch,
                     "model_config": asdict(cfg.model),
                     "model_state_dict": model.state_dict(),
                     "optimizer_steps": progress["optimizer_steps"],
+                    "tokenizer": tokenizer_manifest,
                 },
             )
             write_json(

@@ -44,6 +44,7 @@ FORMAT_VERSION = 1
 
 # The code a GRPO run executes; see implementation_fingerprint.
 GRPO_CODE = (
+    "model/assets.py",  # pinned-file verification used by model/qwen3/pretrained.py
     "model/qwen3",
     "reasoning",
     "training/checkpoint.py",

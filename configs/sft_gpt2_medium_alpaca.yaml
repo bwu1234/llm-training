@@ -1,0 +1,45 @@
+# Instruction fine-tuning of GPT-2 medium (355M), as in chapter 7 of *Build a Large Language
+# Model (From Scratch)* (`gpt_instruction_finetuning.py`): OpenAI's released weights, the
+# 1,100-row Alpaca-style instruction set split 85/10/5 in file order, batches of 8 padded with
+# the end-of-text token, AdamW (lr 5e-5, weight decay 0.1) for 2 epochs, dropout off, and
+# train/validation loss on 5 batches every 5 updates. The loss covers prompt and response, as
+# in the chapter; `data.mask_prompt: true` is its exercise 7.2.
+#
+# Differences from the chapter: SDPA attention (equal to the explicit kernel with dropout off,
+# up to float rounding) and a tied output head (the released head equals the embedding; the
+# chapter trains a separate copy, which `tie_embeddings: false` restores).
+#
+#   uv run llm-training prepare --config configs/sft_gpt2_medium_alpaca.yaml  # ~1.7 GB once
+#   uv run llm-training train --config configs/sft_gpt2_medium_alpaca.yaml
+#   uv run llm-training respond --checkpoint runs/sft/<run>/model.pt \
+#     --config runs/sft/<run>/config.resolved.yaml --device mps
+model:
+  init_from: gpt2-medium-355m
+  weights_dir: ../data/gpt2-medium-355m
+  tie_embeddings: true
+  attn_impl: sdpa
+data:
+  format: instructions
+  dataset: alpaca-1100
+  path: ../data/instructions/alpaca-1100
+  tokenizer_cache: ../data/tokenizer
+  max_length: 1024
+  mask_prompt: false
+training:
+  seed: 123
+  batch_size: 8
+  num_epochs: 2
+  max_steps: null
+  learning_rate: 0.00005
+  weight_decay: 0.1
+  eval_freq: 5
+  eval_iter: 5
+  recipe: sampled_train_validation
+  checkpoint_every: 50
+runtime:
+  device: mps
+  num_threads: 4
+output:
+  root: ../runs/sft
+  prompt: "Below is an instruction that describes a task. Write a response that appropriately completes the request.\n\n### Instruction:\nConvert the active sentence to passive: 'The chef cooks the meal every day.'"
+  sample_tokens: 35

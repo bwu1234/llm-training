@@ -15,7 +15,8 @@ See [the implementation plan](IMPLEMENTATION_PLAN.md) and
 [reproduction evidence](docs/experiments/chapter-reproduction.md).
 For each model's structure, tensor flow, and preset dimensions, see the
 [GPT-2 guide](docs/gpt2.md) and the [Qwen3 guide](docs/qwen3.md).
-Prepared `uint16` token files exist for registered corpora (TinyStories); AMP/`torch.compile`
+Prepared token files (`uint16`, or `uint32` for Qwen3's vocabulary) exist for registered
+corpora (TinyStories); AMP/`torch.compile`
 and distributed training remain future work.
 The runtime is single-process FP32 with `num_workers=0`.
 
@@ -104,9 +105,10 @@ a UTF-8 character. Exact bytes are retained when a token alone cannot decode.
 
 Both `model.pt` and full `checkpoints/last.pt` / `checkpoints/best.pt` can be inspected
 without restoring optimizer or RNG state. Existing trained weights remain usable
-for this inference view. Inference defaults to CPU and the local `data/tokenizer`
-cache; use `--tokenizer-cache`, `--device`, and `--num-threads` to override them.
-Preparation must already have cached the GPT-2 assets; prediction works offline.
+for this inference view. Inference defaults to CPU and the checkpoint family's local
+tokenizer (`data/tokenizer` for GPT-2, `data/qwen3-0.6b-base` for Qwen3); use
+`--tokenizer-cache`, `--device`, and `--num-threads` to override them. Preparation must
+already have cached the tokenizer assets; prediction works offline.
 Held-out NLL/perplexity remain in the run's `evaluation.json`.
 
 The [saved JSON trace](docs/experiments/next-token-predictions.json) records the
@@ -146,7 +148,7 @@ data, tokenizer assets, Python/Torch/dependency versions, device, thread count, 
 numerical settings are rejected. A change to executable training code (model, data, trainer;
 not comments, docstrings, formatting, the CLI, or `predict`) is rejected too, unless you pass
 `--allow-code-drift`; the child run's `provenance.json` records that the override was used.
-Only the code a run executes counts: `LM_TRAINING_CODE` in `training/trainer.py` lists it, so
+Only the code a run executes counts: `lm_training_code` in `training/trainer.py` lists it, so
 edits to the Qwen3 modules never block a GPT-2 resume. Exact recovery is tested
 on CPU FP32 in the recorded environment. On MPS, resume was checked on the TinyStories preset and
 matches an uninterrupted run to float32 rounding (about 1e-7), not bitwise, because MPS kernels are
@@ -302,6 +304,26 @@ and [chapter/resume evidence](docs/experiments/chapter-reproduction.md) for this
 modules alongside the GPT ones. It loads the pinned Qwen3-0.6B base weights and tokenizer,
 which an oracle test checks against Hugging Face Transformers. See
 [the Qwen3 guide](docs/qwen3.md).
+
+## Continued pretraining and SFT from released weights
+
+`model.init_from` starts the same trainer from OpenAI's GPT-2 small or medium, Qwen3-0.6B
+base, or any finished run's `model.pt`. Raw text continues pretraining; `data.format:
+instructions` is supervised fine-tuning, following chapter 7 of *Build a Large Language
+Model (From Scratch)* and chapter 8 of *Build a Reasoning Model (From Scratch)*.
+
+```bash
+uv run llm-training prepare --config configs/sft_gpt2_medium_alpaca.yaml   # ~1.7 GB once
+uv run llm-training train --config configs/sft_gpt2_medium_alpaca.yaml     # ~8-10 min on MPS
+uv run llm-training respond --checkpoint runs/sft/<run>/model.pt \
+  --config runs/sft/<run>/config.resolved.yaml --device mps
+```
+
+`configs/sft_qwen3_0_6b_math_distill.yaml` is chapter 8's reasoning distillation (an
+estimated 18–22 hours). The two `cpt_*_tinystories.yaml` recipes are plumbing tests only: a
+long run on children's stories would erode the models' general skills. See
+[the fine-tuning guide](docs/finetuning.md) for measured costs, the book parity checks,
+and what is not built.
 
 ## Reasoning fine-tune: GRPO on MATH
 

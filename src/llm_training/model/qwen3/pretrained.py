@@ -9,14 +9,13 @@ the official `Qwen/Qwen3-0.6B-Base` `tokenizer.json` (same git blob).
 Only `prepare_qwen3_base` touches the network; loading reads and verifies local files.
 """
 
-import hashlib
-import urllib.request
 from pathlib import Path
 
 import torch
 
+from ..assets import download_pinned, verify_pinned
 from .model import QWEN3_0_6B, Qwen3Model
-from .tokenizer import Qwen3Tokenizer
+from .tokenizer import Qwen3TextTokenizer, Qwen3Tokenizer
 
 REPOSITORY = "rasbt/qwen3-from-scratch"
 REVISION = "8a3862bde98adf1c10e551bc4a400bf836f11e78"
@@ -30,33 +29,11 @@ FILES = {
 
 def prepare_qwen3_base(path):
     """Download any missing or mismatched pinned file into `path` (~1.5 GB of weights)."""
-    path = Path(path)
-    path.mkdir(parents=True, exist_ok=True)
-    for name, expected in FILES.items():
-        target = path / name
-        if target.is_file() and _sha256(target) == expected:
-            continue
-        url = f"https://huggingface.co/{REPOSITORY}/resolve/{REVISION}/{name}"
-        partial = target.with_name(target.name + ".partial")
-        digest = hashlib.sha256()
-        # Stream in 1 MiB chunks, hashing as we write, so the 1.5 GB file never sits in memory.
-        with urllib.request.urlopen(url, timeout=60) as response, partial.open("wb") as out:
-            while chunk := response.read(1 << 20):
-                digest.update(chunk)
-                out.write(chunk)
-        if digest.hexdigest() != expected:
-            partial.unlink()
-            raise ValueError(f"Downloaded {name} SHA256 mismatch")
-        partial.replace(target)
+    download_pinned(f"https://huggingface.co/{REPOSITORY}/resolve/{REVISION}", FILES, path)
 
 
 def verify_qwen3_base(path):
-    for name, expected in FILES.items():
-        target = Path(path) / name
-        if not target.is_file() or _sha256(target) != expected:
-            raise ValueError(
-                f"{target} is missing or differs from the pinned file; run prepare_qwen3_base"
-            )
+    verify_pinned(FILES, path, "prepare_qwen3_base")
 
 
 def load_qwen3_base(path, device="cpu", attn_impl="explicit", tie_embeddings=True):
@@ -86,6 +63,19 @@ def load_qwen3_state(model, state):
     return model
 
 
-def _sha256(path):
-    with open(path, "rb") as file:
-        return hashlib.file_digest(file, "sha256").hexdigest()
+def prepare_qwen3_tokenizer(path):
+    """Download only the pinned tokenizer file into `path`."""
+    download_pinned(
+        f"https://huggingface.co/{REPOSITORY}/resolve/{REVISION}",
+        {TOKENIZER: FILES[TOKENIZER]},
+        path,
+    )
+
+
+def load_qwen3_text_tokenizer(path):
+    """Return the verified pinned tokenizer behind the next-token trainer's interface."""
+    verify_pinned({TOKENIZER: FILES[TOKENIZER]}, path, "`llm-training prepare`")
+    return Qwen3TextTokenizer(Path(path) / TOKENIZER)
+
+
+TOKENIZER_MANIFEST = {"encoding": "qwen3", "files": {TOKENIZER: FILES[TOKENIZER]}}

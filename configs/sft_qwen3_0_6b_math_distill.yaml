@@ -1,0 +1,50 @@
+# Reasoning distillation into Qwen3-0.6B base, as in chapter 8 of *Build a Reasoning Model
+# (From Scratch)* (`ch08/04_train_with_distillation/distill.py`, base-model defaults):
+# DeepSeek-R1's reasoning and answers to 12,000 MATH training problems (MATH-500 excluded),
+# the chapter 3 math prompt, examples over 2,048 tokens dropped, 25 validation examples after
+# a Random(123) shuffle, one example per update, loss on the answer tokens only, AdamW at
+# lr 5e-6 (PyTorch defaults otherwise), gradient clipping at 1.0 as in the chapter, 2 epochs.
+#
+# Differences from the chapter: float32 weights and AdamW state (the chapter's model holds
+# its embedding and linear weights in bfloat16), SDPA attention, and the batch order (a seeded DataLoader shuffle rather
+# than Random(42)); the loss and gradient per example are tested equal to the chapter's.
+# The validation loss here averages tokens over all 25 examples; the chapter averages the
+# 25 per-example means.
+#
+# This is a long run: see docs/finetuning.md for the measured cost before starting it.
+#   uv run llm-training prepare --config configs/sft_qwen3_0_6b_math_distill.yaml  # ~103 MB
+#   uv run llm-training train --config configs/sft_qwen3_0_6b_math_distill.yaml
+#   uv run llm-training math-eval --model runs/sft/<run>/model.pt --limit 100
+model:
+  arch: qwen3
+  init_from: qwen3-0.6b-base
+  weights_dir: ../data/qwen3-0.6b-base
+  tie_embeddings: false
+  attn_impl: sdpa
+data:
+  format: instructions
+  dataset: math-distill-r1
+  path: ../data/instructions/math-distill-r1
+  tokenizer_cache: ../data/qwen3-0.6b-base
+  max_length: 2048
+  mask_prompt: true
+training:
+  seed: 42
+  batch_size: 1
+  num_epochs: 2
+  max_steps: null
+  learning_rate: 0.000005
+  weight_decay: 0.01
+  grad_clip: 1.0
+  eval_freq: 250
+  eval_iter: 25
+  recipe: validation_only
+  checkpoint_every: 250
+runtime:
+  device: mps
+  num_threads: 4
+output:
+  root: ../runs/sft
+  prompt: "You are a helpful math assistant.\nAnswer the question and write the final result on a new line as:\n\\boxed{ANSWER}\n\nQuestion:\nWhat is $1 + 2 \\cdot 3$?\n\nAnswer:"
+  sample_tokens: 120
+  sample_every: 1000

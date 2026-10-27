@@ -7,8 +7,7 @@ from pathlib import Path
 
 import torch
 
-from .model.gpt2.model import GPTModel
-from .model.gpt2.tokenizer import load_tokenizer
+from .model.registry import build_model, load_tokenizer, load_weights
 
 
 def _token(tokenizer, token_id):
@@ -184,7 +183,20 @@ def generate_from_checkpoint(
     }
 
 
-def load_inference_model(checkpoint, tokenizer_cache, device="cpu", num_threads=1):
+def checkpoint_arch(checkpoint):
+    """The model family of a model.pt or full checkpoint, read without building the model."""
+    saved = torch.load(checkpoint, map_location="cpu", weights_only=True, mmap=True)
+    if not isinstance(saved, dict) or saved.get("format_version") not in (1, 2):
+        raise ValueError("Expected a project model.pt or full training checkpoint")
+    config = saved.get("model_config") or saved.get("config", {}).get("model") or {}
+    return saved.get("arch") or config.get("arch", "gpt2")
+
+
+# Where `prepare` puts each family's tokenizer when a recipe does not say otherwise.
+DEFAULT_TOKENIZER_CACHE = {"gpt2": "data/tokenizer", "qwen3": "data/qwen3-0.6b-base"}
+
+
+def load_inference_model(checkpoint, tokenizer_cache=None, device="cpu", num_threads=1):
     """Return (model, tokenizer, model config, optimizer steps, tokenizer manifest)."""
     if type(num_threads) is not int or num_threads <= 0:
         raise ValueError("num_threads must be a positive integer")
@@ -196,27 +208,28 @@ def load_inference_model(checkpoint, tokenizer_cache, device="cpu", num_threads=
         raise ValueError("MPS was requested but is unavailable")
     torch.set_num_threads(num_threads)
     checkpoint = Path(checkpoint).resolve()
-    tokenizer_cache = Path(tokenizer_cache).resolve()
-    saved = torch.load(checkpoint, map_location="cpu", weights_only=True)
+    saved = torch.load(checkpoint, map_location="cpu", weights_only=True, mmap=True)
     if not isinstance(saved, dict) or saved.get("format_version") not in (1, 2):
         raise ValueError("Expected a project model.pt or full training checkpoint")
     if saved["format_version"] == 1:
         config = saved.get("model_config")
         optimizer_steps = saved.get("optimizer_steps")
+        expected = saved.get("tokenizer")
     else:
         config = saved.get("config", {}).get("model")
         optimizer_steps = saved.get("progress", {}).get("optimizer_steps")
+        expected = saved.get("data_identity", {}).get("tokenizer_manifest")
     if not isinstance(config, dict) or "model_state_dict" not in saved:
         raise ValueError("Checkpoint is missing model configuration or weights")
-    if config.get("vocab_size") != 50257:
-        raise ValueError("This command uses the GPT-2 tokenizer with vocabulary size 50257")
-    tokenizer = load_tokenizer(tokenizer_cache)
-    manifest = json.loads((tokenizer_cache / "manifest.json").read_text())
-    expected = saved.get("data_identity", {}).get("tokenizer_manifest")
+    # Checkpoints written before Qwen3 support carry no family and are GPT-2.
+    arch = saved.get("arch") or config.get("arch", "gpt2")
+    if tokenizer_cache is None:
+        tokenizer_cache = DEFAULT_TOKENIZER_CACHE[arch]
+    tokenizer, manifest = load_tokenizer(arch, Path(tokenizer_cache).resolve())
     if expected is not None and expected != manifest:
         raise ValueError("Tokenizer identity differs from the checkpoint")
-    model = GPTModel(config)
-    model.load_state_dict(saved["model_state_dict"])
+    model = build_model(config | {"arch": arch})
+    load_weights(model, arch, saved["model_state_dict"])
     del saved  # Full checkpoints also contain optimizer tensors, unneeded for inference.
     model.to(device)
     return model, tokenizer, config, optimizer_steps, manifest

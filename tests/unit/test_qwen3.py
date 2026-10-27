@@ -3,6 +3,7 @@
 import pytest
 import torch
 
+from llm_training.model.assets import sha256_file
 from llm_training.model.qwen3 import pretrained
 from llm_training.model.qwen3.model import QWEN3_0_6B, KVCache, Qwen3Model
 from tests.reference import qwen3_baseline
@@ -160,7 +161,7 @@ def test_verify_rejects_missing_and_altered_files(tmp_path, monkeypatch):
     files = {"weights.pth": b"weights", "tokenizer.json": b"{}"}
     for name, data in files.items():
         (tmp_path / name).write_bytes(data)
-    monkeypatch.setattr(pretrained, "FILES", {n: pretrained._sha256(tmp_path / n) for n in files})
+    monkeypatch.setattr(pretrained, "FILES", {n: sha256_file(tmp_path / n) for n in files})
     pretrained.verify_qwen3_base(tmp_path)
     (tmp_path / "tokenizer.json").write_bytes(b"[]")
     with pytest.raises(ValueError, match="differs from the pinned file"):

@@ -7,10 +7,11 @@ modules in `model/gpt2/` ([GPT-2 guide](gpt2.md)); each family keeps its archite
 package.
 
 **Status:** the architecture, pinned weight loading, and tokenizer are in place and checked
-against Hugging Face Transformers. The fine-tuning recipe is GRPO on MATH, with its own
-commands; see [the GRPO guide](grpo.md). The next-token `train`, `predict`, and `generate`
-commands remain GPT-2 only. Continued pretraining of Qwen3 on text would need token files
-wider than `uint16` (the vocabulary has 151,936 tokens) and is not built.
+against Hugging Face Transformers. Two ways to fine-tune it exist: GRPO on MATH, with its own
+commands ([GRPO guide](grpo.md)), and the next-token `train` command with `model.arch: qwen3`
+and `model.init_from: qwen3-0.6b-base`, for continued pretraining on `uint32` token files or
+supervised fine-tuning ([fine-tuning guide](finetuning.md)). `predict` and `generate` load
+either family. Training Qwen3 from random weights is not built.
 
 ## Usage
 
@@ -52,7 +53,7 @@ The preset `QWEN3_0_6B` has 596,049,920 parameters: 28 layers, `emb_dim` 1024, a
 | [`layers.py`](../src/llm_training/model/qwen3/layers.py) | `RMSNorm`, SwiGLU `FeedForward` |
 | [`rope.py`](../src/llm_training/model/qwen3/rope.py) | `compute_rope_params`, `apply_rope` |
 | [`pretrained.py`](../src/llm_training/model/qwen3/pretrained.py) | pinned assets: `prepare_qwen3_base`, `load_qwen3_base` |
-| [`tokenizer.py`](../src/llm_training/model/qwen3/tokenizer.py) | `Qwen3Tokenizer` (Hugging Face `tokenizers`, EOS `<\|endoftext\|>`) |
+| [`tokenizer.py`](../src/llm_training/model/qwen3/tokenizer.py) | `Qwen3Tokenizer` (Hugging Face `tokenizers`, EOS `<\|endoftext\|>`); `Qwen3TextTokenizer`, the trainer's tiktoken-style interface |
 
 `KVCache` is kept with the source forward pass. `generation.py` does not use it yet: it
 recomputes the whole context for each new token.

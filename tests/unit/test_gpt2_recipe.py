@@ -326,11 +326,12 @@ def test_scoped_fingerprint_rejects_missing_paths(tmp_path):
         implementation_fingerprint(package, ["renamed"])
 
 
-def test_lm_fingerprint_covers_gpt2_but_not_qwen3():
+def test_lm_fingerprint_covers_only_the_run_family():
     package = Path(trainer.__file__).parent.parent
-    implementation_fingerprint(package, trainer.LM_TRAINING_CODE)  # every listed path exists
-    assert "model/gpt2" in trainer.LM_TRAINING_CODE
-    assert not any(entry.startswith("model/qwen3") for entry in trainer.LM_TRAINING_CODE)
+    gpt2 = trainer.lm_training_code(load_config("configs/smoke.yaml"))
+    implementation_fingerprint(package, gpt2)  # every listed path exists
+    assert "model/gpt2" in gpt2
+    assert not any(entry.startswith(("model/qwen3", "reasoning")) for entry in gpt2)
 
 
 def test_replace_helper_keeps_frozen_config_valid():

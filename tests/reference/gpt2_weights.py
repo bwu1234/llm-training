@@ -1,8 +1,9 @@
 """Map public GPT-2 (Hugging Face `GPT2LMHeadModel`) weights into `llm_training.GPTModel`.
 
 Test-only oracle: it exists to show that the model *is* GPT-2, by checking logits against an
-independent implementation loaded with OpenAI's trained weights. Training code must never
-import this module, and the pretrained weights are never a starting point for a run.
+independent implementation loaded with OpenAI's trained weights, and that the converted files
+fine-tuning starts from (`model/gpt2/pretrained.py`) are those weights. Training code must
+never import this module.
 
 Hugging Face stores projections as `Conv1D`, whose weight is (in, out); `nn.Linear` is
 (out, in), so every projection is transposed. The fused `c_attn` holds Q, K, V side by side.

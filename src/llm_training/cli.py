@@ -31,7 +31,11 @@ def main():
     prediction = commands.add_parser("predict", help="Show next-token candidates and probabilities")
     prediction.add_argument("--checkpoint", type=Path, required=True)
     prediction.add_argument("--prompt", required=True)
-    prediction.add_argument("--tokenizer-cache", type=Path, default=Path("data/tokenizer"))
+    prediction.add_argument(
+        "--tokenizer-cache",
+        type=Path,
+        help="Tokenizer assets (default: data/tokenizer for GPT-2, data/qwen3-0.6b-base for Qwen3)",
+    )
     prediction.add_argument("--max-new-tokens", type=int, default=8)
     prediction.add_argument("--top-k", type=int, default=5, help="Number of candidates to display")
     prediction.add_argument("--device", choices=["cpu", "mps", "cuda"], default="cpu")
@@ -40,7 +44,11 @@ def main():
     generation = commands.add_parser("generate", help="Sample a continuation from a checkpoint")
     generation.add_argument("--checkpoint", type=Path, required=True)
     generation.add_argument("--prompt", default="Once upon a time")
-    generation.add_argument("--tokenizer-cache", type=Path, default=Path("data/tokenizer"))
+    generation.add_argument(
+        "--tokenizer-cache",
+        type=Path,
+        help="Tokenizer assets (default: data/tokenizer for GPT-2, data/qwen3-0.6b-base for Qwen3)",
+    )
     generation.add_argument("--max-new-tokens", type=int, default=200)
     generation.add_argument("--temperature", type=float, default=0.8, help="0 decodes greedily")
     generation.add_argument("--top-k", type=int, help="Sample only from the k likeliest tokens")
@@ -48,6 +56,20 @@ def main():
     generation.add_argument("--num-samples", type=int, default=1, help="Seeds seed..seed+n-1")
     generation.add_argument("--device", choices=["cpu", "mps", "cuda"], default="cpu")
     generation.add_argument("--num-threads", type=int, default=1)
+    responding = commands.add_parser(
+        "respond", help="Greedy responses of a fine-tuned model to held-out instructions"
+    )
+    responding.add_argument("--checkpoint", type=Path, required=True)
+    responding.add_argument(
+        "--config", type=Path, required=True, help="The run's recipe (config.resolved.yaml)"
+    )
+    responding.add_argument("--split", default="test", help="test (chapter 7) or validation")
+    responding.add_argument("--limit", type=int, help="Respond to the first N examples")
+    responding.add_argument("--max-new-tokens", type=int, default=256)
+    responding.add_argument("--device", choices=["cpu", "mps", "cuda"], default="cpu")
+    responding.add_argument(
+        "--output", type=Path, help="JSONL; reruns skip recorded examples (default: beside it)"
+    )
     grpo_prepare = commands.add_parser(
         "grpo-prepare", help="Fetch the pinned Qwen3-0.6B base files and MATH problem sets"
     )
@@ -72,6 +94,7 @@ def main():
     evaluated = math_eval.add_mutually_exclusive_group(required=True)
     evaluated.add_argument("--snapshot", type=Path, help="A GRPO snapshots/stepNNNNN.pt file")
     evaluated.add_argument("--base", action="store_true", help="The untrained base model")
+    evaluated.add_argument("--model", type=Path, help="A Qwen3 model.pt, e.g. from SFT")
     math_eval.add_argument("--weights", type=Path, default=Path("data/qwen3-0.6b-base"))
     math_eval.add_argument("--data", type=Path, default=Path("data/math"))
     math_eval.add_argument("--limit", type=int, default=500, help="Score the first N problems")
@@ -105,6 +128,27 @@ def main():
                 stop_after=args.stop_after,
                 allow_code_drift=args.allow_code_drift,
             )
+            return
+        if args.command == "respond":
+            from .respond import respond
+
+            if args.limit is not None and args.limit <= 0:
+                raise ValueError("--limit must be positive")
+            if args.max_new_tokens <= 0:
+                raise ValueError("--max-new-tokens must be positive")
+            output = args.output or args.checkpoint.with_name(
+                f"{args.checkpoint.stem}.{args.split}-responses.jsonl"
+            )
+            respond(
+                args.checkpoint,
+                args.config,
+                split=args.split,
+                limit=args.limit,
+                max_new_tokens=args.max_new_tokens,
+                device=args.device,
+                output=output,
+            )
+            print(f"Responses: {output}")
             return
         if args.command == "math-eval":
             _math_eval(args)
@@ -153,32 +197,8 @@ def main():
                 print(f"--- seed {seed}, update {result['optimizer_steps']}\n{result['text']}\n")
             return
         cfg = load_config(args.config) if args.config else None
-        if args.command == "prepare" and cfg.data.format == "tokens":
-            from .data.corpus import prepare_corpus
-            from .model.gpt2.tokenizer import prepare_tokenizer
-
-            prepare_tokenizer(Path(cfg.data.tokenizer_cache))
-            prepare_corpus(cfg.data.corpus, Path(cfg.data.path), Path(cfg.data.tokenizer_cache))
-            print(
-                f"Prepared {cfg.data.corpus} tokens in {cfg.data.path} and GPT-2 tokenizer assets"
-            )
-        elif args.command == "prepare":
-            from .model.gpt2.tokenizer import prepare_tokenizer
-
-            path = Path(cfg.data.path)
-            if not path.exists():
-                if cfg.data.source_url is None:
-                    raise ValueError(f"Missing local dataset: {path}")
-                with urllib.request.urlopen(cfg.data.source_url, timeout=30) as response:
-                    data = response.read()
-                if hashlib.sha256(data).hexdigest() != cfg.data.sha256:
-                    raise ValueError("Downloaded data SHA256 mismatch")
-                path.parent.mkdir(parents=True, exist_ok=True)
-                path.write_bytes(data)
-            if cfg.data.sha256 and hashlib.sha256(path.read_bytes()).hexdigest() != cfg.data.sha256:
-                raise ValueError("Existing data SHA256 mismatch")
-            prepare_tokenizer(Path(cfg.data.tokenizer_cache))
-            print(f"Prepared {path} and GPT-2 tokenizer assets")
+        if args.command == "prepare":
+            _prepare(cfg)
         else:
             from .training.trainer import train
 
@@ -193,6 +213,43 @@ def main():
         raise SystemExit(1) from exc
 
 
+def _prepare(cfg):
+    """Fetch everything a recipe reads: tokenizer, starting weights, and data."""
+    from .model.registry import PRETRAINED, prepare_pretrained, prepare_tokenizer
+
+    prepare_tokenizer(cfg.model.arch, Path(cfg.data.tokenizer_cache))
+    if cfg.model.init_from in PRETRAINED:
+        prepare_pretrained(cfg.model.init_from, cfg.model.weights_dir)
+        print(f"Prepared {cfg.model.init_from} weights in {cfg.model.weights_dir}")
+    if cfg.data.format == "tokens":
+        from .data.corpus import prepare_corpus
+
+        prepare_corpus(
+            cfg.data.corpus, Path(cfg.data.path), cfg.model.arch, Path(cfg.data.tokenizer_cache)
+        )
+        print(f"Prepared {cfg.data.corpus} {cfg.model.arch} tokens in {cfg.data.path}")
+        return
+    if cfg.data.format == "instructions":
+        from .data.instructions import prepare_instructions
+
+        prepare_instructions(cfg.data.dataset, cfg.data.path)
+        print(f"Prepared {cfg.data.dataset} in {cfg.data.path}")
+        return
+    path = Path(cfg.data.path)
+    if not path.exists():
+        if cfg.data.source_url is None:
+            raise ValueError(f"Missing local dataset: {path}")
+        with urllib.request.urlopen(cfg.data.source_url, timeout=30) as response:
+            data = response.read()
+        if hashlib.sha256(data).hexdigest() != cfg.data.sha256:
+            raise ValueError("Downloaded data SHA256 mismatch")
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(data)
+    if cfg.data.sha256 and hashlib.sha256(path.read_bytes()).hexdigest() != cfg.data.sha256:
+        raise ValueError("Existing data SHA256 mismatch")
+    print(f"Prepared {path} and {cfg.model.arch} tokenizer assets")
+
+
 def _math_eval(args):
     from .model.qwen3.pretrained import load_qwen3_base
     from .reasoning.evaluate import evaluate_math500, load_snapshot
@@ -204,7 +261,28 @@ def _math_eval(args):
     if args.max_new_tokens <= 0:
         raise ValueError("--max-new-tokens must be positive")
     problems = load_math_data(args.data, "math500")[: args.limit]
-    if args.snapshot:
+    if args.model:
+        import torch
+
+        from .model.assets import verify_pinned
+        from .model.qwen3.pretrained import FILES, TOKENIZER
+        from .model.qwen3.tokenizer import Qwen3Tokenizer
+        from .prediction import checkpoint_arch, load_inference_model
+
+        if checkpoint_arch(args.model) != "qwen3":
+            raise ValueError("math-eval scores Qwen3 models")
+        # Only the tokenizer comes from --weights; the model is the file being scored.
+        verify_pinned({TOKENIZER: FILES[TOKENIZER]}, args.weights, "`llm-training prepare`")
+        model, _, _, steps, _ = load_inference_model(
+            args.model, args.weights, args.device, torch.get_num_threads()
+        )
+        model.eval()
+        tokenizer = Qwen3Tokenizer(str(args.weights / TOKENIZER))
+        output = args.output or args.model.with_name(
+            f"{args.model.stem}.math500-first{args.limit}.jsonl"
+        )
+        evaluated = {"model": str(args.model.resolve()), "optimizer_steps": steps}
+    elif args.snapshot:
         model, tokenizer, meta = load_snapshot(args.snapshot, args.weights, args.device)
         output = args.output or args.snapshot.with_name(
             f"{args.snapshot.stem}.math500-first{args.limit}.jsonl"

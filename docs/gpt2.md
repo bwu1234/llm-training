@@ -8,8 +8,10 @@ uses GPT-2's tokenizer and vocabulary. New training runs initialize embedding
 and linear weights from scratch: by default with PyTorch's defaults (`model.init:
 pytorch`, the book recipe), or with GPT-2-style N(0, 0.02) initialization
 (`model.init: gpt2`, see below); layer normalization starts with scale 1 and
-shift 0. Resumed runs restore the saved parameters.
-The training workflow does not load pretrained GPT-2 weights.
+shift 0. Resumed runs restore the saved parameters. `model.init_from` starts instead from
+OpenAI's released GPT-2 small or medium weights (see the
+[fine-tuning guide](finetuning.md)), which the `pytorch`/`gpt2` initialization then does not
+affect.
 
 ## Data flow
 
@@ -155,7 +157,9 @@ N(0, 1) embedding and a default-scaled head would start with a badly scaled head
 
 `tests/reference/gpt2_weights.py` maps the public Hugging Face GPT-2 weights into this
 model (projections are transposed; `c_attn` is split into Q/K/V). It is a test oracle only:
-training code never imports it. `LLM_ORACLE=1 uv run --group oracle pytest tests/oracle`
+training code never imports it. Fine-tuning loads the author's converted files instead
+(`model/gpt2/pretrained.py`); `tests/oracle/test_gpt2_lineage.py` uses this mapping to show
+the small file is bit-identical to OpenAI's release. `LLM_ORACLE=1 uv run --group oracle pytest tests/oracle`
 downloads about 550 MB once. On 1,024-token inputs it matched Hugging Face to a maximum
 absolute logit difference of 1.4e-4 at logit magnitudes up to about 100 (relative
 about 1.4e-6), with identical argmax at every position; a deliberately broken mapping
@@ -173,6 +177,8 @@ differs by 61.5.
   (`model.init: gpt2`).
 - [`gpt2/tokenizer.py`](../src/llm_training/model/gpt2/tokenizer.py): pinned GPT-2
   tokenizer assets and the `tiktoken` encoding.
+- [`gpt2/pretrained.py`](../src/llm_training/model/gpt2/pretrained.py): pinned OpenAI GPT-2
+  small and medium weights for `model.init_from`.
 - [`config.py`](../src/llm_training/config.py): model settings and validation.
 - [`dataset.py`](../src/llm_training/data/dataset.py) and
   [`loss.py`](../src/llm_training/training/loss.py): shifted next-token targets

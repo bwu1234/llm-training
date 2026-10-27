@@ -52,6 +52,21 @@ comparison uses this independent loop and the frozen model definitions; the
 source script's `GPTModel` and `MultiHeadAttention` were also checked to have the
 same ASTs as the package originals. Hashes/symbols are recorded in the manifest.
 
+Fine-tuning additions (same repository and commit, no local diff at extraction):
+
+| New module | Source | Selected implementation |
+| --- | --- | --- |
+| `data/instructions.py` | `ch07/01_main-chapter-code/gpt_instruction_finetuning.py` | `format_input` |
+
+`collate_instructions` is project code that reproduces chapter 7's `custom_collate_fn` and
+its exercise 7.2 masking variant from examples that already end in end-of-text; a test checks
+the tensors are equal. `tests/reference/instruction_baseline.py` freezes those definitions
+(and chapter 8's below). The starting weights for `init_from: gpt2-small-124m` and
+`gpt2-medium-355m` are the author's
+[`rasbt/gpt2-from-scratch-pytorch`](https://huggingface.co/rasbt/gpt2-from-scratch-pytorch)
+files at `402728f` (MIT); the small file is bit-identical to OpenAI's release
+(`tests/oracle/test_gpt2_lineage.py`). The manifest records the source hashes and pins.
+
 `configs/pretrain_gpt_162m.yaml` derives settings from
 `ch05/01_main-chapter-code/gpt_train.py`. The `sampled_train_validation` recipe preserves source evaluation RNG
 consumption and epoch sampling cadence. See the README and reproduction report
@@ -132,3 +147,15 @@ The grading functions are copied unchanged (AST-identical before formatting). Ch
 
 `tests/reference/reasoning_baseline.py` freezes the selected definitions, with the frozen
 `KVCache` from `qwen3_baseline.py`.
+
+## Reasoning distillation (reasoning-from-scratch, chapter 8)
+
+| New module | Source | Selected implementation |
+| --- | --- | --- |
+| `reasoning/distill.py` | `ch08/04_train_with_distillation/distill.py` | `strip_think_tags`, `format_distilled_answer` |
+
+The rest of chapter 8's recipe is reproduced by the next-token trainer rather than copied:
+`data/instructions.py` encodes prompt and answer as `build_examples` does and drops
+over-length examples as `filter_examples_by_max_len` does, and prompt-masked targets give the
+same loss and gradient as `compute_example_loss` (tests against the frozen copies). Batch
+order comes from the trainer's seeded shuffle, not `random.Random(seed)`.

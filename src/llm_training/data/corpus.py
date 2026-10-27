@@ -1,7 +1,8 @@
-"""Token corpora: explicit download, streaming `uint16` preparation, and verification.
+"""Token corpora: explicit download, streaming token-file preparation, and verification.
 
 `prepare` is the only path that downloads. It writes one flat token file per split plus a
-manifest; training memory-maps those files (`token_dataset.py`), so memory does not grow with
+manifest. Ids are `uint16` when the vocabulary fits (GPT-2's 50,257) and `uint32` otherwise
+(Qwen3's 151,936); training memory-maps those files (`token_dataset.py`), so memory does not grow with
 corpus size and nothing is re-tokenized on start or resume.
 
 Document policy: split the raw text on `<|endoftext|>`, strip surrounding whitespace, drop
@@ -96,11 +97,12 @@ def iter_documents(path: Path, chunk_chars=1 << 22):
 def build_token_corpus(
     sources, out_dir: Path, tokenizer, tokenizer_manifest, provenance, batch_documents=4096
 ):
-    """Tokenize each split's text file into `<split>.bin` (`uint16`) and write the manifest.
+    """Tokenize each split's text file into `<split>.bin` and write the manifest.
 
     The manifest is written last, so its presence marks a complete corpus.
     """
     eot = tokenizer.eot_token
+    dtype = token_dtype(tokenizer.n_vocab)
     out_dir.mkdir(parents=True, exist_ok=True)
     (out_dir / "manifest.json").unlink(missing_ok=True)
     splits = {}
@@ -116,9 +118,9 @@ def build_token_corpus(
                 array = np.fromiter(
                     (t for ids in encoded for t in (eot, *ids)), dtype=np.int64, count=count
                 )
-                if array.min() < 0 or array.max() > np.iinfo(np.uint16).max:
-                    raise ValueError("Token ids do not fit in uint16")
-                data = array.astype(np.uint16).tobytes()
+                if array.min() < 0 or array.max() > np.iinfo(dtype).max:
+                    raise ValueError(f"Token ids do not fit in {dtype}")
+                data = array.astype(dtype).tobytes()
                 out.write(data)
                 digest.update(data)
                 tokens += count
@@ -137,7 +139,7 @@ def build_token_corpus(
         print(f"Prepared {split}: {documents} documents, {tokens} tokens", flush=True)
     manifest = {
         "format_version": FORMAT_VERSION,
-        "dtype": "uint16",
+        "dtype": dtype,
         "document_policy": "split on <|endoftext|>; strip whitespace; drop empty documents",
         "eot_policy": f"prepended: every document starts with token {eot}",
         "cross_document_attention": True,
@@ -151,11 +153,15 @@ def build_token_corpus(
     return manifest
 
 
-def prepare_corpus(name, out_dir: Path, tokenizer_cache: Path):
-    from ..model.gpt2.tokenizer import load_tokenizer
+def token_dtype(n_vocab):
+    return "uint16" if n_vocab <= np.iinfo(np.uint16).max + 1 else "uint32"
+
+
+def prepare_corpus(name, out_dir: Path, arch, tokenizer_cache: Path):
+    from ..model.registry import load_tokenizer
 
     manifest_path = out_dir / "manifest.json"
-    tokenizer_manifest = json.loads((tokenizer_cache / "manifest.json").read_text())
+    tokenizer, tokenizer_manifest = load_tokenizer(arch, tokenizer_cache)
     if manifest_path.is_file():
         try:
             load_token_corpus(out_dir, name, tokenizer_manifest)
@@ -173,9 +179,7 @@ def prepare_corpus(name, out_dir: Path, tokenizer_cache: Path):
         "revision": spec["revision"],
         "files": {split: spec["files"][split][0] for split in SPLITS},
     }
-    build_token_corpus(
-        sources, out_dir, load_tokenizer(tokenizer_cache), tokenizer_manifest, provenance
-    )
+    build_token_corpus(sources, out_dir, tokenizer, tokenizer_manifest, provenance)
 
 
 def load_token_corpus(path: Path, name, tokenizer_manifest):
@@ -186,8 +190,12 @@ def load_token_corpus(path: Path, name, tokenizer_manifest):
     try:
         raw = (path / "manifest.json").read_bytes()
         manifest = json.loads(raw)
-        if manifest["format_version"] != FORMAT_VERSION or manifest["dtype"] != "uint16":
+        if manifest["format_version"] != FORMAT_VERSION or manifest["dtype"] not in (
+            "uint16",
+            "uint32",
+        ):
             raise ValueError("Unsupported token corpus format")
+        itemsize = np.dtype(manifest["dtype"]).itemsize
         if manifest["provenance"]["corpus"] != name:
             raise ValueError(f"Token corpus is {manifest['provenance']['corpus']!r}, not {name!r}")
         if manifest["tokenizer_manifest"] != tokenizer_manifest:
@@ -195,7 +203,10 @@ def load_token_corpus(path: Path, name, tokenizer_manifest):
         for split in SPLITS:
             entry = manifest["splits"][split]
             file = path / entry["file"]
-            if file.stat().st_size != 2 * entry["tokens"] or file_sha256(file) != entry["sha256"]:
+            if (
+                file.stat().st_size != itemsize * entry["tokens"]
+                or file_sha256(file) != entry["sha256"]
+            ):
                 raise ValueError(f"Token file {file.name} does not match its manifest")
     except (OSError, KeyError, TypeError) as exc:
         raise ValueError(

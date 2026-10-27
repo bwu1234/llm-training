@@ -1,4 +1,4 @@
-"""Memory-mapped next-token windows over a prepared `uint16` token file."""
+"""Memory-mapped next-token windows over a prepared token file (`uint16` or `uint32`)."""
 
 import numpy as np
 import torch
@@ -12,8 +12,8 @@ class TokenWindowDataset(Dataset):
     operating system pages tokens in on demand, so memory use is independent of file size.
     """
 
-    def __init__(self, path, max_length, stride):
-        self.tokens = np.memmap(path, dtype=np.uint16, mode="r")
+    def __init__(self, path, max_length, stride, dtype="uint16"):
+        self.tokens = np.memmap(path, dtype=np.dtype(dtype), mode="r")
         self.max_length = max_length
         self.starts = range(0, len(self.tokens) - max_length, stride)
 

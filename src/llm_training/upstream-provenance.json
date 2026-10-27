@@ -94,6 +94,15 @@
         "calc_loss_loader": "mean_batch_loss",
         "evaluate_model": "evaluate_train_validation_loss"
       }
+    },
+    {
+      "source": "ch07/01_main-chapter-code/gpt_instruction_finetuning.py",
+      "symbols": [
+        "format_input"
+      ],
+      "destination": "src/llm_training/data/instructions.py",
+      "sha256": "ddc8ab8a423bcced5d207bae1eefb6f1a09f0c1d617a95546ce779d71c2c6fba",
+      "source_diff": ""
     }
   ],
   "reference": "tests/reference/baseline.py",
@@ -237,6 +246,16 @@
           "destination": "src/llm_training/reasoning/trainer.py",
           "sha256": "bdc09ff7241e10cd4d64034dd2da7a3cb7c7b170cbdb4a99dbba2750365e4548",
           "source_diff": ""
+        },
+        {
+          "source": "ch08/04_train_with_distillation/distill.py",
+          "symbols": [
+            "strip_think_tags",
+            "format_distilled_answer"
+          ],
+          "destination": "src/llm_training/reasoning/distill.py",
+          "sha256": "48153445ba2617aae75972206cdaae40276ee28ff80c1b5d1775550cd2d911fd",
+          "source_diff": ""
         }
       ],
       "local_changes": "No `dtype` config key or argument (float32 parameters; the output head no longer casts its input). Opt-in `tie_embeddings` (the 0.6B preset sets it, matching the official `tie_word_embeddings`) and `attn_impl: sdpa`; defaults keep the source computation.",
@@ -254,7 +273,26 @@
         "derived_from_verified": "2026-10-26: all 310 tensors bit-identical to official model.safetensors (sha256 cd2a512003e2f9f3cd3c32a9c3573f820bb28c940f73c57b1ddaa983d9223eba) after renaming; official file has no lm_head (tied)."
       },
       "reasoning_reference": "tests/reference/reasoning_baseline.py",
-      "reasoning_local_changes": "Grading runs in a time-limited worker process (TimeLimitedGrader); timeouts and grader exceptions score 0 and are recorded. Rollouts sample on the model's device from an explicit, checkpointed generator. grpo_step backpropagates each rollout separately (same gradient as the source's mean loss) and, when all rewards are equal, sets zero gradients without the forward/backward pass. Training is float32 with SDPA attention; the source holds embedding and linear weights and their AdamW state in bfloat16 (RMSNorm scales float32). MATH data is pinned by commit URL and SHA-256."
+      "reasoning_local_changes": "Grading runs in a time-limited worker process (TimeLimitedGrader); timeouts and grader exceptions score 0 and are recorded. Rollouts sample on the model's device from an explicit, checkpointed generator. grpo_step backpropagates each rollout separately (same gradient as the source's mean loss) and, when all rewards are equal, sets zero gradients without the forward/backward pass. Training is float32 with SDPA attention; the source holds embedding and linear weights and their AdamW state in bfloat16 (RMSNorm scales float32). MATH data is pinned by commit URL and SHA-256.",
+      "distill_reference": "tests/reference/instruction_baseline.py (build_examples, filter_examples_by_max_len, compute_example_loss)",
+      "distill_local_changes": "Prompt-masked targets (-100) replace slicing logits at prompt_len - 1; tested equal in loss and gradient. Batches come from a seeded DataLoader shuffle instead of random.Random(seed); validation loss is token-weighted over the 25 examples."
     }
-  ]
+  ],
+  "instruction_reference": "tests/reference/instruction_baseline.py",
+  "instruction_reference_sources": {
+    "ch07/01_main-chapter-code/gpt_instruction_finetuning.py": "ddc8ab8a423bcced5d207bae1eefb6f1a09f0c1d617a95546ce779d71c2c6fba",
+    "ch07/01_main-chapter-code/exercise_experiments.py": "286c2e6b7246f0541aa14b798940ad35d0faaee4a944c60647cdcec4c426077e"
+  },
+  "instruction_local_changes": "Examples carry their final end-of-text token and the collate pads to the longest example, which equals chapter 7's custom_collate_fn (and exercise 7.2 masking) tensor for tensor; over-length examples are dropped (chapter 8's filter) rather than truncated.",
+  "pretrained_weights": {
+    "repository": "https://huggingface.co/rasbt/gpt2-from-scratch-pytorch",
+    "revision": "402728fa68de0d3bb91e3e148ae351511eb7f4db",
+    "derived_from": "OpenAI GPT-2 releases (https://huggingface.co/openai-community/gpt2 at 607a30d783dfa663caf39e06633721c8d4cfcd7e for small)",
+    "files": {
+      "gpt2-small-124M.pth": "24a9078c5b27137fb2706d2206349c759952a7de8f72ef8e305dc02511bcabf8",
+      "gpt2-medium-355M.pth": "9b6b658dc97b2f7a029990036638c7219619c6933eada7fb506c554561f73c60"
+    },
+    "license": "mit",
+    "derived_from_verified": "2026-10-26: gpt2-small-124M.pth bit-identical, tensor for tensor, to the official model.safetensors mapped with tests/reference/gpt2_weights.py (tests/oracle/test_gpt2_lineage.py). Medium not compared."
+  }
 }
