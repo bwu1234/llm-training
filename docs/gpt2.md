@@ -1,7 +1,8 @@
-# Model architecture
+# GPT-2 model
 
-This project trains a decoder-only, GPT-style Transformer for next-token
-prediction. The implementation follows the explicit architecture in Sebastian
+`llm_training.model.gpt2` is the decoder-only, GPT-style Transformer that the next-token
+`train` command trains from scratch. The other model family, Qwen3, is described in
+[the Qwen3 guide](qwen3.md). The implementation follows the explicit architecture in Sebastian
 Raschka's *LLMs-from-scratch*, with project-specific module organization. It
 uses GPT-2's tokenizer and vocabulary. New training runs initialize embedding
 and linear weights from scratch: by default with PyTorch's defaults (`model.init:
@@ -168,6 +169,10 @@ differs by 61.5.
   self-attention and masking.
 - [`gpt2/layers.py`](../src/llm_training/model/gpt2/layers.py): layer normalization,
   GELU, and feed-forward network.
+- [`gpt2/init.py`](../src/llm_training/model/gpt2/init.py): GPT-2-style initialization
+  (`model.init: gpt2`).
+- [`gpt2/tokenizer.py`](../src/llm_training/model/gpt2/tokenizer.py): pinned GPT-2
+  tokenizer assets and the `tiktoken` encoding.
 - [`config.py`](../src/llm_training/config.py): model settings and validation.
 - [`dataset.py`](../src/llm_training/data/dataset.py) and
   [`loss.py`](../src/llm_training/training/loss.py): shifted next-token targets

@@ -1,7 +1,9 @@
 # LLM training
 
 A Python package built from the explicit GPT implementations in Sebastian Raschka's
-[LLMs-from-scratch](https://github.com/rasbt/LLMs-from-scratch).
+[LLMs-from-scratch](https://github.com/rasbt/LLMs-from-scratch), plus the Qwen3 model and
+GRPO reasoning fine-tune from his
+[reasoning-from-scratch](https://github.com/rasbt/reasoning-from-scratch).
 
 The initial package slice is implemented: explicit causal attention/GPT modules,
 GPT-2 tokenization, next-token datasets, a resumable FP32 training CLI, validation
@@ -11,8 +13,8 @@ needed to install or run this project.
 The chapter-sized reproduction and checkpoint recovery workflows are implemented.
 See [the implementation plan](IMPLEMENTATION_PLAN.md) and
 [reproduction evidence](docs/experiments/chapter-reproduction.md).
-For the model's structure, tensor flow, and preset dimensions, see the
-[model architecture guide](docs/model-architecture.md).
+For each model's structure, tensor flow, and preset dimensions, see the
+[GPT-2 guide](docs/gpt2.md) and the [Qwen3 guide](docs/qwen3.md).
 Prepared `uint16` token files exist for registered corpora (TinyStories); AMP/`torch.compile`
 and distributed training remain future work.
 The runtime is single-process FP32 with `num_workers=0`.
@@ -184,7 +186,7 @@ The preset's **data path, tokens per update (32,768, against nanoGPT's ~0.5M sca
 length, token budget, and evaluation cadence are provisional**: no corpus is selected yet, so `prepare` reports the data file missing. The
 model/recipe pieces are verified by unit tests, an exact fresh-process resume test with every
 feature active, an accumulation-equals-full-batch test, and the pretrained-weight oracle in
-the [architecture guide](docs/model-architecture.md#gpt-2-initialization-and-weights).
+the [GPT-2 guide](docs/gpt2.md#gpt-2-initialization-and-weights).
 
 ## TinyStories run (readable output in about a day)
 

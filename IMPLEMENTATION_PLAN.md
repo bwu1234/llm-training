@@ -133,6 +133,10 @@ llm-training/
 └── runs/                         # generated run artifacts; Git-ignored
 ```
 
+This was the starting proposal. As built, model code lives per family (`model/gpt2/`,
+`model/qwen3/`, each with its tokenizer), and the GRPO fine-tune is in `reasoning/`; see the
+[README](README.md).
+
 Public interfaces should remain small: `GPTModel(config)`, a dataset yielding `(inputs, targets)`, a trainer accepting explicit dependencies, and separate evaluation/generation functions. CLI commands orchestrate these APIs; notebooks may call them later.
 
 ## 5. Configuration and operating contracts
