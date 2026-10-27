@@ -905,7 +905,7 @@ window.ARCHITECTURE = {
             "children": [],
             "total": 0,
             "repeat": 1,
-            "label": "Fused attention: scores, mask, softmax, weighted sum"
+            "label": "Causal attention, fused"
            },
            {
             "op": "torch.Tensor.transpose",
@@ -4692,7 +4692,7 @@ window.ARCHITECTURE = {
           "children": [],
           "total": 0,
           "repeat": 1,
-          "label": "Fused attention: scores, mask, softmax, weighted sum"
+          "label": "Causal attention, fused"
          },
          {
           "op": "torch.Tensor.transpose",
@@ -9064,7 +9064,7 @@ window.ARCHITECTURE = {
             "children": [],
             "total": 0,
             "repeat": 1,
-            "label": "Fused attention: scores, mask, softmax, weighted sum"
+            "label": "Causal attention, fused"
            },
            {
             "op": "torch.Tensor.transpose",
@@ -11305,7 +11305,7 @@ window.ARCHITECTURE = {
             "children": [],
             "total": 0,
             "repeat": 1,
-            "label": "Fused attention: scores, mask, softmax, weighted sum"
+            "label": "Causal attention, fused"
            },
            {
             "op": "torch.Tensor.transpose",
@@ -18709,7 +18709,7 @@ window.ARCHITECTURE = {
           "children": [],
           "total": 0,
           "repeat": 1,
-          "label": "Fused attention: scores, mask, softmax, weighted sum"
+          "label": "Causal attention, fused"
          },
          {
           "op": "torch.Tensor.transpose",
