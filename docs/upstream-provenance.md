@@ -124,8 +124,9 @@ The grading functions are copied unchanged (AST-identical before formatting). Ch
   against the frozen source, `rtol=1e-5`), with one rollout's activations in memory at a time.
   When all rewards are equal the advantages are exactly zero, so it sets zero gradients
   without the forward/backward pass; the optimizer still steps, as upstream does by default.
-- Training is float32 with SDPA attention. Upstream holds parameters and AdamW state in
-  bfloat16, where many lr-1e-5 updates round away, so the two runs are not numerically
+- Training is float32 with SDPA attention. Upstream holds the embedding and linear weights
+  and their AdamW state in bfloat16 (RMSNorm scales stay float32), where many lr-1e-5 updates
+  round away, so the two runs are not numerically
   comparable step for step.
 - Data is pinned by commit URL and SHA-256 (`reasoning/math_data.py`); upstream reads `main`.
 

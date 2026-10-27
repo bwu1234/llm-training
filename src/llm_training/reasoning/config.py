@@ -2,7 +2,8 @@
 
 Defaults follow the run behind chapter 6's 47.4% MATH-500 result in *Build a Reasoning Model
 (From Scratch)* (`rlvr_grpo_original_no_kl.py --num_rollouts 8 --max_new_tokens 512`), except
-that parameters and optimizer state are float32 here, where upstream holds both in bfloat16.
+that the embedding and linear weights and their AdamW state are float32 here, where upstream
+holds them in bfloat16.
 """
 
 import math

@@ -11,7 +11,7 @@ deviation. The loss raises the log-probability of above-average rollouts and low
 below-average ones. There is no supervised data and no reward model: the grader is the
 teacher.
 
-The book's results on MATH-500 (its numbers; bfloat16 training, see below):
+The book's results on MATH-500 (its numbers, from bfloat16 training; see below):
 
 | Model | MATH-500 | Mean answer tokens |
 | --- | --- | --- |
@@ -74,7 +74,7 @@ answer taken from the last `\boxed{}` or else the last number in the text.
 
 | | This repo | Book |
 | --- | --- | --- |
-| Parameters, AdamW state | float32 | bfloat16 |
+| Embedding and linear weights, their AdamW state | float32 | bfloat16 (RMSNorm scales float32) |
 | Attention | SDPA kernel | explicit |
 | Rollout gradients | backpropagated one at a time | all rollouts' graphs held for one loss |
 | Grading | worker process, 30 s limit per answer | inline |
@@ -92,18 +92,26 @@ equals the frozen source's (`tests/unit/test_reasoning.py`). The grader limit ex
 an answer like `9^9^9^9` makes SymPy compute an enormous power, which runs indefinitely inline
 (checked: still running after 20 s).
 
-## Cost on an M2 Max (MPS, measured)
+## Cost on an M2 Max (MPS)
 
-| Operation | Rate or size |
+Measured with the shipped recipe (float32, untied, SDPA):
+
+| Operation | Measured |
 | --- | --- |
-| Rollout decoding (KV cache, one sequence) | about 42 tokens/s at 256 tokens; slower as the cache grows |
-| Forward + backward + AdamW on a 600-token rollout | about 1 s; ~24 GB peak memory |
-| One GRPO step, 8 × 512 tokens | about 1–1.7 min, mostly decoding |
-| 50 steps | about 1–1.5 h |
-| MATH-500, base model (answers ~80 tokens) | about 15–20 min |
-| MATH-500, trained model (answers ~600 tokens) | about 2+ h; a degenerate model that always hits 2048 tokens could take 7+ h |
-| `checkpoints/last.pt` (weights + AdamW) | ~9 GB, overwritten |
-| Each snapshot (weights only) | ~3 GB, kept |
+| Top-p rollout sampling, 512 tokens, one sequence | 12.4 s (41 tokens/s); greedy decoding is about the same |
+| Log-probability forward + backward on a 557-token rollout | 1.1 s |
+| One full step, 8 rollouts averaging 133 tokens | 31 s; ~15 GB MPS driver memory afterwards |
+| `checkpoints/last.pt` (weights + AdamW) / each snapshot | ~9 GB, overwritten / ~3 GB, kept |
+
+Estimated from those rates (decoding dominates, so time scales with answer length):
+
+| Operation | Estimate |
+| --- | --- |
+| One step with all 8 rollouts at the 512-token cap | about 1.8 min |
+| 100 steps (answers lengthen as training goes on) | about 1.5–3 h |
+| MATH-500, base model (answers average ~80 tokens) | about 20 min |
+| MATH-500, trained model (~600 tokens) | about 2–2.5 h; a model that always runs to 2048 tokens, 7+ h |
+| `--limit 100` evaluation of a trained snapshot | about 25–30 min |
 
 Decoding is unbatched (one sequence at a time), as in the book's main chapter. Batched
 rollouts and evaluation would be the main speedup and are not built.

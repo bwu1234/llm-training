@@ -313,8 +313,9 @@ uv run llm-training grpo-train --config configs/grpo_qwen3_0_6b_math.yaml
 uv run llm-training math-eval --snapshot runs/grpo/<run>/snapshots/step00050.pt --limit 100
 ```
 
-On an M2 Max a 50-step run takes about 1–1.5 hours, and a full MATH-500 evaluation of a
-trained model about 2 hours. Longer GRPO training can lower the score, so score the saved
+On an M2 Max the 100-step recipe takes an estimated 1.5–3 hours (a step is 31 s measured
+with short answers, about 1.8 minutes when all rollouts reach 512 tokens), and a full
+MATH-500 evaluation of a trained model about 2–2.5 hours. Longer GRPO training can lower the score, so score the saved
 snapshots and keep the best. See [the GRPO guide](docs/grpo.md).
 
 ## Source and license

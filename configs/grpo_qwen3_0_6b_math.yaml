@@ -1,8 +1,8 @@
 # GRPO (no KL term) fine-tuning of Qwen3-0.6B base on MATH, as in chapter 6 of *Build a
 # Reasoning Model (From Scratch)*: the run behind its 47.4% MATH-500 result
 # (`rlvr_grpo_original_no_kl.py --num_rollouts 8 --steps 100 --max_new_tokens 512`, scored at
-# step 50). Differences from upstream: float32 parameters and AdamW state (upstream: bfloat16)
-# and SDPA attention. See docs/grpo.md.
+# step 50). Differences from upstream: float32 embedding/linear weights and AdamW state
+# (upstream: bfloat16) and SDPA attention. See docs/grpo.md.
 model:
   weights: ../data/qwen3-0.6b-base
   tie_embeddings: false

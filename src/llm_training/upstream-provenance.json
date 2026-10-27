@@ -254,7 +254,7 @@
         "derived_from_verified": "2026-10-26: all 310 tensors bit-identical to official model.safetensors (sha256 cd2a512003e2f9f3cd3c32a9c3573f820bb28c940f73c57b1ddaa983d9223eba) after renaming; official file has no lm_head (tied)."
       },
       "reasoning_reference": "tests/reference/reasoning_baseline.py",
-      "reasoning_local_changes": "Grading runs in a time-limited worker process (TimeLimitedGrader); timeouts and grader exceptions score 0 and are recorded. Rollouts sample on the model's device from an explicit, checkpointed generator. grpo_step backpropagates each rollout separately (same gradient as the source's mean loss) and, when all rewards are equal, sets zero gradients without the forward/backward pass. Training is float32 with SDPA attention; the source holds parameters and AdamW state in bfloat16. MATH data is pinned by commit URL and SHA-256."
+      "reasoning_local_changes": "Grading runs in a time-limited worker process (TimeLimitedGrader); timeouts and grader exceptions score 0 and are recorded. Rollouts sample on the model's device from an explicit, checkpointed generator. grpo_step backpropagates each rollout separately (same gradient as the source's mean loss) and, when all rewards are equal, sets zero gradients without the forward/backward pass. Training is float32 with SDPA attention; the source holds embedding and linear weights and their AdamW state in bfloat16 (RMSNorm scales float32). MATH data is pinned by commit URL and SHA-256."
     }
   ]
 }
