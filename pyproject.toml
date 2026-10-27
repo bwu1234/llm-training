@@ -8,7 +8,10 @@ version = "0.1.0"
 description = "Reproducible GPT training using implementations from LLMs-from-scratch"
 readme = "README.md"
 requires-python = ">=3.14.9,<3.15"
-license = {file = "LICENSE.txt"}
+# Upstream code ships under both repositories' licenses. LLMs-from-scratch's is Apache 2.0
+# with its definition of "Source" narrowed to exclude the books, so it is not plain SPDX Apache-2.0.
+license = "LicenseRef-LLMs-from-scratch AND Apache-2.0"
+license-files = ["LICENSES/*.txt"]
 dependencies = [
     "torch>=2.9,<3",
     "tiktoken>=0.12,<1",

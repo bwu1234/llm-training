@@ -1,4 +1,4 @@
-# Copyright (c) Sebastian Raschka under Apache License 2.0 (see model/qwen3/LICENSE.txt).
+# Copyright (c) Sebastian Raschka under Apache License 2.0 (see LICENSES/reasoning-from-scratch.txt).
 # Source: https://github.com/rasbt/reasoning-from-scratch (reasoning_from_scratch/ch02.py,
 # ch04.py, ch06.py, and ch06/02_rlvr_grpo_scripts_intro/rlvr_grpo_original_no_kl.py)
 # Modified: selected symbols, reorganized imports/modules and formatting for llm-training.

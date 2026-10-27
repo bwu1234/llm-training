@@ -1,4 +1,4 @@
-# Copyright (c) Sebastian Raschka under Apache License 2.0 (see model/qwen3/LICENSE.txt).
+# Copyright (c) Sebastian Raschka under Apache License 2.0 (see LICENSES/reasoning-from-scratch.txt).
 # Source: https://github.com/rasbt/reasoning-from-scratch (reasoning_from_scratch/ch03.py)
 # Modified: selected symbols, reorganized imports/modules and formatting for llm-training.
 # Also modified: `TimeLimitedGrader` (new) runs `grade_answer` in a worker process so an

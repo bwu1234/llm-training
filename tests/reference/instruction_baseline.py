@@ -1,7 +1,8 @@
 # Copyright (c) Sebastian Raschka under Apache License 2.0.
-# Chapter 7 code: https://github.com/rasbt/LLMs-from-scratch (commit cdbd33e; see LICENSE.txt).
+# Chapter 7 code: https://github.com/rasbt/LLMs-from-scratch (commit cdbd33e; see
+# LICENSES/LLMs-from-scratch.txt).
 # Chapter 8 code: https://github.com/rasbt/reasoning-from-scratch (commit a788466; see
-# src/llm_training/model/qwen3/LICENSE.txt).
+# LICENSES/reasoning-from-scratch.txt).
 # Modified: selected symbols copied verbatim (ast.get_source_segment) and formatting.
 
 # Frozen selected source definitions; do not refactor with production code.

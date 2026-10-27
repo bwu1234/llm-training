@@ -1,4 +1,4 @@
-# Copyright (c) Sebastian Raschka under Apache License 2.0 (see LICENSE.txt at the repository root).
+# Copyright (c) Sebastian Raschka under Apache License 2.0 (see LICENSES/LLMs-from-scratch.txt).
 # Source: https://github.com/rasbt/LLMs-from-scratch (ch07/01_main-chapter-code)
 # Modified: `format_input` is copied; the rest is new. Batching reproduces chapter 7's
 # `custom_collate_fn` (and its exercise 7.2 prompt masking) from examples that already end
@@ -34,7 +34,7 @@ IGNORE_INDEX = -100  # cross_entropy's default ignore_index
 DATASETS = {
     "alpaca-1100": {
         "description": "LLMs-from-scratch chapter 7 instruction data (Alpaca format)",
-        "license": "LLMs-from-scratch repository license (Apache 2.0; see LICENSE.txt)",
+        "license": "LLMs-from-scratch repository license (Apache 2.0; see LICENSES/LLMs-from-scratch.txt)",
         "url": "https://raw.githubusercontent.com/rasbt/LLMs-from-scratch/"
         "cdbd33e6d57a71e20ea31434841095fac50cecd8/ch07/01_main-chapter-code/instruction-data.json",
         "file": "instruction-data.json",

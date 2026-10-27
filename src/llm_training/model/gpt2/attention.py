@@ -1,4 +1,4 @@
-# Copyright (c) Sebastian Raschka under Apache License 2.0 (see LICENSE.txt at the repository root).
+# Copyright (c) Sebastian Raschka under Apache License 2.0 (see LICENSES/LLMs-from-scratch.txt).
 # Source: https://github.com/rasbt/LLMs-from-scratch
 # Modified: selected symbols, reorganized imports/modules and formatting for llm-training.
 # Also modified: optional fused SDPA path (attn_impl="sdpa"); the default is the source code.

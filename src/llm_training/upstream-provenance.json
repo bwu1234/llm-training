@@ -2,6 +2,7 @@
   "repository": "https://github.com/rasbt/LLMs-from-scratch",
   "commit": "cdbd33e6d57a71e20ea31434841095fac50cecd8",
   "source_status": " M requirements.txt\n",
+  "license": "LICENSES/LLMs-from-scratch.txt",
   "files": [
     {
       "source": "pkg/llms_from_scratch/ch03.py",
@@ -127,7 +128,7 @@
       "repository": "https://github.com/rasbt/reasoning-from-scratch",
       "commit": "a788466dc85cfe8617b6c0b809ed4ab9084485de",
       "source_status": " M ch02/01_main-chapter-code/ch02_main.ipynb\n?? ch02/01_main-chapter-code/ch02_test.ipynb\n",
-      "license": "src/llm_training/model/qwen3/LICENSE.txt",
+      "license": "LICENSES/reasoning-from-scratch.txt",
       "files": [
         {
           "source": "reasoning_from_scratch/qwen3.py",

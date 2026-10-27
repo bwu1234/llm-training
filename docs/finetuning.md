@@ -169,6 +169,4 @@ becomes ordinary tokens rather than the control token, as tiktoken's `encode_ord
 
 ## What is not built
 
-Unbuilt pieces (domain corpora, response grading, GRPO from an SFT model, Qwen3 from random
-weights, bfloat16, faster generation) and the pending runs of these recipes are tracked in
-[the backlog](backlog.md).
+See [the backlog](backlog.md).

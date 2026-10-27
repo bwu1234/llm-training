@@ -1,3 +1,7 @@
+# Recipe from: https://github.com/rasbt/reasoning-from-scratch
+# (ch06/02_rlvr_grpo_scripts_intro/rlvr_grpo_original_no_kl.py; Apache License 2.0, see
+# LICENSES/reasoning-from-scratch.txt). The loop is reimplemented here, not copied: it follows
+# that script's step order, optimizer and `--skip-zero-advantage-updates` option.
 """GRPO fine-tuning of the Qwen3-0.6B base model on MATH with verifiable rewards.
 
 Chapter 6 of *Build a Reasoning Model (From Scratch)* as a resumable run: one problem per
@@ -26,7 +30,7 @@ import yaml
 from llm_training.model.qwen3 import pretrained
 from llm_training.model.qwen3.pretrained import load_qwen3_base, load_qwen3_state
 from llm_training.training.checkpoint import atomic_save, config_hash
-from llm_training.training.optim import clip_and_measure
+from llm_training.training.gradients import clip_and_measure
 from llm_training.training.provenance import (
     collect_runtime_metadata,
     git_provenance,
@@ -48,7 +52,7 @@ GRPO_CODE = (
     "model/qwen3",
     "reasoning",
     "training/checkpoint.py",
-    "training/optim.py",
+    "training/gradients.py",
     "training/provenance.py",
 )
 

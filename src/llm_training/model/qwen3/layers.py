@@ -1,4 +1,4 @@
-# Copyright (c) Sebastian Raschka under Apache License 2.0 (see LICENSE.txt in this folder).
+# Copyright (c) Sebastian Raschka under Apache License 2.0 (see LICENSES/reasoning-from-scratch.txt).
 # Source: https://github.com/rasbt/reasoning-from-scratch (reasoning_from_scratch/qwen3.py)
 # Modified: selected symbols, reorganized imports/modules and formatting for llm-training.
 # Also modified: no `dtype` argument; parameters use PyTorch's default float32.

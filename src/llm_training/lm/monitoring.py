@@ -1,4 +1,4 @@
-# Copyright (c) Sebastian Raschka under Apache License 2.0 (see LICENSE.txt).
+# Copyright (c) Sebastian Raschka under Apache License 2.0 (see LICENSES/LLMs-from-scratch.txt).
 # Source: https://github.com/rasbt/LLMs-from-scratch
 # Modified: selected and renamed functions and imports, formatted for llm-training.
 

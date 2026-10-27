@@ -5,20 +5,25 @@ A Python package built from the explicit GPT implementations in Sebastian Raschk
 GRPO reasoning fine-tune from his
 [reasoning-from-scratch](https://github.com/rasbt/reasoning-from-scratch).
 
-The initial package slice is implemented: explicit causal attention/GPT modules,
-GPT-2 tokenization, next-token datasets, a resumable FP32 training CLI, validation
-metrics, greedy samples, and reloadable model weights. The source checkout is not
-needed to install or run this project.
+What it does, all through one `llm-training` CLI:
 
-The chapter-sized reproduction and checkpoint recovery workflows are implemented.
-See [the implementation plan](IMPLEMENTATION_PLAN.md) and
-[reproduction evidence](docs/experiments/chapter-reproduction.md).
-For each model's structure, tensor flow, and preset dimensions, see the
+- **Pretraining** a GPT model from random weights, with the book's chapter-5 recipe or the
+  GPT-2 recipe.
+- **Continued pretraining and SFT** from released GPT-2 or Qwen3-0.6B weights.
+- **GRPO** on MATH for Qwen3-0.6B, and MATH-500 evaluation.
+- **Inspecting a model:** next-token predictions, sampled text, and responses to held-out
+  instructions.
+
+Training is resumable. It runs single-process in FP32 with `num_workers=0`, on CPU or the
+Mac GPU (MPS). The source checkout is not needed to install or run this project.
+
+Two full-length runs are complete: the chapter-5 reproduction
+([evidence](docs/experiments/chapter-reproduction.md)) and the 51M-parameter TinyStories
+model (below). For each model's structure, tensor flow and preset dimensions, see the
 [GPT-2 guide](docs/gpt2.md) and the [Qwen3 guide](docs/qwen3.md).
-Prepared token files (`uint16`, or `uint32` for Qwen3's vocabulary) exist for registered
-corpora (TinyStories). The runtime is single-process FP32 with `num_workers=0`.
 **Pending runs, unbuilt work, open decisions and next steps are in
-[the backlog](docs/backlog.md).**
+[the backlog](docs/backlog.md).** [`IMPLEMENTATION_PLAN.md`](IMPLEMENTATION_PLAN.md) is the
+original plan, kept for history.
 
 Two recipes share the trainer. `configs/pretrain_gpt_162m.yaml` reproduces the book's
 chapter-5 loop (PyTorch init, untied head, context 256, constant LR, no clipping) and is
@@ -357,7 +362,14 @@ snapshots and keep the best. See [the GRPO guide](docs/grpo.md).
 
 See [upstream provenance](docs/upstream-provenance.md) for the source commit,
 symbol mapping, changes, and hashes. Derived code retains Sebastian Raschka's
-attribution and the [upstream license as shipped](LICENSE.txt). The Qwen3 modules ship
-*reasoning-from-scratch*'s license, which is plain Apache 2.0 without the book exclusions,
-as [`model/qwen3/LICENSE.txt`](src/llm_training/model/qwen3/LICENSE.txt). The package does
-not depend on Jupyter, TensorFlow, or a sibling source directory.
+attribution, and each upstream repository's license is shipped unchanged under
+[`LICENSES/`](LICENSES):
+
+- [`LLMs-from-scratch.txt`](LICENSES/LLMs-from-scratch.txt) covers the GPT-2 model, the
+  next-token data, loss, monitoring and generation code, and the chapter 7 instruction format.
+  It is Apache 2.0 with the books and their images excluded from "Source".
+- [`reasoning-from-scratch.txt`](LICENSES/reasoning-from-scratch.txt) covers the Qwen3 model
+  and the GRPO, grading and distillation code in `reasoning/`. It is plain Apache 2.0.
+
+Each derived file's header names its license. Both files are installed with the wheel. The
+package does not depend on Jupyter, TensorFlow, or a sibling source directory.

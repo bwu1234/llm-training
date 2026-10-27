@@ -1,5 +1,11 @@
 # LLM training from scratch: implementation plan
 
+> **Historical.** This is the original plan, and its status notes below are as of 2026-10-25.
+> They are not maintained. The repository has since gained commits, the Qwen3 and GRPO ports,
+> fine-tuning, and a moved package layout. For what exists, read the [README](README.md) and
+> the guides in `docs/`. [The backlog](docs/backlog.md) is the only tracker of pending work,
+> and the [gap register](docs/gpt2-parity-gaps.md)'s priorities override this plan's.
+
 Date: 2026-10-24  
 Status: M0/M1 completed, including a fresh ten-epoch source comparison. The M3
 full-state recovery slice is implemented and verified across fresh processes;

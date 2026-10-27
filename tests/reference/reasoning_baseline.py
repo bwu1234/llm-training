@@ -1,4 +1,4 @@
-# Copyright (c) Sebastian Raschka under Apache License 2.0 (see src/llm_training/model/qwen3/LICENSE.txt)
+# Copyright (c) Sebastian Raschka under Apache License 2.0 (see LICENSES/reasoning-from-scratch.txt)
 # Source for "Build a Reasoning Model (From Scratch)": https://mng.bz/lZ5B
 # Code repository: https://github.com/rasbt/reasoning-from-scratch (commit a788466)
 # Modified: selected symbols from reasoning_from_scratch/ch02.py, ch03.py, ch04.py, ch06.py,

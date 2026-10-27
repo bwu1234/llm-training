@@ -96,7 +96,7 @@ Verified 2026-10-25 with the full suite (69 passed, plus the opt-in oracle, 2 pa
   nothing is guaranteed, and the child run records the override.
 - The training loop is `lm/trainer.py`'s `Trainer` (F4): `step` (one update, with accumulation,
   schedule, and clipping), `evaluate`, and `checkpoint`. The recipe logic it calls lives in
-  `lm/optim.py`, `training/optim.py`, `lm/schedule.py`, and `model/gpt2/init.py`.
+  `lm/optim.py`, `training/gradients.py`, `lm/schedule.py`, and `model/gpt2/init.py`.
 - The preset's data path, warmup, evaluation cadence, and token budget are placeholders.
 
 ## Priority key

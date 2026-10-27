@@ -39,7 +39,7 @@ from llm_training.training.checkpoint import (
     load_checkpoint,
     restore_rng,
 )
-from llm_training.training.optim import clip_and_measure
+from llm_training.training.gradients import clip_and_measure
 from llm_training.training.provenance import (
     collect_runtime_metadata,
     git_provenance,

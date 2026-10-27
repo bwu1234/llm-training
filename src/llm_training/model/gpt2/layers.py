@@ -1,4 +1,4 @@
-# Copyright (c) Sebastian Raschka under Apache License 2.0 (see LICENSE.txt at the repository root).
+# Copyright (c) Sebastian Raschka under Apache License 2.0 (see LICENSES/LLMs-from-scratch.txt).
 # Source: https://github.com/rasbt/LLMs-from-scratch
 # Modified: selected symbols, reorganized imports/modules and formatting for llm-training.
 # Also modified: GELU's float32 constant is a non-persistent buffer instead of rebuilt per call.

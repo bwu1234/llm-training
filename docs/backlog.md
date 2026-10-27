@@ -1,6 +1,6 @@
 # Backlog
 
-Last updated 2026-10-26. **This is the one place that tracks pending work:** runs that are
+Last updated 2026-10-27. **This is the one place that tracks pending work:** runs that are
 built but not yet launched, work that is not built, known issues, decisions that block other
 work, and the recommended next steps. Other docs describe what exists and link here for
 what doesn't. The linked guides hold the details, measurements and design, and the
@@ -102,8 +102,10 @@ Open:
   saved configs.
 - **Exact resume on MPS** matches an uninterrupted run to float32 rounding (about 1e-7),
   not bit for bit.
-- **Old checkpoints need `--allow-code-drift`.** GPT-2 and GRPO checkpoints written before
-  2026-10-26 need it to resume, because the code their resume hash covers has changed.
+- **Old checkpoints need `--allow-code-drift`.** Every checkpoint written before 2026-10-27
+  (GPT-2, Qwen3 next-token and GRPO, including the finished TinyStories run) needs it to
+  resume, because the code its resume hash covers has changed. The most recent change was
+  renaming `training/optim.py` to `training/gradients.py`.
 
 ## 4. Open decisions
 

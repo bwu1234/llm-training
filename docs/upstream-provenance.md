@@ -1,5 +1,17 @@
 # Upstream provenance
 
+Two upstream repositories, each with its own license, shipped unchanged under `LICENSES/` and
+installed with the wheel:
+
+| Repository | License file | Derived code |
+| --- | --- | --- |
+| LLMs-from-scratch | [`LICENSES/LLMs-from-scratch.txt`](../LICENSES/LLMs-from-scratch.txt) | `model/gpt2/`, `data/dataset.py`, `data/instructions.py`, `lm/generation.py`, `lm/loss.py`, `lm/monitoring.py` |
+| reasoning-from-scratch | [`LICENSES/reasoning-from-scratch.txt`](../LICENSES/reasoning-from-scratch.txt) | `model/qwen3/`, `reasoning/grading.py`, `reasoning/grpo.py`, `reasoning/distill.py`, and the recipe of `reasoning/trainer.py` |
+
+Each derived file's header names its license file.
+
+## GPT-2 (LLMs-from-scratch)
+
 Source: [rasbt/LLMs-from-scratch](https://github.com/rasbt/LLMs-from-scratch),
 commit `cdbd33e6d57a71e20ea31434841095fac50cecd8`.
 
@@ -74,8 +86,8 @@ for the full-run comparison and scope. `the-verdict.txt` is downloaded
 only by explicit preparation, with pinned revision and content hash; it is not
 bundled in the package. The committed smoke text was authored for this project.
 
-`LICENSE.txt` is an unchanged copy of the source repository's license file,
-including its wording about books and related images. Source headers are retained
+`LICENSES/LLMs-from-scratch.txt` is an unchanged copy of the source repository's license
+file, including its wording about books and related images. Source headers are retained
 and modified files are marked. No book prose, notebook narrative, or images were
 copied. Future upstream updates should refresh this mapping and run the parity
 checks before changing the frozen reference.
@@ -85,9 +97,9 @@ checks before changing the frozen reference.
 Source: [rasbt/reasoning-from-scratch](https://github.com/rasbt/reasoning-from-scratch),
 commit `a788466dc85cfe8617b6c0b809ed4ab9084485de`, file `reasoning_from_scratch/qwen3.py`
 (SHA256 `873c3cbd…`, no local diff at extraction). The manifest records it under
-`additional_sources`, and its license ships as
-[`model/qwen3/LICENSE.txt`](../src/llm_training/model/qwen3/LICENSE.txt). That file is plain
-Apache 2.0, without the book exclusions in this repository's `LICENSE.txt`.
+`additional_sources`, and its license ships unchanged as
+[`LICENSES/reasoning-from-scratch.txt`](../LICENSES/reasoning-from-scratch.txt). That file is
+plain Apache 2.0, without the book exclusions in `LICENSES/LLMs-from-scratch.txt`.
 
 | New module | Selected implementation |
 | --- | --- |
@@ -116,7 +128,7 @@ the package's default path matches them bit for bit.
 ## GRPO on MATH (reasoning-from-scratch, chapters 2–6)
 
 Same repository and commit as the Qwen3 port, no local diff at extraction. The license is the
-same plain Apache 2.0 file.
+same file, `LICENSES/reasoning-from-scratch.txt`.
 
 | New module | Source | Selected implementation |
 | --- | --- | --- |
@@ -126,7 +138,9 @@ same plain Apache 2.0 file.
 | `reasoning/grpo.py` | `reasoning_from_scratch/ch02.py` | `generate_text_basic_stream_cache` → `generate_greedy_ids` |
 | `reasoning/trainer.py` | `ch06/02_rlvr_grpo_scripts_intro/rlvr_grpo_original_no_kl.py` | the training-loop recipe and `--skip-zero-advantage-updates` |
 
-The grading functions are copied unchanged (AST-identical before formatting). Changes elsewhere:
+The grading functions are copied unchanged (AST-identical before formatting).
+`reasoning/trainer.py` copies no code: it reimplements the script's loop, and its header
+names the script as the source of the recipe. Changes elsewhere:
 
 - `TimeLimitedGrader` (new) runs `grade_answer` in a worker process with a time limit. SymPy
   parses with `evaluate=True`, so a 7-character answer such as `9^9^9^9` starts an integer

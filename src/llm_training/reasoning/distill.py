@@ -1,4 +1,4 @@
-# Copyright (c) Sebastian Raschka under Apache License 2.0 (see model/qwen3/LICENSE.txt).
+# Copyright (c) Sebastian Raschka under Apache License 2.0 (see LICENSES/reasoning-from-scratch.txt).
 # Source: https://github.com/rasbt/reasoning-from-scratch
 # (ch08/04_train_with_distillation/distill.py)
 # Modified: selected symbols and formatting for llm-training.
