@@ -13,8 +13,8 @@ OpenAI's released GPT-2 small or medium weights (see the
 [fine-tuning guide](finetuning.md)), which the `pytorch`/`gpt2` initialization then does not
 affect.
 
-The [architecture explorer](https://bwu1234.github.io/llm-training/) ([local copy](architecture/index.html)) shows every preset's modules, shapes,
-parameter counts and source, side by side with Qwen3.
+The [architecture explorer](https://bwu1234.github.io/llm-training/) ([local copy](architecture/index.html)) shows every preset's modules and
+each tensor step, with shapes, parameter counts and source, side by side with Qwen3.
 
 ## Data flow
 

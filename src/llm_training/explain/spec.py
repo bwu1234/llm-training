@@ -3,22 +3,37 @@
 `docs/architecture/explainer.json` lists the presets (a recipe plus optional model-config
 overrides) and the prose. Each preset's model is built on the meta device, which gives every
 tensor a shape but no storage, so even Qwen3-0.6B builds without allocating its weights. One
-forward pass with module hooks records which modules run, in what order, on what shapes.
+forward pass records, in order:
 
-Nothing here knows a family: the module tree, the classes' `forward` source and the parameter
-counts all come from the model itself, and the prose lives with the page. This package is
-outside every trainer's resume fingerprint, and no trainer imports it.
+- every module call, with module hooks;
+- every call to a function of this package (such as RoPE's `apply_rope`), with `sys.monitoring`;
+- every tensor operation that this package's code performs itself (a residual add, a reshape,
+  a softmax), with a `TorchFunctionMode`. Operations inside a PyTorch module such as
+  `nn.Linear` belong to that module's row instead.
+
+A `TorchDispatchMode` checks that nothing is missed: every kernel that runs must belong to a
+recorded operation or to a PyTorch module, or the trace fails.
+
+Nothing here knows a family: the module tree, the source and the parameter counts all come from
+the model itself, and the prose lives with the page. This package is outside every trainer's
+resume fingerprint, and no trainer imports it.
 """
 
+import functools
 import inspect
 import json
+import linecache
 import re
+import sys
 import textwrap
 from dataclasses import asdict
 from pathlib import Path
 
 import torch
+import torch.nn.functional as F
 from torch import nn
+from torch.overrides import TorchFunctionMode
+from torch.utils._python_dispatch import TorchDispatchMode
 
 from ..lm.config import load_config
 from ..model.registry import family
@@ -28,6 +43,8 @@ PAGE_DIR = REPO / "docs" / "architecture"
 CONTENT = PAGE_DIR / "explainer.json"
 SPEC = PAGE_DIR / "spec.js"
 COMMAND = "uv run python -m llm_training.explain"
+PACKAGE = Path(__file__).resolve().parents[1]
+TORCH = Path(torch.__file__).resolve().parent
 
 # Two traced passes with different sizes; a dimension that changes between them is named.
 SIZES = ({"B": 2, "T": 5}, {"B": 3, "T": 7})
@@ -43,12 +60,13 @@ NUMBERED = re.compile(r"^((?:.*\.)?)(\d+)$")
 def build_spec(content_path=CONTENT):
     content = json.loads(Path(content_path).read_text())
     base = Path(content_path).parent
-    classes = {}
-    presets = [_preset(entry, base, classes) for entry in content["presets"]]
-    for key, info in classes.items():
-        if note := content["classes"].get(key):
-            info["note"] = note
-    return {"presets": presets, "classes": classes, "roles": content["roles"]}
+    found = {"classes": {}, "functions": {}, "ops": {}}
+    presets = [_preset(entry, base, found) for entry in content["presets"]]
+    for kind, entries in found.items():
+        for key, info in entries.items():
+            if note := content[kind].get(key):
+                info["note"] = note
+    return {"presets": presets, **found, "roles": content["roles"]}
 
 
 def render(spec):
@@ -65,17 +83,22 @@ def write_spec(path=SPEC):
     return spec
 
 
-def _preset(entry, base, classes):
-    cfg = load_config(base / entry["recipe"])
+def build_model(entry, base=PAGE_DIR):
+    """A preset's model on the meta device, with its family and resolved model config."""
+    cfg = load_config(Path(base) / entry["recipe"])
     model_family = family(cfg.model.arch)
     model_config = asdict(cfg.model) | entry.get("overrides", {})
     with torch.device("meta"):
         model = model_family.build(model_config)
-    model.eval()
-    traces = [_trace(model, size["B"], size["T"]) for size in SIZES]
+    return model.eval(), model_family, model_config
+
+
+def _preset(entry, base, found):
+    model, model_family, model_config = build_model(entry, base)
+    traces = [trace(model, size["B"], size["T"]) for size in SIZES]
     tree = _merge(*traces)
     owners = _owners(model)
-    _annotate(tree, dict(model.named_modules()), owners, classes)
+    _annotate(tree, dict(model.named_modules()), owners, found)
     keys = model_family.architecture_keys + model_family.inherited_build_keys
     return {
         "id": entry["id"],
@@ -90,31 +113,179 @@ def _preset(entry, base, classes):
     }
 
 
-def _trace(model, batch, tokens):
-    """One meta forward pass; returns the root call with its nested child calls."""
+def trace(model, batch, tokens):
+    """One meta forward pass; returns the root call with its nested calls and steps.
+
+    Each node is a module call (`module`), a call to a function of this package (`function`),
+    or a tensor operation (`op`), and `children` lists what ran inside it, in order.
+    """
     names = {module: name for name, module in model.named_modules()}
+    tensors = {id(t): n for n, t in [*model.named_buffers(), *model.named_parameters()]}
+    forwards = {type(m).forward.__code__ for m in model.modules() if _ours(type(m).forward)}
     stack = [{"children": []}]
+    # The module calls in `stack`, innermost last, and whether each runs this package's code.
+    modules = [("", True)]
+    inside_op = [0]  # > 0 while a recorded operation runs
+    kernels = [0]  # kernels dispatched so far
+
+    def recording():
+        return modules[-1][1] and not inside_op[0]
 
     def before(module, args):
         call = {"module": names[module], "in": _shape(args), "children": []}
         stack[-1]["children"].append(call)
         stack.append(call)
+        modules.append((call["module"], _ours(type(module).forward)))
 
     def after(module, args, output):
         stack.pop()["out"] = _shape(output)
+        modules.pop()
+
+    def skip(code):
+        return code in forwards or code.co_name.startswith("<") or not _ours(code)
+
+    # `sys.monitoring` callbacks; DISABLE stops one code location from reporting again, so
+    # PyTorch's own functions cost one call each rather than one per call.
+    def start(code, offset):
+        if skip(code):
+            return sys.monitoring.DISABLE
+        frame = sys._getframe(1)
+        call = {
+            "function": _function_key(frame),
+            "line": frame.f_back.f_lineno,
+            "in": _shape([frame.f_locals[v] for v in code.co_varnames[: code.co_argcount]]),
+            "children": [],
+            "frame": frame,
+        }
+        stack[-1]["children"].append(call)
+        stack.append(call)
+
+    def end(code, offset, value):
+        if skip(code):
+            return sys.monitoring.DISABLE
+        if stack[-1].get("frame") is sys._getframe(1):
+            call = stack.pop()
+            del call["frame"]
+            call["out"] = _shape(value)
+
+    class Steps(TorchFunctionMode):
+        def __torch_function__(self, func, types, args=(), kwargs=None):
+            record, before = recording(), kernels[0]
+            inside_op[0] += 1
+            try:
+                out = func(*args, **(kwargs or {}))
+            finally:
+                inside_op[0] -= 1
+            caller = _caller()
+            # A step computes something; reading `x.shape` or `x.dtype` runs no kernel.
+            computes = _shape(out) is not None or kernels[0] > before
+            if record and computes and _ours(caller.f_code):
+                prefix = modules[-1][0] + "." if modules[-1][0] else ""
+                step = {
+                    "op": _op_key(func),
+                    "line": caller.f_lineno,
+                    "code": linecache.getline(caller.f_code.co_filename, caller.f_lineno).strip(),
+                    "in": [list(t.shape) for t in _tensors((args, kwargs))],
+                    "out": _shape(out),
+                    "uses": [
+                        tensors[id(t)].removeprefix(prefix)
+                        for t in _tensors((args, kwargs))
+                        if id(t) in tensors
+                    ],
+                    "children": [],
+                }
+                stack[-1]["children"].append(step)
+            return out
+
+    class Unrecorded(TorchDispatchMode):
+        def __torch_dispatch__(self, func, types, args=(), kwargs=None):
+            kernels[0] += 1
+            if recording():
+                raise ValueError(f"{func} ran outside every recorded step and module")
+            return func(*args, **(kwargs or {}))
 
     handles = []
     for module in model.modules():
         handles.append(module.register_forward_pre_hook(before))
         handles.append(module.register_forward_hook(after))
+    token_ids = torch.zeros(batch, tokens, dtype=torch.long, device="meta")
+    tool = _monitoring_tool()
+    events = sys.monitoring.events
+    sys.monitoring.register_callback(tool, events.PY_START, start)
+    sys.monitoring.register_callback(tool, events.PY_RETURN, end)
     try:
-        with torch.no_grad():
-            model(torch.zeros(batch, tokens, dtype=torch.long, device="meta"))
+        with torch.no_grad(), Unrecorded(), Steps():
+            sys.monitoring.set_events(tool, events.PY_START | events.PY_RETURN)
+            model(token_ids)
     finally:
+        sys.monitoring.set_events(tool, events.NO_EVENTS)
+        sys.monitoring.free_tool_id(tool)
         for handle in handles:
             handle.remove()
     (root,) = stack[0]["children"]
     return root
+
+
+def _monitoring_tool():
+    """Claim a free `sys.monitoring` tool ID; a debugger or coverage tool may hold others."""
+    for tool in range(6):
+        if sys.monitoring.get_tool(tool) is None:
+            sys.monitoring.use_tool_id(tool, "llm_training.explain")
+            return tool
+    raise RuntimeError("every sys.monitoring tool ID is in use")
+
+
+def _ours(code):
+    """Whether a code object (or a function) is this package's, outside the explainer."""
+    return _in_package(getattr(code, "__code__", code).co_filename)
+
+
+@functools.cache
+def _in_package(filename):
+    path = Path(filename).resolve()
+    return path.is_relative_to(PACKAGE) and not path.is_relative_to(Path(__file__).parent)
+
+
+@functools.cache
+def _in_torch(filename):
+    return Path(filename).resolve().is_relative_to(TORCH)
+
+
+def _caller():
+    """The first frame outside PyTorch and this module: the code that made the call."""
+    frame = sys._getframe(2)
+    while _in_torch(frame.f_code.co_filename):
+        frame = frame.f_back
+    return frame
+
+
+def _tensors(value):
+    if isinstance(value, torch.Tensor):
+        yield value
+    elif isinstance(value, (tuple, list)):
+        for item in value:
+            yield from _tensors(item)
+    elif isinstance(value, dict):
+        for item in value.values():
+            yield from _tensors(item)
+
+
+def _function_key(frame):
+    return f"{frame.f_globals['__name__']}.{frame.f_code.co_qualname}"
+
+
+def _op_key(func):
+    """The public name of an intercepted function: `torch.Tensor.view`, `torch.triu`, …"""
+    name = func.__name__
+    if name == "__get__":  # a property such as `x.T`
+        return f"torch.Tensor.{func.__self__.__name__}"
+    if getattr(F, name, None) is func:
+        return f"torch.nn.functional.{name}"
+    if getattr(torch, name, None) is func:
+        return f"torch.{name}"
+    if func.__qualname__.split(".")[0] in ("Tensor", "TensorBase"):
+        return f"torch.Tensor.{name}"
+    raise ValueError(f"no public name for {func!r}")
 
 
 def _shape(value):
@@ -130,11 +301,17 @@ def _shape(value):
 
 def _merge(first, second):
     """Combine two traces: equal dimensions stay numbers, changed ones become B, T or B·T."""
-    if first["module"] != second["module"] or len(first["children"]) != len(second["children"]):
-        raise ValueError(f"module calls depend on the input size at {first['module']!r}")
-    return {
-        "module": first["module"],
-        "in": _symbolic(first["in"], second["in"]),
+    fixed = {k: v for k, v in first.items() if k not in ("in", "out", "children")}
+    if fixed != {k: v for k, v in second.items() if k not in ("in", "out", "children")} or len(
+        first["children"]
+    ) != len(second["children"]):
+        raise ValueError(f"the forward pass depends on the input size at {fixed}")
+    if "op" in first:
+        inputs = [_symbolic(a, b) for a, b in zip(first["in"], second["in"], strict=True)]
+    else:
+        inputs = _symbolic(first["in"], second["in"])
+    return fixed | {
+        "in": inputs,
         "out": _symbolic(first["out"], second["out"]),
         "children": [_merge(a, b) for a, b in zip(first["children"], second["children"])],
     }
@@ -159,10 +336,20 @@ def _owners(model):
     return {id(p): name for name, p in model.named_parameters()}
 
 
-def _annotate(call, modules, owners, classes):
+def _annotate(call, modules, owners, found):
+    """Add classes, parameters and totals to module calls; register functions and ops."""
+    if "module" not in call:
+        if "op" in call:
+            found["ops"].setdefault(call["op"], _op_info(call["op"]))
+        else:
+            found["functions"].setdefault(call["function"], _function_info(call["function"]))
+        for child in call["children"]:
+            _annotate(child, modules, owners, found)
+        call["total"] = sum(c["total"] for c in call["children"])
+        return
     module = modules[call["module"]]
     prefix = f"{call['module']}." if call["module"] else ""
-    call["class"] = _class_key(type(module), classes)
+    call["class"] = _class_key(type(module), found["classes"])
     persistent = {k for k in module.state_dict(keep_vars=True) if "." not in k}
     call["params"] = [
         _parameter(name, p, prefix, owners) for name, p in module.named_parameters(recurse=False)
@@ -173,7 +360,7 @@ def _annotate(call, modules, owners, classes):
     ]
     call["total"] = sum(p.numel() for p in module.parameters() if owners[id(p)].startswith(prefix))
     for child in call["children"]:
-        _annotate(child, modules, owners, classes)
+        _annotate(child, modules, owners, found)
 
 
 def _parameter(name, param, prefix, owners):
@@ -207,6 +394,32 @@ def _class_info(cls, is_torch):
     }
 
 
+def _function_info(key):
+    module_name, _, qualname = key.partition(".")
+    while qualname and module_name + "." + qualname.split(".")[0] in sys.modules:
+        head, _, qualname = qualname.partition(".")
+        module_name += "." + head
+    function = sys.modules[module_name]
+    for part in qualname.split("."):
+        function = getattr(function, part)
+    path = Path(inspect.getsourcefile(function)).resolve()
+    source, line = inspect.getsourcelines(function)
+    return {
+        "name": function.__name__,
+        "path": path.relative_to(REPO).as_posix(),
+        "line": line,
+        "header": list(_leading_comments(path.read_text().splitlines())),
+        "code": textwrap.dedent("".join(source)),
+    }
+
+
+def _op_info(key):
+    name = key.rsplit(".", 1)[1]
+    if name.startswith("__"):  # `x[...]` and other operators without a docs page of their own
+        return {"name": name.strip("_")}
+    return {"name": name, "docs": f"https://docs.pytorch.org/docs/stable/generated/{key}.html"}
+
+
 def _leading_comments(lines):
     for line in lines:
         if not line.startswith("#"):
@@ -228,6 +441,8 @@ def _collapse(call):
 
 
 def _next_in_run(previous, child):
+    if "module" not in previous or "module" not in child:
+        return False
     a, b = NUMBERED.match(previous.get("last", previous["module"])), NUMBERED.match(child["module"])
     return (
         a is not None
@@ -243,13 +458,16 @@ def _signature(call):
     own = call["module"]
 
     def strip(node):
-        return {
-            "module": node["module"].removeprefix(own),
-            "class": node["class"],
-            "in": node["in"],
-            "out": node["out"],
-            "params": [{k: v for k, v in p.items() if k != "tied_to"} for p in node["params"]],
-            "children": [strip(c) for c in node["children"]],
-        }
+        stripped = node | {"children": [strip(c) for c in node["children"]]}
+        for key in ("module", "last"):
+            if key in node:
+                stripped[key] = node[key].removeprefix(own)
+        if "params" in node:
+            stripped["params"] = [
+                {k: v for k, v in p.items() if k != "tied_to"} for p in node["params"]
+            ]
+        return stripped
 
-    return json.dumps(strip(call))
+    # `repeat` and `last` are the run's own bookkeeping, set on `previous` but not on `child`.
+    top = {k: v for k, v in strip(call).items() if k not in ("repeat", "last")}
+    return json.dumps(top)

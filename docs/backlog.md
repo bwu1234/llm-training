@@ -97,7 +97,6 @@ items extend it.
 
 | Item | Why it matters | Notes |
 | --- | --- | --- |
-| Show functional steps in the explorer | Residual adds, RoPE, the head split, the causal mask and the SwiGLU product are code, not modules, so they appear only in each module's source | Record them with `torch.overrides.TorchFunctionMode` during the traced pass, filtered to the ops that teach something (`add`, `softmax`, `matmul`, the RoPE rotation). The filter must stay generic, not per family |
 | Live views on real weights | Attention heatmaps, logit lens, GQA head sharing, RoPE rotation | Uses the weights already in `data/`; could extend the explorer's traced pass with real inputs. Plotting or notebook dependencies go in an optional group, as `IMPLEMENTATION_PLAN.md` requires. Several days |
 | A guided learning path (`docs/learn.md`) | The guides say what each part does but not what order to read the code in | Tokenizer → embeddings → attention → block → training loop → GRPO, each linked to its book chapter and to the graphics. About half a day |
 
