@@ -21,8 +21,8 @@ Two full-length runs are complete: the chapter-5 reproduction
 ([evidence](docs/experiments/chapter-reproduction.md)) and the 51M-parameter TinyStories
 model (below). For each model's structure, tensor flow and preset dimensions, see the
 [GPT-2 guide](docs/gpt2.md) and the [Qwen3 guide](docs/qwen3.md). To explore them side by
-side, open [`docs/architecture/index.html`](docs/architecture/index.html) in a browser: every
-module that runs, its shapes, parameters and source, traced from the code (see below).
+side, open the [architecture explorer](https://bwu1234.github.io/llm-training/): every module that runs, its shapes,
+parameters and source, traced from the code (see below).
 **Pending runs, unbuilt work, open decisions and next steps are in
 [the backlog](docs/backlog.md).** [`IMPLEMENTATION_PLAN.md`](IMPLEMENTATION_PLAN.md) is the
 original plan, kept for history.
@@ -332,7 +332,15 @@ explorer, add a preset and notes for its module classes to `docs/architecture/ex
 such as GPT-2 small and Qwen3-0.6B. Each row is a module that runs in the forward pass, in the
 order it runs, with its output shape (`B` batch, `T` tokens) and parameter count. Selecting a
 row shows what it does, its own tensors, its `forward` source with a link to the file, and the
-module at the same path in the other model. It needs no server: open the file in a browser.
+module at the same path in the other model.
+
+It is published at <https://bwu1234.github.io/llm-training/>. To view a local copy, open the file in a browser; it needs
+no server. Locally its source links open the files in your checkout. On the published page
+they open the files on GitHub at the commit it was built from, so line numbers match.
+The `pages` job in `.github/workflows/ci.yml` deploys it after every push to `main` once the
+checks pass, so a stale `spec.js` can't be published. It publishes `index.html`,
+`spec.js` and `LICENSES/`, plus a one-line `site.js` that sets the GitHub link root. Nothing
+else from `docs/` goes online.
 
 The page's data, `docs/architecture/spec.js`, is generated from the models themselves:
 

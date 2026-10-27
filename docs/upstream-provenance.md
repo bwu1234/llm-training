@@ -12,7 +12,9 @@ Each derived file's header names its license file.
 
 `docs/architecture/spec.js`, the architecture explorer's generated data, also holds copies of
 the derived classes' `forward` methods. Each copy keeps its file's header, which the page
-shows with the excerpt. It isn't installed with the wheel.
+shows with the excerpt. It isn't installed with the wheel. The CI `pages` job publishes it on
+[GitHub Pages](https://bwu1234.github.io/llm-training/) together with an unchanged copy of `LICENSES/`, and the page's
+footer links to both licenses.
 
 ## GPT-2 (LLMs-from-scratch)
 

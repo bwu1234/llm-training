@@ -172,15 +172,20 @@ footer { color: var(--muted); font-size: 0.8rem; padding-top: 24px; padding-bott
 </aside>
 <footer>
   The model code is derived from Sebastian Raschka's
-  <a href="https://github.com/rasbt/LLMs-from-scratch">LLMs-from-scratch</a> and
+  <a href="https://github.com/rasbt/LLMs-from-scratch">LLMs-from-scratch</a>
+  (<a data-source="LICENSES/LLMs-from-scratch.txt" href="../../LICENSES/LLMs-from-scratch.txt">license</a>) and
   <a href="https://github.com/rasbt/reasoning-from-scratch">reasoning-from-scratch</a>
-  (Apache License 2.0). Each source excerpt shows its file's license header.
+  (<a data-source="LICENSES/reasoning-from-scratch.txt" href="../../LICENSES/reasoning-from-scratch.txt">license</a>),
+  both under the Apache License 2.0. Each source excerpt shows its file's license header.
 </footer>
 <script src="spec.js"></script>
+<!-- Written only by the Pages deploy; it points source links at the deployed commit. -->
+<script src="site.js" onerror="this.remove()"></script>
 <script>
 (() => {
   const SPEC = window.ARCHITECTURE;
-  const ROOT = "../../";
+  const ROOT = window.SOURCE_ROOT || "../../";
+  for (const a of document.querySelectorAll("a[data-source]")) a.href = ROOT + a.dataset.source;
   const presets = new Map(SPEC.presets.map((p) => [p.id, p]));
   const sides = { a: SPEC.presets[0].id, b: SPEC.presets[1].id };
   let selected = null;
