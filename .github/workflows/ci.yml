@@ -19,3 +19,31 @@ jobs:
       - name: Import installed wheel outside checkout
         working-directory: /tmp
         run: '"$GITHUB_WORKSPACE/.venv/bin/llm-training" inspect'
+  # Publishes the architecture explorer. It runs only after the checks pass, so a stale
+  # spec.js (which fails tests/unit/test_explain.py) never ships.
+  pages:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: cpu
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    concurrency:
+      group: pages
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+      - name: Assemble the site
+        run: |
+          mkdir -p _site
+          cp docs/architecture/index.html docs/architecture/spec.js _site/
+          cp -R LICENSES _site/LICENSES
+          printf 'window.SOURCE_ROOT = "%s";\n' \
+            "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/blob/$GITHUB_SHA/" > _site/site.js
+      - uses: actions/upload-pages-artifact@v5
+      - id: deploy
+        uses: actions/deploy-pages@v5
