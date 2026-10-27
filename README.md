@@ -337,8 +337,13 @@ order it runs, with its output shape (`B` batch, `T` tokens):
 - a tensor operation that the repo's own code performs: residual additions, the head split,
   the causal mask, softmax, the SwiGLU product, each step of RoPE and of the norms.
 
-Buffers such as RoPE's `cos` and `sin` tables are listed under the module that stores them.
-Selecting a row shows what it does and its source, with the line it runs highlighted. A
+Every row is named for what it does: "QK-norm, keys", "Residual connection", "Split queries
+into heads", "Rotate each channel pair". Buffers such as RoPE's `cos` and `sin` tables are
+listed under the module that stores them, with links to the steps that read them. Selecting a
+row shows what it does and its source, with the line it runs highlighted, and its data flow:
+where each input came from and what reads its output, marked in the tree. That shows, for
+example, that Qwen3 adds nothing to its token embedding: the causal mask and the RoPE tables
+go to every block as separate arguments. A
 selected module also highlights the module at the same path in the other model. The
 `attn_impl: explicit` presets show attention's scores, mask, scaling and softmax as separate
 steps; with `sdpa` they are one fused call.
@@ -364,18 +369,19 @@ one forward pass and records, with input and output shapes:
 - module calls, with module hooks;
 - calls to the package's own functions, with Python's `sys.monitoring`;
 - every tensor operation the package's code performs, with PyTorch's `TorchFunctionMode`.
-  Operations inside a PyTorch module such as `nn.Linear` belong to that module's row.
+  Operations inside a PyTorch module such as `nn.Linear` belong to that module's row;
+- for each of those, which earlier node produced each tensor it reads.
 
 A `TorchDispatchMode` sees every kernel that runs and fails the generation if one ran outside
 both a recorded operation and a PyTorch module, so a step can't be dropped silently. A second
 pass with a different batch and length names the dimensions that changed. The prose for each
-module class, function and operation lives in `explainer.json`, so `src/` holds no
-family-specific text. `tests/unit/test_explain.py` fails when:
+module class, function, operation and buffer, and the name of each module and source line,
+live in `explainer.json`, so `src/` holds no family-specific text. `tests/unit/test_explain.py` fails when:
 
 - `spec.js` is stale, for example after an edit to a model's `forward`;
 - a documented parameter count changes;
-- a module class, function or operation has no note, or a note names something that no
-  longer runs;
+- a module class, function, operation or buffer has no note, a module or step has no name,
+  or a note or name refers to something that no longer runs;
 - folding the repeated blocks loses or adds a step.
 
 The explainer is outside every resume fingerprint, so changing it never affects

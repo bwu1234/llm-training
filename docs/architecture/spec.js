@@ -25,6 +25,13 @@ window.ARCHITECTURE = {
    "total": 124439808,
    "tree": {
     "module": "",
+    "id": 0,
+    "inputs": [
+     {
+      "name": "in_idx",
+      "input": true
+     }
+    ],
     "in": [
      "B",
      "T"
@@ -37,6 +44,13 @@ window.ARCHITECTURE = {
     "children": [
      {
       "module": "tok_emb",
+      "id": 1,
+      "inputs": [
+       {
+        "name": "input",
+        "input": true
+       }
+      ],
       "in": [
        "B",
        "T"
@@ -60,23 +74,34 @@ window.ARCHITECTURE = {
       ],
       "buffers": [],
       "total": 38597376,
-      "repeat": 1
+      "repeat": 1,
+      "role": "llm_training.model.gpt2.model.GPTModel.tok_emb"
      },
      {
       "op": "torch.arange",
+      "id": 2,
       "line": 71,
       "code": "pos_embeds = self.pos_emb(torch.arange(seq_len, device=in_idx.device))",
       "uses": [],
+      "inputs": [],
       "in": [],
       "out": [
        "T"
       ],
       "children": [],
       "total": 0,
-      "repeat": 1
+      "repeat": 1,
+      "label": "Position indices 0 … T−1"
      },
      {
       "module": "pos_emb",
+      "id": 3,
+      "inputs": [
+       {
+        "name": "input",
+        "from": 2
+       }
+      ],
       "in": [
        "T"
       ],
@@ -98,13 +123,23 @@ window.ARCHITECTURE = {
       ],
       "buffers": [],
       "total": 786432,
-      "repeat": 1
+      "repeat": 1,
+      "role": "llm_training.model.gpt2.model.GPTModel.pos_emb"
      },
      {
       "op": "torch.Tensor.add",
+      "id": 4,
       "line": 72,
       "code": "x = tok_embeds + pos_embeds  # Shape [batch_size, num_tokens, emb_size]",
       "uses": [],
+      "inputs": [
+       {
+        "from": 1
+       },
+       {
+        "from": 3
+       }
+      ],
       "in": [
        [
         "B",
@@ -123,10 +158,18 @@ window.ARCHITECTURE = {
       ],
       "children": [],
       "total": 0,
-      "repeat": 1
+      "repeat": 1,
+      "label": "Add position to token embeddings"
      },
      {
       "module": "drop_emb",
+      "id": 5,
+      "inputs": [
+       {
+        "name": "input",
+        "from": 4
+       }
+      ],
       "in": [
        "B",
        "T",
@@ -142,10 +185,18 @@ window.ARCHITECTURE = {
       "params": [],
       "buffers": [],
       "total": 0,
-      "repeat": 1
+      "repeat": 1,
+      "role": "llm_training.model.gpt2.model.GPTModel.drop_emb"
      },
      {
       "module": "trf_blocks",
+      "id": 6,
+      "inputs": [
+       {
+        "name": "input",
+        "from": 5
+       }
+      ],
       "in": [
        "B",
        "T",
@@ -159,6 +210,14 @@ window.ARCHITECTURE = {
       "children": [
        {
         "module": "trf_blocks.0",
+        "id": 7,
+        "inputs": [
+         {
+          "name": "x",
+          "from": 5,
+          "first_copy": true
+         }
+        ],
         "in": [
          "B",
          "T",
@@ -172,6 +231,14 @@ window.ARCHITECTURE = {
         "children": [
          {
           "module": "trf_blocks.0.norm1",
+          "id": 8,
+          "inputs": [
+           {
+            "name": "x",
+            "from": 5,
+            "first_copy": true
+           }
+          ],
           "in": [
            "B",
            "T",
@@ -185,9 +252,16 @@ window.ARCHITECTURE = {
           "children": [
            {
             "op": "torch.Tensor.mean",
+            "id": 9,
             "line": 18,
             "code": "mean = x.mean(dim=-1, keepdim=True)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 5,
+              "first_copy": true
+             }
+            ],
             "in": [
              [
               "B",
@@ -202,13 +276,21 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Mean over channels"
            },
            {
             "op": "torch.Tensor.var",
+            "id": 10,
             "line": 19,
             "code": "var = x.var(dim=-1, keepdim=True, unbiased=False)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 5,
+              "first_copy": true
+             }
+            ],
             "in": [
              [
               "B",
@@ -223,13 +305,24 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Variance over channels"
            },
            {
             "op": "torch.Tensor.sub",
+            "id": 11,
             "line": 20,
             "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 5,
+              "first_copy": true
+             },
+             {
+              "from": 9
+             }
+            ],
             "in": [
              [
               "B",
@@ -249,13 +342,20 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Normalize"
            },
            {
             "op": "torch.Tensor.add",
+            "id": 12,
             "line": 20,
             "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 10
+             }
+            ],
             "in": [
              [
               "B",
@@ -270,13 +370,20 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Normalize"
            },
            {
             "op": "torch.sqrt",
+            "id": 13,
             "line": 20,
             "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 12
+             }
+            ],
             "in": [
              [
               "B",
@@ -291,13 +398,23 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Normalize"
            },
            {
             "op": "torch.Tensor.div",
+            "id": 14,
             "line": 20,
             "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 11
+             },
+             {
+              "from": 13
+             }
+            ],
             "in": [
              [
               "B",
@@ -317,15 +434,25 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Normalize"
            },
            {
             "op": "torch.Tensor.mul",
+            "id": 15,
             "line": 21,
             "code": "return self.scale * norm_x + self.shift",
             "uses": [
              "scale"
             ],
+            "inputs": [
+             {
+              "tensor": "trf_blocks.0.norm1.scale"
+             },
+             {
+              "from": 14
+             }
+            ],
             "in": [
              [
               768
@@ -343,15 +470,26 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Learned scale and shift"
            },
            {
             "op": "torch.Tensor.add",
+            "id": 16,
             "line": 21,
             "code": "return self.scale * norm_x + self.shift",
             "uses": [
              "shift"
             ],
+            "inputs": [
+             {
+              "from": 15
+             },
+             {
+              "tensor": "trf_blocks.0.norm1.shift"
+             }
+            ],
+            "returned_by": 8,
             "in": [
              [
               "B",
@@ -369,7 +507,8 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Learned scale and shift"
            }
           ],
           "class": "llm_training.model.gpt2.layers.LayerNorm",
@@ -391,10 +530,18 @@ window.ARCHITECTURE = {
           ],
           "buffers": [],
           "total": 1536,
-          "repeat": 1
+          "repeat": 1,
+          "role": "llm_training.model.gpt2.model.TransformerBlock.norm1"
          },
          {
           "module": "trf_blocks.0.att",
+          "id": 17,
+          "inputs": [
+           {
+            "name": "x",
+            "from": 8
+           }
+          ],
           "in": [
            "B",
            "T",
@@ -408,6 +555,13 @@ window.ARCHITECTURE = {
           "children": [
            {
             "module": "trf_blocks.0.att.W_key",
+            "id": 18,
+            "inputs": [
+             {
+              "name": "input",
+              "from": 8
+             }
+            ],
             "in": [
              "B",
              "T",
@@ -439,10 +593,18 @@ window.ARCHITECTURE = {
             ],
             "buffers": [],
             "total": 590592,
-            "repeat": 1
+            "repeat": 1,
+            "role": "llm_training.model.gpt2.attention.MultiHeadAttention.W_key"
            },
            {
             "module": "trf_blocks.0.att.W_query",
+            "id": 19,
+            "inputs": [
+             {
+              "name": "input",
+              "from": 8
+             }
+            ],
             "in": [
              "B",
              "T",
@@ -474,10 +636,18 @@ window.ARCHITECTURE = {
             ],
             "buffers": [],
             "total": 590592,
-            "repeat": 1
+            "repeat": 1,
+            "role": "llm_training.model.gpt2.attention.MultiHeadAttention.W_query"
            },
            {
             "module": "trf_blocks.0.att.W_value",
+            "id": 20,
+            "inputs": [
+             {
+              "name": "input",
+              "from": 8
+             }
+            ],
             "in": [
              "B",
              "T",
@@ -509,13 +679,20 @@ window.ARCHITECTURE = {
             ],
             "buffers": [],
             "total": 590592,
-            "repeat": 1
+            "repeat": 1,
+            "role": "llm_training.model.gpt2.attention.MultiHeadAttention.W_value"
            },
            {
             "op": "torch.Tensor.view",
+            "id": 21,
             "line": 40,
             "code": "keys = keys.view(b, num_tokens, self.num_heads, self.head_dim)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 18
+             }
+            ],
             "in": [
              [
               "B",
@@ -531,13 +708,20 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Split keys into heads"
            },
            {
             "op": "torch.Tensor.view",
+            "id": 22,
             "line": 41,
             "code": "values = values.view(b, num_tokens, self.num_heads, self.head_dim)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 20
+             }
+            ],
             "in": [
              [
               "B",
@@ -553,13 +737,20 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Split values into heads"
            },
            {
             "op": "torch.Tensor.view",
+            "id": 23,
             "line": 42,
             "code": "queries = queries.view(b, num_tokens, self.num_heads, self.head_dim)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 19
+             }
+            ],
             "in": [
              [
               "B",
@@ -575,13 +766,20 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Split queries into heads"
            },
            {
             "op": "torch.Tensor.transpose",
+            "id": 24,
             "line": 45,
             "code": "keys = keys.transpose(1, 2)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 21
+             }
+            ],
             "in": [
              [
               "B",
@@ -598,13 +796,20 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Split keys into heads"
            },
            {
             "op": "torch.Tensor.transpose",
+            "id": 25,
             "line": 46,
             "code": "queries = queries.transpose(1, 2)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 23
+             }
+            ],
             "in": [
              [
               "B",
@@ -621,13 +826,20 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Split queries into heads"
            },
            {
             "op": "torch.Tensor.transpose",
+            "id": 26,
             "line": 47,
             "code": "values = values.transpose(1, 2)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 22
+             }
+            ],
             "in": [
              [
               "B",
@@ -644,13 +856,26 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Split values into heads"
            },
            {
             "op": "torch.nn.functional.scaled_dot_product_attention",
+            "id": 27,
             "line": 52,
             "code": "context_vec = torch.nn.functional.scaled_dot_product_attention(",
             "uses": [],
+            "inputs": [
+             {
+              "from": 25
+             },
+             {
+              "from": 24
+             },
+             {
+              "from": 26
+             }
+            ],
             "in": [
              [
               "B",
@@ -679,13 +904,20 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Fused attention: scores, mask, softmax, weighted sum"
            },
            {
             "op": "torch.Tensor.transpose",
+            "id": 28,
             "line": 58,
             "code": ").transpose(1, 2)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 27
+             }
+            ],
             "in": [
              [
               "B",
@@ -702,13 +934,20 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Merge heads"
            },
            {
             "op": "torch.Tensor.reshape",
+            "id": 29,
             "line": 76,
             "code": "context_vec = context_vec.reshape(b, num_tokens, self.d_out)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 28
+             }
+            ],
             "in": [
              [
               "B",
@@ -724,10 +963,19 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Merge heads"
            },
            {
             "module": "trf_blocks.0.att.out_proj",
+            "id": 30,
+            "inputs": [
+             {
+              "name": "input",
+              "from": 29
+             }
+            ],
+            "returned_by": 17,
             "in": [
              "B",
              "T",
@@ -759,7 +1007,8 @@ window.ARCHITECTURE = {
             ],
             "buffers": [],
             "total": 590592,
-            "repeat": 1
+            "repeat": 1,
+            "role": "llm_training.model.gpt2.attention.MultiHeadAttention.out_proj"
            }
           ],
           "class": "llm_training.model.gpt2.attention.MultiHeadAttention",
@@ -775,10 +1024,18 @@ window.ARCHITECTURE = {
            }
           ],
           "total": 2362368,
-          "repeat": 1
+          "repeat": 1,
+          "role": "llm_training.model.gpt2.model.TransformerBlock.att"
          },
          {
           "module": "trf_blocks.0.drop_resid",
+          "id": 31,
+          "inputs": [
+           {
+            "name": "input",
+            "from": 17
+           }
+          ],
           "in": [
            "B",
            "T",
@@ -794,13 +1051,24 @@ window.ARCHITECTURE = {
           "params": [],
           "buffers": [],
           "total": 0,
-          "repeat": 1
+          "repeat": 1,
+          "role": "llm_training.model.gpt2.model.TransformerBlock.drop_resid"
          },
          {
           "op": "torch.Tensor.add",
+          "id": 32,
           "line": 37,
           "code": "x = x + shortcut  # Add the original input back",
           "uses": [],
+          "inputs": [
+           {
+            "from": 31
+           },
+           {
+            "from": 5,
+            "first_copy": true
+           }
+          ],
           "in": [
            [
             "B",
@@ -820,10 +1088,18 @@ window.ARCHITECTURE = {
           ],
           "children": [],
           "total": 0,
-          "repeat": 1
+          "repeat": 1,
+          "label": "Residual connection"
          },
          {
           "module": "trf_blocks.0.norm2",
+          "id": 33,
+          "inputs": [
+           {
+            "name": "x",
+            "from": 32
+           }
+          ],
           "in": [
            "B",
            "T",
@@ -837,9 +1113,15 @@ window.ARCHITECTURE = {
           "children": [
            {
             "op": "torch.Tensor.mean",
+            "id": 34,
             "line": 18,
             "code": "mean = x.mean(dim=-1, keepdim=True)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 32
+             }
+            ],
             "in": [
              [
               "B",
@@ -854,13 +1136,20 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Mean over channels"
            },
            {
             "op": "torch.Tensor.var",
+            "id": 35,
             "line": 19,
             "code": "var = x.var(dim=-1, keepdim=True, unbiased=False)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 32
+             }
+            ],
             "in": [
              [
               "B",
@@ -875,13 +1164,23 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Variance over channels"
            },
            {
             "op": "torch.Tensor.sub",
+            "id": 36,
             "line": 20,
             "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 32
+             },
+             {
+              "from": 34
+             }
+            ],
             "in": [
              [
               "B",
@@ -901,13 +1200,20 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Normalize"
            },
            {
             "op": "torch.Tensor.add",
+            "id": 37,
             "line": 20,
             "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 35
+             }
+            ],
             "in": [
              [
               "B",
@@ -922,13 +1228,20 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Normalize"
            },
            {
             "op": "torch.sqrt",
+            "id": 38,
             "line": 20,
             "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 37
+             }
+            ],
             "in": [
              [
               "B",
@@ -943,13 +1256,23 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Normalize"
            },
            {
             "op": "torch.Tensor.div",
+            "id": 39,
             "line": 20,
             "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 36
+             },
+             {
+              "from": 38
+             }
+            ],
             "in": [
              [
               "B",
@@ -969,15 +1292,25 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Normalize"
            },
            {
             "op": "torch.Tensor.mul",
+            "id": 40,
             "line": 21,
             "code": "return self.scale * norm_x + self.shift",
             "uses": [
              "scale"
             ],
+            "inputs": [
+             {
+              "tensor": "trf_blocks.0.norm2.scale"
+             },
+             {
+              "from": 39
+             }
+            ],
             "in": [
              [
               768
@@ -995,15 +1328,26 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Learned scale and shift"
            },
            {
             "op": "torch.Tensor.add",
+            "id": 41,
             "line": 21,
             "code": "return self.scale * norm_x + self.shift",
             "uses": [
              "shift"
             ],
+            "inputs": [
+             {
+              "from": 40
+             },
+             {
+              "tensor": "trf_blocks.0.norm2.shift"
+             }
+            ],
+            "returned_by": 33,
             "in": [
              [
               "B",
@@ -1021,7 +1365,8 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Learned scale and shift"
            }
           ],
           "class": "llm_training.model.gpt2.layers.LayerNorm",
@@ -1043,10 +1388,18 @@ window.ARCHITECTURE = {
           ],
           "buffers": [],
           "total": 1536,
-          "repeat": 1
+          "repeat": 1,
+          "role": "llm_training.model.gpt2.model.TransformerBlock.norm2"
          },
          {
           "module": "trf_blocks.0.ff",
+          "id": 42,
+          "inputs": [
+           {
+            "name": "x",
+            "from": 33
+           }
+          ],
           "in": [
            "B",
            "T",
@@ -1060,6 +1413,14 @@ window.ARCHITECTURE = {
           "children": [
            {
             "module": "trf_blocks.0.ff.layers",
+            "id": 43,
+            "inputs": [
+             {
+              "name": "input",
+              "from": 33
+             }
+            ],
+            "returned_by": 42,
             "in": [
              "B",
              "T",
@@ -1073,6 +1434,13 @@ window.ARCHITECTURE = {
             "children": [
              {
               "module": "trf_blocks.0.ff.layers.0",
+              "id": 44,
+              "inputs": [
+               {
+                "name": "input",
+                "from": 33
+               }
+              ],
               "in": [
                "B",
                "T",
@@ -1104,10 +1472,18 @@ window.ARCHITECTURE = {
               ],
               "buffers": [],
               "total": 2362368,
-              "repeat": 1
+              "repeat": 1,
+              "role": "llm_training.model.gpt2.layers.FeedForward.layers.0"
              },
              {
               "module": "trf_blocks.0.ff.layers.1",
+              "id": 45,
+              "inputs": [
+               {
+                "name": "x",
+                "from": 44
+               }
+              ],
               "in": [
                "B",
                "T",
@@ -1121,9 +1497,15 @@ window.ARCHITECTURE = {
               "children": [
                {
                 "op": "torch.Tensor.mul",
+                "id": 46,
                 "line": 34,
                 "code": "return 0.5 * x * (1 + torch.tanh(self._sqrt_two_over_pi * (x + 0.044715 * torch.pow(x, 3))))",
                 "uses": [],
+                "inputs": [
+                 {
+                  "from": 44
+                 }
+                ],
                 "in": [
                  [
                   "B",
@@ -1138,13 +1520,20 @@ window.ARCHITECTURE = {
                 ],
                 "children": [],
                 "total": 0,
-                "repeat": 1
+                "repeat": 1,
+                "label": "GELU, tanh approximation"
                },
                {
                 "op": "torch.pow",
+                "id": 47,
                 "line": 34,
                 "code": "return 0.5 * x * (1 + torch.tanh(self._sqrt_two_over_pi * (x + 0.044715 * torch.pow(x, 3))))",
                 "uses": [],
+                "inputs": [
+                 {
+                  "from": 44
+                 }
+                ],
                 "in": [
                  [
                   "B",
@@ -1159,13 +1548,20 @@ window.ARCHITECTURE = {
                 ],
                 "children": [],
                 "total": 0,
-                "repeat": 1
+                "repeat": 1,
+                "label": "GELU, tanh approximation"
                },
                {
                 "op": "torch.Tensor.mul",
+                "id": 48,
                 "line": 34,
                 "code": "return 0.5 * x * (1 + torch.tanh(self._sqrt_two_over_pi * (x + 0.044715 * torch.pow(x, 3))))",
                 "uses": [],
+                "inputs": [
+                 {
+                  "from": 47
+                 }
+                ],
                 "in": [
                  [
                   "B",
@@ -1180,13 +1576,23 @@ window.ARCHITECTURE = {
                 ],
                 "children": [],
                 "total": 0,
-                "repeat": 1
+                "repeat": 1,
+                "label": "GELU, tanh approximation"
                },
                {
                 "op": "torch.Tensor.add",
+                "id": 49,
                 "line": 34,
                 "code": "return 0.5 * x * (1 + torch.tanh(self._sqrt_two_over_pi * (x + 0.044715 * torch.pow(x, 3))))",
                 "uses": [],
+                "inputs": [
+                 {
+                  "from": 44
+                 },
+                 {
+                  "from": 48
+                 }
+                ],
                 "in": [
                  [
                   "B",
@@ -1206,14 +1612,24 @@ window.ARCHITECTURE = {
                 ],
                 "children": [],
                 "total": 0,
-                "repeat": 1
+                "repeat": 1,
+                "label": "GELU, tanh approximation"
                },
                {
                 "op": "torch.Tensor.mul",
+                "id": 50,
                 "line": 34,
                 "code": "return 0.5 * x * (1 + torch.tanh(self._sqrt_two_over_pi * (x + 0.044715 * torch.pow(x, 3))))",
                 "uses": [
                  "_sqrt_two_over_pi"
+                ],
+                "inputs": [
+                 {
+                  "tensor": "trf_blocks.0.ff.layers.1._sqrt_two_over_pi"
+                 },
+                 {
+                  "from": 49
+                 }
                 ],
                 "in": [
                  [],
@@ -1230,13 +1646,20 @@ window.ARCHITECTURE = {
                 ],
                 "children": [],
                 "total": 0,
-                "repeat": 1
+                "repeat": 1,
+                "label": "GELU, tanh approximation"
                },
                {
                 "op": "torch.tanh",
+                "id": 51,
                 "line": 34,
                 "code": "return 0.5 * x * (1 + torch.tanh(self._sqrt_two_over_pi * (x + 0.044715 * torch.pow(x, 3))))",
                 "uses": [],
+                "inputs": [
+                 {
+                  "from": 50
+                 }
+                ],
                 "in": [
                  [
                   "B",
@@ -1251,13 +1674,20 @@ window.ARCHITECTURE = {
                 ],
                 "children": [],
                 "total": 0,
-                "repeat": 1
+                "repeat": 1,
+                "label": "GELU, tanh approximation"
                },
                {
                 "op": "torch.Tensor.add",
+                "id": 52,
                 "line": 34,
                 "code": "return 0.5 * x * (1 + torch.tanh(self._sqrt_two_over_pi * (x + 0.044715 * torch.pow(x, 3))))",
                 "uses": [],
+                "inputs": [
+                 {
+                  "from": 51
+                 }
+                ],
                 "in": [
                  [
                   "B",
@@ -1272,13 +1702,24 @@ window.ARCHITECTURE = {
                 ],
                 "children": [],
                 "total": 0,
-                "repeat": 1
+                "repeat": 1,
+                "label": "GELU, tanh approximation"
                },
                {
                 "op": "torch.Tensor.mul",
+                "id": 53,
                 "line": 34,
                 "code": "return 0.5 * x * (1 + torch.tanh(self._sqrt_two_over_pi * (x + 0.044715 * torch.pow(x, 3))))",
                 "uses": [],
+                "inputs": [
+                 {
+                  "from": 46
+                 },
+                 {
+                  "from": 52
+                 }
+                ],
+                "returned_by": 45,
                 "in": [
                  [
                   "B",
@@ -1298,7 +1739,8 @@ window.ARCHITECTURE = {
                 ],
                 "children": [],
                 "total": 0,
-                "repeat": 1
+                "repeat": 1,
+                "label": "GELU, tanh approximation"
                }
               ],
               "class": "llm_training.model.gpt2.layers.GELU",
@@ -1311,10 +1753,19 @@ window.ARCHITECTURE = {
                }
               ],
               "total": 0,
-              "repeat": 1
+              "repeat": 1,
+              "role": "llm_training.model.gpt2.layers.FeedForward.layers.1"
              },
              {
               "module": "trf_blocks.0.ff.layers.2",
+              "id": 54,
+              "inputs": [
+               {
+                "name": "input",
+                "from": 45
+               }
+              ],
+              "returned_by": 43,
               "in": [
                "B",
                "T",
@@ -1346,24 +1797,34 @@ window.ARCHITECTURE = {
               ],
               "buffers": [],
               "total": 2360064,
-              "repeat": 1
+              "repeat": 1,
+              "role": "llm_training.model.gpt2.layers.FeedForward.layers.2"
              }
             ],
             "class": "torch.nn.Sequential",
             "params": [],
             "buffers": [],
             "total": 4722432,
-            "repeat": 1
+            "repeat": 1,
+            "role": "llm_training.model.gpt2.layers.FeedForward.layers"
            }
           ],
           "class": "llm_training.model.gpt2.layers.FeedForward",
           "params": [],
           "buffers": [],
           "total": 4722432,
-          "repeat": 1
+          "repeat": 1,
+          "role": "llm_training.model.gpt2.model.TransformerBlock.ff"
          },
          {
           "module": "trf_blocks.0.drop_resid",
+          "id": 55,
+          "inputs": [
+           {
+            "name": "input",
+            "from": 42
+           }
+          ],
           "in": [
            "B",
            "T",
@@ -1379,13 +1840,24 @@ window.ARCHITECTURE = {
           "params": [],
           "buffers": [],
           "total": 0,
-          "repeat": 1
+          "repeat": 1,
+          "role": "llm_training.model.gpt2.model.TransformerBlock.drop_resid"
          },
          {
           "op": "torch.Tensor.add",
+          "id": 56,
           "line": 44,
           "code": "x = x + shortcut  # Add the original input back",
           "uses": [],
+          "inputs": [
+           {
+            "from": 55
+           },
+           {
+            "from": 32
+           }
+          ],
+          "returned_by": 7,
           "in": [
            [
             "B",
@@ -1405,7 +1877,8 @@ window.ARCHITECTURE = {
           ],
           "children": [],
           "total": 0,
-          "repeat": 1
+          "repeat": 1,
+          "label": "Residual connection"
          }
         ],
         "class": "llm_training.model.gpt2.model.TransformerBlock",
@@ -1413,17 +1886,27 @@ window.ARCHITECTURE = {
         "buffers": [],
         "total": 7087872,
         "repeat": 12,
-        "last": "trf_blocks.11"
+        "last": "trf_blocks.11",
+        "returned_by": 6,
+        "role": "llm_training.model.gpt2.model.GPTModel.trf_blocks"
        }
       ],
       "class": "torch.nn.Sequential",
       "params": [],
       "buffers": [],
       "total": 85054464,
-      "repeat": 1
+      "repeat": 1,
+      "role": "llm_training.model.gpt2.model.GPTModel.trf_blocks"
      },
      {
       "module": "final_norm",
+      "id": 607,
+      "inputs": [
+       {
+        "name": "x",
+        "from": 6
+       }
+      ],
       "in": [
        "B",
        "T",
@@ -1437,9 +1920,15 @@ window.ARCHITECTURE = {
       "children": [
        {
         "op": "torch.Tensor.mean",
+        "id": 608,
         "line": 18,
         "code": "mean = x.mean(dim=-1, keepdim=True)",
         "uses": [],
+        "inputs": [
+         {
+          "from": 6
+         }
+        ],
         "in": [
          [
           "B",
@@ -1454,13 +1943,20 @@ window.ARCHITECTURE = {
         ],
         "children": [],
         "total": 0,
-        "repeat": 1
+        "repeat": 1,
+        "label": "Mean over channels"
        },
        {
         "op": "torch.Tensor.var",
+        "id": 609,
         "line": 19,
         "code": "var = x.var(dim=-1, keepdim=True, unbiased=False)",
         "uses": [],
+        "inputs": [
+         {
+          "from": 6
+         }
+        ],
         "in": [
          [
           "B",
@@ -1475,13 +1971,23 @@ window.ARCHITECTURE = {
         ],
         "children": [],
         "total": 0,
-        "repeat": 1
+        "repeat": 1,
+        "label": "Variance over channels"
        },
        {
         "op": "torch.Tensor.sub",
+        "id": 610,
         "line": 20,
         "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
         "uses": [],
+        "inputs": [
+         {
+          "from": 6
+         },
+         {
+          "from": 608
+         }
+        ],
         "in": [
          [
           "B",
@@ -1501,13 +2007,20 @@ window.ARCHITECTURE = {
         ],
         "children": [],
         "total": 0,
-        "repeat": 1
+        "repeat": 1,
+        "label": "Normalize"
        },
        {
         "op": "torch.Tensor.add",
+        "id": 611,
         "line": 20,
         "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
         "uses": [],
+        "inputs": [
+         {
+          "from": 609
+         }
+        ],
         "in": [
          [
           "B",
@@ -1522,13 +2035,20 @@ window.ARCHITECTURE = {
         ],
         "children": [],
         "total": 0,
-        "repeat": 1
+        "repeat": 1,
+        "label": "Normalize"
        },
        {
         "op": "torch.sqrt",
+        "id": 612,
         "line": 20,
         "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
         "uses": [],
+        "inputs": [
+         {
+          "from": 611
+         }
+        ],
         "in": [
          [
           "B",
@@ -1543,13 +2063,23 @@ window.ARCHITECTURE = {
         ],
         "children": [],
         "total": 0,
-        "repeat": 1
+        "repeat": 1,
+        "label": "Normalize"
        },
        {
         "op": "torch.Tensor.div",
+        "id": 613,
         "line": 20,
         "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
         "uses": [],
+        "inputs": [
+         {
+          "from": 610
+         },
+         {
+          "from": 612
+         }
+        ],
         "in": [
          [
           "B",
@@ -1569,15 +2099,25 @@ window.ARCHITECTURE = {
         ],
         "children": [],
         "total": 0,
-        "repeat": 1
+        "repeat": 1,
+        "label": "Normalize"
        },
        {
         "op": "torch.Tensor.mul",
+        "id": 614,
         "line": 21,
         "code": "return self.scale * norm_x + self.shift",
         "uses": [
          "scale"
         ],
+        "inputs": [
+         {
+          "tensor": "final_norm.scale"
+         },
+         {
+          "from": 613
+         }
+        ],
         "in": [
          [
           768
@@ -1595,15 +2135,26 @@ window.ARCHITECTURE = {
         ],
         "children": [],
         "total": 0,
-        "repeat": 1
+        "repeat": 1,
+        "label": "Learned scale and shift"
        },
        {
         "op": "torch.Tensor.add",
+        "id": 615,
         "line": 21,
         "code": "return self.scale * norm_x + self.shift",
         "uses": [
          "shift"
         ],
+        "inputs": [
+         {
+          "from": 614
+         },
+         {
+          "tensor": "final_norm.shift"
+         }
+        ],
+        "returned_by": 607,
         "in": [
          [
           "B",
@@ -1621,7 +2172,8 @@ window.ARCHITECTURE = {
         ],
         "children": [],
         "total": 0,
-        "repeat": 1
+        "repeat": 1,
+        "label": "Learned scale and shift"
        }
       ],
       "class": "llm_training.model.gpt2.layers.LayerNorm",
@@ -1643,10 +2195,19 @@ window.ARCHITECTURE = {
       ],
       "buffers": [],
       "total": 1536,
-      "repeat": 1
+      "repeat": 1,
+      "role": "llm_training.model.gpt2.model.GPTModel.final_norm"
      },
      {
       "module": "out_head",
+      "id": 616,
+      "inputs": [
+       {
+        "name": "input",
+        "from": 607
+       }
+      ],
+      "returned_by": 0,
       "in": [
        "B",
        "T",
@@ -1672,7 +2233,8 @@ window.ARCHITECTURE = {
       ],
       "buffers": [],
       "total": 0,
-      "repeat": 1
+      "repeat": 1,
+      "role": "llm_training.model.gpt2.model.GPTModel.out_head"
      }
     ],
     "class": "llm_training.model.gpt2.model.GPTModel",
@@ -1707,6 +2269,13 @@ window.ARCHITECTURE = {
    "total": 596049920,
    "tree": {
     "module": "",
+    "id": 0,
+    "inputs": [
+     {
+      "name": "in_idx",
+      "input": true
+     }
+    ],
     "in": [
      "B",
      "T"
@@ -1719,6 +2288,13 @@ window.ARCHITECTURE = {
     "children": [
      {
       "module": "tok_emb",
+      "id": 1,
+      "inputs": [
+       {
+        "name": "input",
+        "input": true
+       }
+      ],
       "in": [
        "B",
        "T"
@@ -1742,13 +2318,16 @@ window.ARCHITECTURE = {
       ],
       "buffers": [],
       "total": 155582464,
-      "repeat": 1
+      "repeat": 1,
+      "role": "llm_training.model.qwen3.model.Qwen3Model.tok_emb"
      },
      {
       "op": "torch.ones",
+      "id": 2,
       "line": 81,
       "code": "torch.ones(num_tokens, num_tokens, device=x.device, dtype=torch.bool), diagonal=1",
       "uses": [],
+      "inputs": [],
       "in": [],
       "out": [
        "T",
@@ -1756,13 +2335,20 @@ window.ARCHITECTURE = {
       ],
       "children": [],
       "total": 0,
-      "repeat": 1
+      "repeat": 1,
+      "label": "Causal mask"
      },
      {
       "op": "torch.triu",
+      "id": 3,
       "line": 80,
       "code": "mask = torch.triu(",
       "uses": [],
+      "inputs": [
+       {
+        "from": 2
+       }
+      ],
       "in": [
        [
         "T",
@@ -1775,13 +2361,20 @@ window.ARCHITECTURE = {
       ],
       "children": [],
       "total": 0,
-      "repeat": 1
+      "repeat": 1,
+      "label": "Causal mask"
      },
      {
       "op": "torch.Tensor.__getitem__",
+      "id": 4,
       "line": 92,
       "code": "mask = mask[None, None, :, :]  # broadcast mask",
       "uses": [],
+      "inputs": [
+       {
+        "from": 3
+       }
+      ],
       "in": [
        [
         "T",
@@ -1796,10 +2389,31 @@ window.ARCHITECTURE = {
       ],
       "children": [],
       "total": 0,
-      "repeat": 1
+      "repeat": 1,
+      "label": "Causal mask"
      },
      {
       "module": "trf_blocks.0",
+      "id": 5,
+      "inputs": [
+       {
+        "name": "x",
+        "from": 1,
+        "first_copy": true
+       },
+       {
+        "name": "mask",
+        "from": 4
+       },
+       {
+        "name": "cos",
+        "tensor": "cos"
+       },
+       {
+        "name": "sin",
+        "tensor": "sin"
+       }
+      ],
       "in": [
        "B",
        "T",
@@ -1813,6 +2427,14 @@ window.ARCHITECTURE = {
       "children": [
        {
         "module": "trf_blocks.0.norm1",
+        "id": 6,
+        "inputs": [
+         {
+          "name": "x",
+          "from": 1,
+          "first_copy": true
+         }
+        ],
         "in": [
          "B",
          "T",
@@ -1826,9 +2448,17 @@ window.ARCHITECTURE = {
         "children": [
          {
           "op": "torch.Tensor.to",
+          "id": 7,
           "line": 36,
           "code": "x = x.to(torch.float32)",
           "uses": [],
+          "inputs": [
+           {
+            "from": 1,
+            "first_copy": true
+           }
+          ],
+          "unchanged": true,
           "in": [
            [
             "B",
@@ -1843,13 +2473,21 @@ window.ARCHITECTURE = {
           ],
           "children": [],
           "total": 0,
-          "repeat": 1
+          "repeat": 1,
+          "label": "Compute in float32"
          },
          {
           "op": "torch.Tensor.pow",
+          "id": 8,
           "line": 38,
           "code": "variance = x.pow(2).mean(dim=-1, keepdim=True)",
           "uses": [],
+          "inputs": [
+           {
+            "from": 1,
+            "first_copy": true
+           }
+          ],
           "in": [
            [
             "B",
@@ -1864,13 +2502,20 @@ window.ARCHITECTURE = {
           ],
           "children": [],
           "total": 0,
-          "repeat": 1
+          "repeat": 1,
+          "label": "Mean square over channels"
          },
          {
           "op": "torch.Tensor.mean",
+          "id": 9,
           "line": 38,
           "code": "variance = x.pow(2).mean(dim=-1, keepdim=True)",
           "uses": [],
+          "inputs": [
+           {
+            "from": 8
+           }
+          ],
           "in": [
            [
             "B",
@@ -1885,13 +2530,20 @@ window.ARCHITECTURE = {
           ],
           "children": [],
           "total": 0,
-          "repeat": 1
+          "repeat": 1,
+          "label": "Mean square over channels"
          },
          {
           "op": "torch.Tensor.add",
+          "id": 10,
           "line": 39,
           "code": "norm_x = x * torch.rsqrt(variance + self.eps)",
           "uses": [],
+          "inputs": [
+           {
+            "from": 9
+           }
+          ],
           "in": [
            [
             "B",
@@ -1906,13 +2558,20 @@ window.ARCHITECTURE = {
           ],
           "children": [],
           "total": 0,
-          "repeat": 1
+          "repeat": 1,
+          "label": "Divide by the root mean square"
          },
          {
           "op": "torch.rsqrt",
+          "id": 11,
           "line": 39,
           "code": "norm_x = x * torch.rsqrt(variance + self.eps)",
           "uses": [],
+          "inputs": [
+           {
+            "from": 10
+           }
+          ],
           "in": [
            [
             "B",
@@ -1927,13 +2586,24 @@ window.ARCHITECTURE = {
           ],
           "children": [],
           "total": 0,
-          "repeat": 1
+          "repeat": 1,
+          "label": "Divide by the root mean square"
          },
          {
           "op": "torch.Tensor.mul",
+          "id": 12,
           "line": 39,
           "code": "norm_x = x * torch.rsqrt(variance + self.eps)",
           "uses": [],
+          "inputs": [
+           {
+            "from": 1,
+            "first_copy": true
+           },
+           {
+            "from": 11
+           }
+          ],
           "in": [
            [
             "B",
@@ -1953,15 +2623,26 @@ window.ARCHITECTURE = {
           ],
           "children": [],
           "total": 0,
-          "repeat": 1
+          "repeat": 1,
+          "label": "Divide by the root mean square"
          },
          {
           "op": "torch.Tensor.mul",
+          "id": 13,
           "line": 40,
           "code": "norm_x = norm_x * self.scale",
           "uses": [
            "scale"
           ],
+          "inputs": [
+           {
+            "from": 12
+           },
+           {
+            "tensor": "trf_blocks.0.norm1.scale"
+           }
+          ],
+          "returned_by": 6,
           "in": [
            [
             "B",
@@ -1979,13 +2660,21 @@ window.ARCHITECTURE = {
           ],
           "children": [],
           "total": 0,
-          "repeat": 1
+          "repeat": 1,
+          "label": "Learned scale"
          },
          {
           "op": "torch.Tensor.to",
+          "id": 14,
           "line": 45,
           "code": "return norm_x.to(input_dtype)",
           "uses": [],
+          "inputs": [
+           {
+            "from": 13
+           }
+          ],
+          "unchanged": true,
           "in": [
            [
             "B",
@@ -2000,7 +2689,8 @@ window.ARCHITECTURE = {
           ],
           "children": [],
           "total": 0,
-          "repeat": 1
+          "repeat": 1,
+          "label": "Cast back to the input dtype"
          }
         ],
         "class": "llm_training.model.qwen3.layers.RMSNorm",
@@ -2015,10 +2705,31 @@ window.ARCHITECTURE = {
         ],
         "buffers": [],
         "total": 1024,
-        "repeat": 1
+        "repeat": 1,
+        "role": "llm_training.model.qwen3.model.TransformerBlock.norm1"
        },
        {
         "module": "trf_blocks.0.att",
+        "id": 15,
+        "inputs": [
+         {
+          "name": "x",
+          "from": 6
+         },
+         {
+          "name": "mask",
+          "from": 4
+         },
+         {
+          "name": "cos",
+          "tensor": "cos"
+         },
+         {
+          "name": "sin",
+          "tensor": "sin"
+         }
+        ],
+        "returned_by": 5,
         "in": [
          "B",
          "T",
@@ -2032,6 +2743,13 @@ window.ARCHITECTURE = {
         "children": [
          {
           "module": "trf_blocks.0.att.W_query",
+          "id": 16,
+          "inputs": [
+           {
+            "name": "input",
+            "from": 6
+           }
+          ],
           "in": [
            "B",
            "T",
@@ -2056,10 +2774,18 @@ window.ARCHITECTURE = {
           ],
           "buffers": [],
           "total": 2097152,
-          "repeat": 1
+          "repeat": 1,
+          "role": "llm_training.model.qwen3.attention.GroupedQueryAttention.W_query"
          },
          {
           "module": "trf_blocks.0.att.W_key",
+          "id": 17,
+          "inputs": [
+           {
+            "name": "input",
+            "from": 6
+           }
+          ],
           "in": [
            "B",
            "T",
@@ -2084,10 +2810,18 @@ window.ARCHITECTURE = {
           ],
           "buffers": [],
           "total": 1048576,
-          "repeat": 1
+          "repeat": 1,
+          "role": "llm_training.model.qwen3.attention.GroupedQueryAttention.W_key"
          },
          {
           "module": "trf_blocks.0.att.W_value",
+          "id": 18,
+          "inputs": [
+           {
+            "name": "input",
+            "from": 6
+           }
+          ],
           "in": [
            "B",
            "T",
@@ -2112,13 +2846,20 @@ window.ARCHITECTURE = {
           ],
           "buffers": [],
           "total": 1048576,
-          "repeat": 1
+          "repeat": 1,
+          "role": "llm_training.model.qwen3.attention.GroupedQueryAttention.W_value"
          },
          {
           "op": "torch.Tensor.view",
+          "id": 19,
           "line": 56,
           "code": "queries = queries.view(b, num_tokens, self.num_heads, self.head_dim).transpose(1, 2)",
           "uses": [],
+          "inputs": [
+           {
+            "from": 16
+           }
+          ],
           "in": [
            [
             "B",
@@ -2134,13 +2875,20 @@ window.ARCHITECTURE = {
           ],
           "children": [],
           "total": 0,
-          "repeat": 1
+          "repeat": 1,
+          "label": "Split queries into heads"
          },
          {
           "op": "torch.Tensor.transpose",
+          "id": 20,
           "line": 56,
           "code": "queries = queries.view(b, num_tokens, self.num_heads, self.head_dim).transpose(1, 2)",
           "uses": [],
+          "inputs": [
+           {
+            "from": 19
+           }
+          ],
           "in": [
            [
             "B",
@@ -2157,13 +2905,20 @@ window.ARCHITECTURE = {
           ],
           "children": [],
           "total": 0,
-          "repeat": 1
+          "repeat": 1,
+          "label": "Split queries into heads"
          },
          {
           "op": "torch.Tensor.view",
+          "id": 21,
           "line": 57,
           "code": "keys_new = keys.view(b, num_tokens, self.num_kv_groups, self.head_dim).transpose(1, 2)",
           "uses": [],
+          "inputs": [
+           {
+            "from": 17
+           }
+          ],
           "in": [
            [
             "B",
@@ -2179,13 +2934,20 @@ window.ARCHITECTURE = {
           ],
           "children": [],
           "total": 0,
-          "repeat": 1
+          "repeat": 1,
+          "label": "Split keys into heads"
          },
          {
           "op": "torch.Tensor.transpose",
+          "id": 22,
           "line": 57,
           "code": "keys_new = keys.view(b, num_tokens, self.num_kv_groups, self.head_dim).transpose(1, 2)",
           "uses": [],
+          "inputs": [
+           {
+            "from": 21
+           }
+          ],
           "in": [
            [
             "B",
@@ -2202,13 +2964,20 @@ window.ARCHITECTURE = {
           ],
           "children": [],
           "total": 0,
-          "repeat": 1
+          "repeat": 1,
+          "label": "Split keys into heads"
          },
          {
           "op": "torch.Tensor.view",
+          "id": 23,
           "line": 58,
           "code": "values_new = values.view(b, num_tokens, self.num_kv_groups, self.head_dim).transpose(1, 2)",
           "uses": [],
+          "inputs": [
+           {
+            "from": 18
+           }
+          ],
           "in": [
            [
             "B",
@@ -2224,13 +2993,21 @@ window.ARCHITECTURE = {
           ],
           "children": [],
           "total": 0,
-          "repeat": 1
+          "repeat": 1,
+          "label": "Split values into heads"
          },
          {
           "op": "torch.Tensor.transpose",
+          "id": 24,
           "line": 58,
           "code": "values_new = values.view(b, num_tokens, self.num_kv_groups, self.head_dim).transpose(1, 2)",
           "uses": [],
+          "inputs": [
+           {
+            "from": 23
+           }
+          ],
+          "returned_by": 15,
           "in": [
            [
             "B",
@@ -2247,10 +3024,18 @@ window.ARCHITECTURE = {
           ],
           "children": [],
           "total": 0,
-          "repeat": 1
+          "repeat": 1,
+          "label": "Split values into heads"
          },
          {
           "module": "trf_blocks.0.att.q_norm",
+          "id": 25,
+          "inputs": [
+           {
+            "name": "x",
+            "from": 20
+           }
+          ],
           "in": [
            "B",
            16,
@@ -2266,9 +3051,16 @@ window.ARCHITECTURE = {
           "children": [
            {
             "op": "torch.Tensor.to",
+            "id": 26,
             "line": 36,
             "code": "x = x.to(torch.float32)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 20
+             }
+            ],
+            "unchanged": true,
             "in": [
              [
               "B",
@@ -2285,13 +3077,20 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Compute in float32"
            },
            {
             "op": "torch.Tensor.pow",
+            "id": 27,
             "line": 38,
             "code": "variance = x.pow(2).mean(dim=-1, keepdim=True)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 20
+             }
+            ],
             "in": [
              [
               "B",
@@ -2308,13 +3107,20 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Mean square over channels"
            },
            {
             "op": "torch.Tensor.mean",
+            "id": 28,
             "line": 38,
             "code": "variance = x.pow(2).mean(dim=-1, keepdim=True)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 27
+             }
+            ],
             "in": [
              [
               "B",
@@ -2331,13 +3137,20 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Mean square over channels"
            },
            {
             "op": "torch.Tensor.add",
+            "id": 29,
             "line": 39,
             "code": "norm_x = x * torch.rsqrt(variance + self.eps)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 28
+             }
+            ],
             "in": [
              [
               "B",
@@ -2354,13 +3167,20 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Divide by the root mean square"
            },
            {
             "op": "torch.rsqrt",
+            "id": 30,
             "line": 39,
             "code": "norm_x = x * torch.rsqrt(variance + self.eps)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 29
+             }
+            ],
             "in": [
              [
               "B",
@@ -2377,13 +3197,23 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Divide by the root mean square"
            },
            {
             "op": "torch.Tensor.mul",
+            "id": 31,
             "line": 39,
             "code": "norm_x = x * torch.rsqrt(variance + self.eps)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 20
+             },
+             {
+              "from": 30
+             }
+            ],
             "in": [
              [
               "B",
@@ -2406,15 +3236,26 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Divide by the root mean square"
            },
            {
             "op": "torch.Tensor.mul",
+            "id": 32,
             "line": 40,
             "code": "norm_x = norm_x * self.scale",
             "uses": [
              "scale"
             ],
+            "inputs": [
+             {
+              "from": 31
+             },
+             {
+              "tensor": "trf_blocks.0.att.q_norm.scale"
+             }
+            ],
+            "returned_by": 25,
             "in": [
              [
               "B",
@@ -2434,13 +3275,21 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Learned scale"
            },
            {
             "op": "torch.Tensor.to",
+            "id": 33,
             "line": 45,
             "code": "return norm_x.to(input_dtype)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 32
+             }
+            ],
+            "unchanged": true,
             "in": [
              [
               "B",
@@ -2457,7 +3306,8 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Cast back to the input dtype"
            }
           ],
           "class": "llm_training.model.qwen3.layers.RMSNorm",
@@ -2472,10 +3322,18 @@ window.ARCHITECTURE = {
           ],
           "buffers": [],
           "total": 128,
-          "repeat": 1
+          "repeat": 1,
+          "role": "llm_training.model.qwen3.attention.GroupedQueryAttention.q_norm"
          },
          {
           "module": "trf_blocks.0.att.k_norm",
+          "id": 34,
+          "inputs": [
+           {
+            "name": "x",
+            "from": 22
+           }
+          ],
           "in": [
            "B",
            8,
@@ -2491,9 +3349,16 @@ window.ARCHITECTURE = {
           "children": [
            {
             "op": "torch.Tensor.to",
+            "id": 35,
             "line": 36,
             "code": "x = x.to(torch.float32)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 22
+             }
+            ],
+            "unchanged": true,
             "in": [
              [
               "B",
@@ -2510,13 +3375,20 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Compute in float32"
            },
            {
             "op": "torch.Tensor.pow",
+            "id": 36,
             "line": 38,
             "code": "variance = x.pow(2).mean(dim=-1, keepdim=True)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 22
+             }
+            ],
             "in": [
              [
               "B",
@@ -2533,13 +3405,20 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Mean square over channels"
            },
            {
             "op": "torch.Tensor.mean",
+            "id": 37,
             "line": 38,
             "code": "variance = x.pow(2).mean(dim=-1, keepdim=True)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 36
+             }
+            ],
             "in": [
              [
               "B",
@@ -2556,13 +3435,20 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Mean square over channels"
            },
            {
             "op": "torch.Tensor.add",
+            "id": 38,
             "line": 39,
             "code": "norm_x = x * torch.rsqrt(variance + self.eps)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 37
+             }
+            ],
             "in": [
              [
               "B",
@@ -2579,13 +3465,20 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Divide by the root mean square"
            },
            {
             "op": "torch.rsqrt",
+            "id": 39,
             "line": 39,
             "code": "norm_x = x * torch.rsqrt(variance + self.eps)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 38
+             }
+            ],
             "in": [
              [
               "B",
@@ -2602,13 +3495,23 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Divide by the root mean square"
            },
            {
             "op": "torch.Tensor.mul",
+            "id": 40,
             "line": 39,
             "code": "norm_x = x * torch.rsqrt(variance + self.eps)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 22
+             },
+             {
+              "from": 39
+             }
+            ],
             "in": [
              [
               "B",
@@ -2631,15 +3534,26 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Divide by the root mean square"
            },
            {
             "op": "torch.Tensor.mul",
+            "id": 41,
             "line": 40,
             "code": "norm_x = norm_x * self.scale",
             "uses": [
              "scale"
             ],
+            "inputs": [
+             {
+              "from": 40
+             },
+             {
+              "tensor": "trf_blocks.0.att.k_norm.scale"
+             }
+            ],
+            "returned_by": 34,
             "in": [
              [
               "B",
@@ -2659,13 +3573,21 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Learned scale"
            },
            {
             "op": "torch.Tensor.to",
+            "id": 42,
             "line": 45,
             "code": "return norm_x.to(input_dtype)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 41
+             }
+            ],
+            "unchanged": true,
             "in": [
              [
               "B",
@@ -2682,7 +3604,8 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Cast back to the input dtype"
            }
           ],
           "class": "llm_training.model.qwen3.layers.RMSNorm",
@@ -2697,11 +3620,27 @@ window.ARCHITECTURE = {
           ],
           "buffers": [],
           "total": 128,
-          "repeat": 1
+          "repeat": 1,
+          "role": "llm_training.model.qwen3.attention.GroupedQueryAttention.k_norm"
          },
          {
           "function": "llm_training.model.qwen3.rope.apply_rope",
+          "id": 43,
           "line": 67,
+          "inputs": [
+           {
+            "name": "x",
+            "from": 25
+           },
+           {
+            "name": "cos",
+            "tensor": "cos"
+           },
+           {
+            "name": "sin",
+            "tensor": "sin"
+           }
+          ],
           "in": [
            "B",
            16,
@@ -2717,9 +3656,15 @@ window.ARCHITECTURE = {
           "children": [
            {
             "op": "torch.Tensor.__getitem__",
+            "id": 44,
             "line": 92,
             "code": "x1 = x[..., : head_dim // 2]  # First half",
             "uses": [],
+            "inputs": [
+             {
+              "from": 25
+             }
+            ],
             "in": [
              [
               "B",
@@ -2736,13 +3681,20 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "First half of each head"
            },
            {
             "op": "torch.Tensor.__getitem__",
+            "id": 45,
             "line": 93,
             "code": "x2 = x[..., head_dim // 2 :]  # Second half",
             "uses": [],
+            "inputs": [
+             {
+              "from": 25
+             }
+            ],
             "in": [
              [
               "B",
@@ -2759,15 +3711,22 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Second half of each head"
            },
            {
             "op": "torch.Tensor.__getitem__",
+            "id": 46,
             "line": 97,
             "code": "cos[offset : offset + seq_len, :].unsqueeze(0).unsqueeze(0)",
             "uses": [
              "cos"
             ],
+            "inputs": [
+             {
+              "tensor": "cos"
+             }
+            ],
             "in": [
              [
               40960,
@@ -2780,13 +3739,20 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Cosines for positions 0 … T−1"
            },
            {
             "op": "torch.Tensor.unsqueeze",
+            "id": 47,
             "line": 97,
             "code": "cos[offset : offset + seq_len, :].unsqueeze(0).unsqueeze(0)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 46
+             }
+            ],
             "in": [
              [
               "T",
@@ -2800,13 +3766,20 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Cosines for positions 0 … T−1"
            },
            {
             "op": "torch.Tensor.unsqueeze",
+            "id": 48,
             "line": 97,
             "code": "cos[offset : offset + seq_len, :].unsqueeze(0).unsqueeze(0)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 47
+             }
+            ],
             "in": [
              [
               1,
@@ -2822,15 +3795,22 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Cosines for positions 0 … T−1"
            },
            {
             "op": "torch.Tensor.__getitem__",
+            "id": 49,
             "line": 99,
             "code": "sin = sin[offset : offset + seq_len, :].unsqueeze(0).unsqueeze(0)",
             "uses": [
              "sin"
             ],
+            "inputs": [
+             {
+              "tensor": "sin"
+             }
+            ],
             "in": [
              [
               40960,
@@ -2843,13 +3823,20 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Sines for positions 0 … T−1"
            },
            {
             "op": "torch.Tensor.unsqueeze",
+            "id": 50,
             "line": 99,
             "code": "sin = sin[offset : offset + seq_len, :].unsqueeze(0).unsqueeze(0)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 49
+             }
+            ],
             "in": [
              [
               "T",
@@ -2863,13 +3850,20 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Sines for positions 0 … T−1"
            },
            {
             "op": "torch.Tensor.unsqueeze",
+            "id": 51,
             "line": 99,
             "code": "sin = sin[offset : offset + seq_len, :].unsqueeze(0).unsqueeze(0)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 50
+             }
+            ],
             "in": [
              [
               1,
@@ -2885,13 +3879,20 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Sines for positions 0 … T−1"
            },
            {
             "op": "torch.Tensor.neg",
+            "id": 52,
             "line": 102,
             "code": "rotated = torch.cat((-x2, x1), dim=-1)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 45
+             }
+            ],
             "in": [
              [
               "B",
@@ -2908,13 +3909,23 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Swap halves: (−x₂, x₁)"
            },
            {
             "op": "torch.cat",
+            "id": 53,
             "line": 102,
             "code": "rotated = torch.cat((-x2, x1), dim=-1)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 52
+             },
+             {
+              "from": 44
+             }
+            ],
             "in": [
              [
               "B",
@@ -2937,13 +3948,23 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Swap halves: (−x₂, x₁)"
            },
            {
             "op": "torch.Tensor.mul",
+            "id": 54,
             "line": 103,
             "code": "x_rotated = (x * cos) + (rotated * sin)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 25
+             },
+             {
+              "from": 48
+             }
+            ],
             "in": [
              [
               "B",
@@ -2966,13 +3987,23 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Rotate each channel pair"
            },
            {
             "op": "torch.Tensor.mul",
+            "id": 55,
             "line": 103,
             "code": "x_rotated = (x * cos) + (rotated * sin)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 53
+             },
+             {
+              "from": 51
+             }
+            ],
             "in": [
              [
               "B",
@@ -2995,13 +4026,24 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Rotate each channel pair"
            },
            {
             "op": "torch.Tensor.add",
+            "id": 56,
             "line": 103,
             "code": "x_rotated = (x * cos) + (rotated * sin)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 54
+             },
+             {
+              "from": 55
+             }
+            ],
+            "returned_by": 43,
             "in": [
              [
               "B",
@@ -3024,13 +4066,21 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Rotate each channel pair"
            },
            {
             "op": "torch.Tensor.to",
+            "id": 57,
             "line": 106,
             "code": "return x_rotated.to(dtype=x.dtype)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 56
+             }
+            ],
+            "unchanged": true,
             "in": [
              [
               "B",
@@ -3047,7 +4097,8 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Cast back to the input dtype"
            }
           ],
           "total": 0,
@@ -3055,7 +4106,23 @@ window.ARCHITECTURE = {
          },
          {
           "function": "llm_training.model.qwen3.rope.apply_rope",
+          "id": 58,
           "line": 68,
+          "inputs": [
+           {
+            "name": "x",
+            "from": 34
+           },
+           {
+            "name": "cos",
+            "tensor": "cos"
+           },
+           {
+            "name": "sin",
+            "tensor": "sin"
+           }
+          ],
+          "returned_by": 15,
           "in": [
            "B",
            8,
@@ -3071,9 +4138,15 @@ window.ARCHITECTURE = {
           "children": [
            {
             "op": "torch.Tensor.__getitem__",
+            "id": 59,
             "line": 92,
             "code": "x1 = x[..., : head_dim // 2]  # First half",
             "uses": [],
+            "inputs": [
+             {
+              "from": 34
+             }
+            ],
             "in": [
              [
               "B",
@@ -3090,13 +4163,20 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "First half of each head"
            },
            {
             "op": "torch.Tensor.__getitem__",
+            "id": 60,
             "line": 93,
             "code": "x2 = x[..., head_dim // 2 :]  # Second half",
             "uses": [],
+            "inputs": [
+             {
+              "from": 34
+             }
+            ],
             "in": [
              [
               "B",
@@ -3113,15 +4193,22 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Second half of each head"
            },
            {
             "op": "torch.Tensor.__getitem__",
+            "id": 61,
             "line": 97,
             "code": "cos[offset : offset + seq_len, :].unsqueeze(0).unsqueeze(0)",
             "uses": [
              "cos"
             ],
+            "inputs": [
+             {
+              "tensor": "cos"
+             }
+            ],
             "in": [
              [
               40960,
@@ -3134,13 +4221,20 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Cosines for positions 0 … T−1"
            },
            {
             "op": "torch.Tensor.unsqueeze",
+            "id": 62,
             "line": 97,
             "code": "cos[offset : offset + seq_len, :].unsqueeze(0).unsqueeze(0)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 61
+             }
+            ],
             "in": [
              [
               "T",
@@ -3154,13 +4248,20 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Cosines for positions 0 … T−1"
            },
            {
             "op": "torch.Tensor.unsqueeze",
+            "id": 63,
             "line": 97,
             "code": "cos[offset : offset + seq_len, :].unsqueeze(0).unsqueeze(0)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 62
+             }
+            ],
             "in": [
              [
               1,
@@ -3176,15 +4277,22 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Cosines for positions 0 … T−1"
            },
            {
             "op": "torch.Tensor.__getitem__",
+            "id": 64,
             "line": 99,
             "code": "sin = sin[offset : offset + seq_len, :].unsqueeze(0).unsqueeze(0)",
             "uses": [
              "sin"
             ],
+            "inputs": [
+             {
+              "tensor": "sin"
+             }
+            ],
             "in": [
              [
               40960,
@@ -3197,13 +4305,20 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Sines for positions 0 … T−1"
            },
            {
             "op": "torch.Tensor.unsqueeze",
+            "id": 65,
             "line": 99,
             "code": "sin = sin[offset : offset + seq_len, :].unsqueeze(0).unsqueeze(0)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 64
+             }
+            ],
             "in": [
              [
               "T",
@@ -3217,13 +4332,20 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Sines for positions 0 … T−1"
            },
            {
             "op": "torch.Tensor.unsqueeze",
+            "id": 66,
             "line": 99,
             "code": "sin = sin[offset : offset + seq_len, :].unsqueeze(0).unsqueeze(0)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 65
+             }
+            ],
             "in": [
              [
               1,
@@ -3239,13 +4361,20 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Sines for positions 0 … T−1"
            },
            {
             "op": "torch.Tensor.neg",
+            "id": 67,
             "line": 102,
             "code": "rotated = torch.cat((-x2, x1), dim=-1)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 60
+             }
+            ],
             "in": [
              [
               "B",
@@ -3262,13 +4391,23 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Swap halves: (−x₂, x₁)"
            },
            {
             "op": "torch.cat",
+            "id": 68,
             "line": 102,
             "code": "rotated = torch.cat((-x2, x1), dim=-1)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 67
+             },
+             {
+              "from": 59
+             }
+            ],
             "in": [
              [
               "B",
@@ -3291,13 +4430,23 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Swap halves: (−x₂, x₁)"
            },
            {
             "op": "torch.Tensor.mul",
+            "id": 69,
             "line": 103,
             "code": "x_rotated = (x * cos) + (rotated * sin)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 34
+             },
+             {
+              "from": 63
+             }
+            ],
             "in": [
              [
               "B",
@@ -3320,13 +4469,23 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Rotate each channel pair"
            },
            {
             "op": "torch.Tensor.mul",
+            "id": 70,
             "line": 103,
             "code": "x_rotated = (x * cos) + (rotated * sin)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 68
+             },
+             {
+              "from": 66
+             }
+            ],
             "in": [
              [
               "B",
@@ -3349,13 +4508,24 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Rotate each channel pair"
            },
            {
             "op": "torch.Tensor.add",
+            "id": 71,
             "line": 103,
             "code": "x_rotated = (x * cos) + (rotated * sin)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 69
+             },
+             {
+              "from": 70
+             }
+            ],
+            "returned_by": 58,
             "in": [
              [
               "B",
@@ -3378,13 +4548,21 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Rotate each channel pair"
            },
            {
             "op": "torch.Tensor.to",
+            "id": 72,
             "line": 106,
             "code": "return x_rotated.to(dtype=x.dtype)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 71
+             }
+            ],
+            "unchanged": true,
             "in": [
              [
               "B",
@@ -3401,7 +4579,8 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Cast back to the input dtype"
            }
           ],
           "total": 0,
@@ -3409,9 +4588,15 @@ window.ARCHITECTURE = {
          },
          {
           "op": "torch.Tensor.repeat_interleave",
+          "id": 73,
           "line": 80,
           "code": "keys = keys.repeat_interleave(self.group_size, dim=1)",
           "uses": [],
+          "inputs": [
+           {
+            "from": 58
+           }
+          ],
           "in": [
            [
             "B",
@@ -3428,13 +4613,20 @@ window.ARCHITECTURE = {
           ],
           "children": [],
           "total": 0,
-          "repeat": 1
+          "repeat": 1,
+          "label": "Share each key head with its query group"
          },
          {
           "op": "torch.Tensor.repeat_interleave",
+          "id": 74,
           "line": 81,
           "code": "values = values.repeat_interleave(self.group_size, dim=1)",
           "uses": [],
+          "inputs": [
+           {
+            "from": 24
+           }
+          ],
           "in": [
            [
             "B",
@@ -3451,13 +4643,26 @@ window.ARCHITECTURE = {
           ],
           "children": [],
           "total": 0,
-          "repeat": 1
+          "repeat": 1,
+          "label": "Share each value head with its query group"
          },
          {
           "op": "torch.nn.functional.scaled_dot_product_attention",
+          "id": 75,
           "line": 88,
           "code": "context = torch.nn.functional.scaled_dot_product_attention(",
           "uses": [],
+          "inputs": [
+           {
+            "from": 43
+           },
+           {
+            "from": 73
+           },
+           {
+            "from": 74
+           }
+          ],
           "in": [
            [
             "B",
@@ -3486,13 +4691,20 @@ window.ARCHITECTURE = {
           ],
           "children": [],
           "total": 0,
-          "repeat": 1
+          "repeat": 1,
+          "label": "Fused attention: scores, mask, softmax, weighted sum"
          },
          {
           "op": "torch.Tensor.transpose",
+          "id": 76,
           "line": 95,
           "code": "context = context.transpose(1, 2).reshape(b, num_tokens, self.d_out)",
           "uses": [],
+          "inputs": [
+           {
+            "from": 75
+           }
+          ],
           "in": [
            [
             "B",
@@ -3509,13 +4721,20 @@ window.ARCHITECTURE = {
           ],
           "children": [],
           "total": 0,
-          "repeat": 1
+          "repeat": 1,
+          "label": "Merge heads"
          },
          {
           "op": "torch.Tensor.reshape",
+          "id": 77,
           "line": 95,
           "code": "context = context.transpose(1, 2).reshape(b, num_tokens, self.d_out)",
           "uses": [],
+          "inputs": [
+           {
+            "from": 76
+           }
+          ],
           "in": [
            [
             "B",
@@ -3531,10 +4750,19 @@ window.ARCHITECTURE = {
           ],
           "children": [],
           "total": 0,
-          "repeat": 1
+          "repeat": 1,
+          "label": "Merge heads"
          },
          {
           "module": "trf_blocks.0.att.out_proj",
+          "id": 78,
+          "inputs": [
+           {
+            "name": "input",
+            "from": 77
+           }
+          ],
+          "returned_by": 15,
           "in": [
            "B",
            "T",
@@ -3559,20 +4787,32 @@ window.ARCHITECTURE = {
           ],
           "buffers": [],
           "total": 2097152,
-          "repeat": 1
+          "repeat": 1,
+          "role": "llm_training.model.qwen3.attention.GroupedQueryAttention.out_proj"
          }
         ],
         "class": "llm_training.model.qwen3.attention.GroupedQueryAttention",
         "params": [],
         "buffers": [],
         "total": 6291712,
-        "repeat": 1
+        "repeat": 1,
+        "role": "llm_training.model.qwen3.model.TransformerBlock.att"
        },
        {
         "op": "torch.Tensor.add",
+        "id": 79,
         "line": 132,
         "code": "x = x + shortcut  # Add the original input back",
         "uses": [],
+        "inputs": [
+         {
+          "from": 15
+         },
+         {
+          "from": 1,
+          "first_copy": true
+         }
+        ],
         "in": [
          [
           "B",
@@ -3592,10 +4832,18 @@ window.ARCHITECTURE = {
         ],
         "children": [],
         "total": 0,
-        "repeat": 1
+        "repeat": 1,
+        "label": "Residual connection"
        },
        {
         "module": "trf_blocks.0.norm2",
+        "id": 80,
+        "inputs": [
+         {
+          "name": "x",
+          "from": 79
+         }
+        ],
         "in": [
          "B",
          "T",
@@ -3609,9 +4857,16 @@ window.ARCHITECTURE = {
         "children": [
          {
           "op": "torch.Tensor.to",
+          "id": 81,
           "line": 36,
           "code": "x = x.to(torch.float32)",
           "uses": [],
+          "inputs": [
+           {
+            "from": 79
+           }
+          ],
+          "unchanged": true,
           "in": [
            [
             "B",
@@ -3626,13 +4881,20 @@ window.ARCHITECTURE = {
           ],
           "children": [],
           "total": 0,
-          "repeat": 1
+          "repeat": 1,
+          "label": "Compute in float32"
          },
          {
           "op": "torch.Tensor.pow",
+          "id": 82,
           "line": 38,
           "code": "variance = x.pow(2).mean(dim=-1, keepdim=True)",
           "uses": [],
+          "inputs": [
+           {
+            "from": 79
+           }
+          ],
           "in": [
            [
             "B",
@@ -3647,13 +4909,20 @@ window.ARCHITECTURE = {
           ],
           "children": [],
           "total": 0,
-          "repeat": 1
+          "repeat": 1,
+          "label": "Mean square over channels"
          },
          {
           "op": "torch.Tensor.mean",
+          "id": 83,
           "line": 38,
           "code": "variance = x.pow(2).mean(dim=-1, keepdim=True)",
           "uses": [],
+          "inputs": [
+           {
+            "from": 82
+           }
+          ],
           "in": [
            [
             "B",
@@ -3668,13 +4937,20 @@ window.ARCHITECTURE = {
           ],
           "children": [],
           "total": 0,
-          "repeat": 1
+          "repeat": 1,
+          "label": "Mean square over channels"
          },
          {
           "op": "torch.Tensor.add",
+          "id": 84,
           "line": 39,
           "code": "norm_x = x * torch.rsqrt(variance + self.eps)",
           "uses": [],
+          "inputs": [
+           {
+            "from": 83
+           }
+          ],
           "in": [
            [
             "B",
@@ -3689,13 +4965,20 @@ window.ARCHITECTURE = {
           ],
           "children": [],
           "total": 0,
-          "repeat": 1
+          "repeat": 1,
+          "label": "Divide by the root mean square"
          },
          {
           "op": "torch.rsqrt",
+          "id": 85,
           "line": 39,
           "code": "norm_x = x * torch.rsqrt(variance + self.eps)",
           "uses": [],
+          "inputs": [
+           {
+            "from": 84
+           }
+          ],
           "in": [
            [
             "B",
@@ -3710,13 +4993,23 @@ window.ARCHITECTURE = {
           ],
           "children": [],
           "total": 0,
-          "repeat": 1
+          "repeat": 1,
+          "label": "Divide by the root mean square"
          },
          {
           "op": "torch.Tensor.mul",
+          "id": 86,
           "line": 39,
           "code": "norm_x = x * torch.rsqrt(variance + self.eps)",
           "uses": [],
+          "inputs": [
+           {
+            "from": 79
+           },
+           {
+            "from": 85
+           }
+          ],
           "in": [
            [
             "B",
@@ -3736,15 +5029,26 @@ window.ARCHITECTURE = {
           ],
           "children": [],
           "total": 0,
-          "repeat": 1
+          "repeat": 1,
+          "label": "Divide by the root mean square"
          },
          {
           "op": "torch.Tensor.mul",
+          "id": 87,
           "line": 40,
           "code": "norm_x = norm_x * self.scale",
           "uses": [
            "scale"
           ],
+          "inputs": [
+           {
+            "from": 86
+           },
+           {
+            "tensor": "trf_blocks.0.norm2.scale"
+           }
+          ],
+          "returned_by": 80,
           "in": [
            [
             "B",
@@ -3762,13 +5066,21 @@ window.ARCHITECTURE = {
           ],
           "children": [],
           "total": 0,
-          "repeat": 1
+          "repeat": 1,
+          "label": "Learned scale"
          },
          {
           "op": "torch.Tensor.to",
+          "id": 88,
           "line": 45,
           "code": "return norm_x.to(input_dtype)",
           "uses": [],
+          "inputs": [
+           {
+            "from": 87
+           }
+          ],
+          "unchanged": true,
           "in": [
            [
             "B",
@@ -3783,7 +5095,8 @@ window.ARCHITECTURE = {
           ],
           "children": [],
           "total": 0,
-          "repeat": 1
+          "repeat": 1,
+          "label": "Cast back to the input dtype"
          }
         ],
         "class": "llm_training.model.qwen3.layers.RMSNorm",
@@ -3798,10 +5111,18 @@ window.ARCHITECTURE = {
         ],
         "buffers": [],
         "total": 1024,
-        "repeat": 1
+        "repeat": 1,
+        "role": "llm_training.model.qwen3.model.TransformerBlock.norm2"
        },
        {
         "module": "trf_blocks.0.ff",
+        "id": 89,
+        "inputs": [
+         {
+          "name": "x",
+          "from": 80
+         }
+        ],
         "in": [
          "B",
          "T",
@@ -3815,6 +5136,13 @@ window.ARCHITECTURE = {
         "children": [
          {
           "module": "trf_blocks.0.ff.fc1",
+          "id": 90,
+          "inputs": [
+           {
+            "name": "input",
+            "from": 80
+           }
+          ],
           "in": [
            "B",
            "T",
@@ -3839,10 +5167,18 @@ window.ARCHITECTURE = {
           ],
           "buffers": [],
           "total": 3145728,
-          "repeat": 1
+          "repeat": 1,
+          "role": "llm_training.model.qwen3.layers.FeedForward.fc1"
          },
          {
           "module": "trf_blocks.0.ff.fc2",
+          "id": 91,
+          "inputs": [
+           {
+            "name": "input",
+            "from": 80
+           }
+          ],
           "in": [
            "B",
            "T",
@@ -3867,13 +5203,20 @@ window.ARCHITECTURE = {
           ],
           "buffers": [],
           "total": 3145728,
-          "repeat": 1
+          "repeat": 1,
+          "role": "llm_training.model.qwen3.layers.FeedForward.fc2"
          },
          {
           "op": "torch.nn.functional.silu",
+          "id": 92,
           "line": 20,
           "code": "x = nn.functional.silu(x_fc1) * x_fc2",
           "uses": [],
+          "inputs": [
+           {
+            "from": 90
+           }
+          ],
           "in": [
            [
             "B",
@@ -3888,13 +5231,23 @@ window.ARCHITECTURE = {
           ],
           "children": [],
           "total": 0,
-          "repeat": 1
+          "repeat": 1,
+          "label": "SwiGLU gate: SiLU(fc1)"
          },
          {
           "op": "torch.Tensor.mul",
+          "id": 93,
           "line": 20,
           "code": "x = nn.functional.silu(x_fc1) * x_fc2",
           "uses": [],
+          "inputs": [
+           {
+            "from": 92
+           },
+           {
+            "from": 91
+           }
+          ],
           "in": [
            [
             "B",
@@ -3914,10 +5267,19 @@ window.ARCHITECTURE = {
           ],
           "children": [],
           "total": 0,
-          "repeat": 1
+          "repeat": 1,
+          "label": "SwiGLU: gate × fc2"
          },
          {
           "module": "trf_blocks.0.ff.fc3",
+          "id": 94,
+          "inputs": [
+           {
+            "name": "input",
+            "from": 93
+           }
+          ],
+          "returned_by": 89,
           "in": [
            "B",
            "T",
@@ -3942,20 +5304,32 @@ window.ARCHITECTURE = {
           ],
           "buffers": [],
           "total": 3145728,
-          "repeat": 1
+          "repeat": 1,
+          "role": "llm_training.model.qwen3.layers.FeedForward.fc3"
          }
         ],
         "class": "llm_training.model.qwen3.layers.FeedForward",
         "params": [],
         "buffers": [],
         "total": 9437184,
-        "repeat": 1
+        "repeat": 1,
+        "role": "llm_training.model.qwen3.model.TransformerBlock.ff"
        },
        {
         "op": "torch.Tensor.add",
+        "id": 95,
         "line": 138,
         "code": "x = x + shortcut  # Add the original input back",
         "uses": [],
+        "inputs": [
+         {
+          "from": 89
+         },
+         {
+          "from": 79
+         }
+        ],
+        "returned_by": 5,
         "in": [
          [
           "B",
@@ -3975,7 +5349,8 @@ window.ARCHITECTURE = {
         ],
         "children": [],
         "total": 0,
-        "repeat": 1
+        "repeat": 1,
+        "label": "Residual connection"
        }
       ],
       "class": "llm_training.model.qwen3.model.TransformerBlock",
@@ -3983,10 +5358,18 @@ window.ARCHITECTURE = {
       "buffers": [],
       "total": 15730944,
       "repeat": 28,
-      "last": "trf_blocks.27"
+      "last": "trf_blocks.27",
+      "role": "llm_training.model.qwen3.model.Qwen3Model.trf_blocks"
      },
      {
       "module": "final_norm",
+      "id": 2553,
+      "inputs": [
+       {
+        "name": "x",
+        "from": 5
+       }
+      ],
       "in": [
        "B",
        "T",
@@ -4000,9 +5383,16 @@ window.ARCHITECTURE = {
       "children": [
        {
         "op": "torch.Tensor.to",
+        "id": 2554,
         "line": 36,
         "code": "x = x.to(torch.float32)",
         "uses": [],
+        "inputs": [
+         {
+          "from": 5
+         }
+        ],
+        "unchanged": true,
         "in": [
          [
           "B",
@@ -4017,13 +5407,20 @@ window.ARCHITECTURE = {
         ],
         "children": [],
         "total": 0,
-        "repeat": 1
+        "repeat": 1,
+        "label": "Compute in float32"
        },
        {
         "op": "torch.Tensor.pow",
+        "id": 2555,
         "line": 38,
         "code": "variance = x.pow(2).mean(dim=-1, keepdim=True)",
         "uses": [],
+        "inputs": [
+         {
+          "from": 5
+         }
+        ],
         "in": [
          [
           "B",
@@ -4038,13 +5435,20 @@ window.ARCHITECTURE = {
         ],
         "children": [],
         "total": 0,
-        "repeat": 1
+        "repeat": 1,
+        "label": "Mean square over channels"
        },
        {
         "op": "torch.Tensor.mean",
+        "id": 2556,
         "line": 38,
         "code": "variance = x.pow(2).mean(dim=-1, keepdim=True)",
         "uses": [],
+        "inputs": [
+         {
+          "from": 2555
+         }
+        ],
         "in": [
          [
           "B",
@@ -4059,13 +5463,20 @@ window.ARCHITECTURE = {
         ],
         "children": [],
         "total": 0,
-        "repeat": 1
+        "repeat": 1,
+        "label": "Mean square over channels"
        },
        {
         "op": "torch.Tensor.add",
+        "id": 2557,
         "line": 39,
         "code": "norm_x = x * torch.rsqrt(variance + self.eps)",
         "uses": [],
+        "inputs": [
+         {
+          "from": 2556
+         }
+        ],
         "in": [
          [
           "B",
@@ -4080,13 +5491,20 @@ window.ARCHITECTURE = {
         ],
         "children": [],
         "total": 0,
-        "repeat": 1
+        "repeat": 1,
+        "label": "Divide by the root mean square"
        },
        {
         "op": "torch.rsqrt",
+        "id": 2558,
         "line": 39,
         "code": "norm_x = x * torch.rsqrt(variance + self.eps)",
         "uses": [],
+        "inputs": [
+         {
+          "from": 2557
+         }
+        ],
         "in": [
          [
           "B",
@@ -4101,13 +5519,23 @@ window.ARCHITECTURE = {
         ],
         "children": [],
         "total": 0,
-        "repeat": 1
+        "repeat": 1,
+        "label": "Divide by the root mean square"
        },
        {
         "op": "torch.Tensor.mul",
+        "id": 2559,
         "line": 39,
         "code": "norm_x = x * torch.rsqrt(variance + self.eps)",
         "uses": [],
+        "inputs": [
+         {
+          "from": 5
+         },
+         {
+          "from": 2558
+         }
+        ],
         "in": [
          [
           "B",
@@ -4127,15 +5555,26 @@ window.ARCHITECTURE = {
         ],
         "children": [],
         "total": 0,
-        "repeat": 1
+        "repeat": 1,
+        "label": "Divide by the root mean square"
        },
        {
         "op": "torch.Tensor.mul",
+        "id": 2560,
         "line": 40,
         "code": "norm_x = norm_x * self.scale",
         "uses": [
          "scale"
         ],
+        "inputs": [
+         {
+          "from": 2559
+         },
+         {
+          "tensor": "final_norm.scale"
+         }
+        ],
+        "returned_by": 2553,
         "in": [
          [
           "B",
@@ -4153,13 +5592,21 @@ window.ARCHITECTURE = {
         ],
         "children": [],
         "total": 0,
-        "repeat": 1
+        "repeat": 1,
+        "label": "Learned scale"
        },
        {
         "op": "torch.Tensor.to",
+        "id": 2561,
         "line": 45,
         "code": "return norm_x.to(input_dtype)",
         "uses": [],
+        "inputs": [
+         {
+          "from": 2560
+         }
+        ],
+        "unchanged": true,
         "in": [
          [
           "B",
@@ -4174,7 +5621,8 @@ window.ARCHITECTURE = {
         ],
         "children": [],
         "total": 0,
-        "repeat": 1
+        "repeat": 1,
+        "label": "Cast back to the input dtype"
        }
       ],
       "class": "llm_training.model.qwen3.layers.RMSNorm",
@@ -4189,10 +5637,19 @@ window.ARCHITECTURE = {
       ],
       "buffers": [],
       "total": 1024,
-      "repeat": 1
+      "repeat": 1,
+      "role": "llm_training.model.qwen3.model.Qwen3Model.final_norm"
      },
      {
       "module": "out_head",
+      "id": 2562,
+      "inputs": [
+       {
+        "name": "input",
+        "from": 2553
+       }
+      ],
+      "returned_by": 0,
       "in": [
        "B",
        "T",
@@ -4218,7 +5675,8 @@ window.ARCHITECTURE = {
       ],
       "buffers": [],
       "total": 0,
-      "repeat": 1
+      "repeat": 1,
+      "role": "llm_training.model.qwen3.model.Qwen3Model.out_head"
      }
     ],
     "class": "llm_training.model.qwen3.model.Qwen3Model",
@@ -4267,6 +5725,13 @@ window.ARCHITECTURE = {
    "total": 162419712,
    "tree": {
     "module": "",
+    "id": 0,
+    "inputs": [
+     {
+      "name": "in_idx",
+      "input": true
+     }
+    ],
     "in": [
      "B",
      "T"
@@ -4279,6 +5744,13 @@ window.ARCHITECTURE = {
     "children": [
      {
       "module": "tok_emb",
+      "id": 1,
+      "inputs": [
+       {
+        "name": "input",
+        "input": true
+       }
+      ],
       "in": [
        "B",
        "T"
@@ -4302,23 +5774,34 @@ window.ARCHITECTURE = {
       ],
       "buffers": [],
       "total": 38597376,
-      "repeat": 1
+      "repeat": 1,
+      "role": "llm_training.model.gpt2.model.GPTModel.tok_emb"
      },
      {
       "op": "torch.arange",
+      "id": 2,
       "line": 71,
       "code": "pos_embeds = self.pos_emb(torch.arange(seq_len, device=in_idx.device))",
       "uses": [],
+      "inputs": [],
       "in": [],
       "out": [
        "T"
       ],
       "children": [],
       "total": 0,
-      "repeat": 1
+      "repeat": 1,
+      "label": "Position indices 0 … T−1"
      },
      {
       "module": "pos_emb",
+      "id": 3,
+      "inputs": [
+       {
+        "name": "input",
+        "from": 2
+       }
+      ],
       "in": [
        "T"
       ],
@@ -4340,13 +5823,23 @@ window.ARCHITECTURE = {
       ],
       "buffers": [],
       "total": 196608,
-      "repeat": 1
+      "repeat": 1,
+      "role": "llm_training.model.gpt2.model.GPTModel.pos_emb"
      },
      {
       "op": "torch.Tensor.add",
+      "id": 4,
       "line": 72,
       "code": "x = tok_embeds + pos_embeds  # Shape [batch_size, num_tokens, emb_size]",
       "uses": [],
+      "inputs": [
+       {
+        "from": 1
+       },
+       {
+        "from": 3
+       }
+      ],
       "in": [
        [
         "B",
@@ -4365,10 +5858,18 @@ window.ARCHITECTURE = {
       ],
       "children": [],
       "total": 0,
-      "repeat": 1
+      "repeat": 1,
+      "label": "Add position to token embeddings"
      },
      {
       "module": "drop_emb",
+      "id": 5,
+      "inputs": [
+       {
+        "name": "input",
+        "from": 4
+       }
+      ],
       "in": [
        "B",
        "T",
@@ -4384,10 +5885,18 @@ window.ARCHITECTURE = {
       "params": [],
       "buffers": [],
       "total": 0,
-      "repeat": 1
+      "repeat": 1,
+      "role": "llm_training.model.gpt2.model.GPTModel.drop_emb"
      },
      {
       "module": "trf_blocks",
+      "id": 6,
+      "inputs": [
+       {
+        "name": "input",
+        "from": 5
+       }
+      ],
       "in": [
        "B",
        "T",
@@ -4401,6 +5910,14 @@ window.ARCHITECTURE = {
       "children": [
        {
         "module": "trf_blocks.0",
+        "id": 7,
+        "inputs": [
+         {
+          "name": "x",
+          "from": 5,
+          "first_copy": true
+         }
+        ],
         "in": [
          "B",
          "T",
@@ -4414,6 +5931,14 @@ window.ARCHITECTURE = {
         "children": [
          {
           "module": "trf_blocks.0.norm1",
+          "id": 8,
+          "inputs": [
+           {
+            "name": "x",
+            "from": 5,
+            "first_copy": true
+           }
+          ],
           "in": [
            "B",
            "T",
@@ -4427,9 +5952,16 @@ window.ARCHITECTURE = {
           "children": [
            {
             "op": "torch.Tensor.mean",
+            "id": 9,
             "line": 18,
             "code": "mean = x.mean(dim=-1, keepdim=True)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 5,
+              "first_copy": true
+             }
+            ],
             "in": [
              [
               "B",
@@ -4444,13 +5976,21 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Mean over channels"
            },
            {
             "op": "torch.Tensor.var",
+            "id": 10,
             "line": 19,
             "code": "var = x.var(dim=-1, keepdim=True, unbiased=False)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 5,
+              "first_copy": true
+             }
+            ],
             "in": [
              [
               "B",
@@ -4465,13 +6005,24 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Variance over channels"
            },
            {
             "op": "torch.Tensor.sub",
+            "id": 11,
             "line": 20,
             "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 5,
+              "first_copy": true
+             },
+             {
+              "from": 9
+             }
+            ],
             "in": [
              [
               "B",
@@ -4491,13 +6042,20 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Normalize"
            },
            {
             "op": "torch.Tensor.add",
+            "id": 12,
             "line": 20,
             "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 10
+             }
+            ],
             "in": [
              [
               "B",
@@ -4512,13 +6070,20 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Normalize"
            },
            {
             "op": "torch.sqrt",
+            "id": 13,
             "line": 20,
             "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 12
+             }
+            ],
             "in": [
              [
               "B",
@@ -4533,13 +6098,23 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Normalize"
            },
            {
             "op": "torch.Tensor.div",
+            "id": 14,
             "line": 20,
             "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 11
+             },
+             {
+              "from": 13
+             }
+            ],
             "in": [
              [
               "B",
@@ -4559,15 +6134,25 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Normalize"
            },
            {
             "op": "torch.Tensor.mul",
+            "id": 15,
             "line": 21,
             "code": "return self.scale * norm_x + self.shift",
             "uses": [
              "scale"
             ],
+            "inputs": [
+             {
+              "tensor": "trf_blocks.0.norm1.scale"
+             },
+             {
+              "from": 14
+             }
+            ],
             "in": [
              [
               768
@@ -4585,15 +6170,26 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Learned scale and shift"
            },
            {
             "op": "torch.Tensor.add",
+            "id": 16,
             "line": 21,
             "code": "return self.scale * norm_x + self.shift",
             "uses": [
              "shift"
             ],
+            "inputs": [
+             {
+              "from": 15
+             },
+             {
+              "tensor": "trf_blocks.0.norm1.shift"
+             }
+            ],
+            "returned_by": 8,
             "in": [
              [
               "B",
@@ -4611,7 +6207,8 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Learned scale and shift"
            }
           ],
           "class": "llm_training.model.gpt2.layers.LayerNorm",
@@ -4633,10 +6230,18 @@ window.ARCHITECTURE = {
           ],
           "buffers": [],
           "total": 1536,
-          "repeat": 1
+          "repeat": 1,
+          "role": "llm_training.model.gpt2.model.TransformerBlock.norm1"
          },
          {
           "module": "trf_blocks.0.att",
+          "id": 17,
+          "inputs": [
+           {
+            "name": "x",
+            "from": 8
+           }
+          ],
           "in": [
            "B",
            "T",
@@ -4650,6 +6255,13 @@ window.ARCHITECTURE = {
           "children": [
            {
             "module": "trf_blocks.0.att.W_key",
+            "id": 18,
+            "inputs": [
+             {
+              "name": "input",
+              "from": 8
+             }
+            ],
             "in": [
              "B",
              "T",
@@ -4674,10 +6286,18 @@ window.ARCHITECTURE = {
             ],
             "buffers": [],
             "total": 589824,
-            "repeat": 1
+            "repeat": 1,
+            "role": "llm_training.model.gpt2.attention.MultiHeadAttention.W_key"
            },
            {
             "module": "trf_blocks.0.att.W_query",
+            "id": 19,
+            "inputs": [
+             {
+              "name": "input",
+              "from": 8
+             }
+            ],
             "in": [
              "B",
              "T",
@@ -4702,10 +6322,18 @@ window.ARCHITECTURE = {
             ],
             "buffers": [],
             "total": 589824,
-            "repeat": 1
+            "repeat": 1,
+            "role": "llm_training.model.gpt2.attention.MultiHeadAttention.W_query"
            },
            {
             "module": "trf_blocks.0.att.W_value",
+            "id": 20,
+            "inputs": [
+             {
+              "name": "input",
+              "from": 8
+             }
+            ],
             "in": [
              "B",
              "T",
@@ -4730,13 +6358,20 @@ window.ARCHITECTURE = {
             ],
             "buffers": [],
             "total": 589824,
-            "repeat": 1
+            "repeat": 1,
+            "role": "llm_training.model.gpt2.attention.MultiHeadAttention.W_value"
            },
            {
             "op": "torch.Tensor.view",
+            "id": 21,
             "line": 40,
             "code": "keys = keys.view(b, num_tokens, self.num_heads, self.head_dim)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 18
+             }
+            ],
             "in": [
              [
               "B",
@@ -4752,13 +6387,20 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Split keys into heads"
            },
            {
             "op": "torch.Tensor.view",
+            "id": 22,
             "line": 41,
             "code": "values = values.view(b, num_tokens, self.num_heads, self.head_dim)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 20
+             }
+            ],
             "in": [
              [
               "B",
@@ -4774,13 +6416,20 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Split values into heads"
            },
            {
             "op": "torch.Tensor.view",
+            "id": 23,
             "line": 42,
             "code": "queries = queries.view(b, num_tokens, self.num_heads, self.head_dim)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 19
+             }
+            ],
             "in": [
              [
               "B",
@@ -4796,13 +6445,20 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Split queries into heads"
            },
            {
             "op": "torch.Tensor.transpose",
+            "id": 24,
             "line": 45,
             "code": "keys = keys.transpose(1, 2)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 21
+             }
+            ],
             "in": [
              [
               "B",
@@ -4819,13 +6475,20 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Split keys into heads"
            },
            {
             "op": "torch.Tensor.transpose",
+            "id": 25,
             "line": 46,
             "code": "queries = queries.transpose(1, 2)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 23
+             }
+            ],
             "in": [
              [
               "B",
@@ -4842,13 +6505,20 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Split queries into heads"
            },
            {
             "op": "torch.Tensor.transpose",
+            "id": 26,
             "line": 47,
             "code": "values = values.transpose(1, 2)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 22
+             }
+            ],
             "in": [
              [
               "B",
@@ -4865,13 +6535,20 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Split values into heads"
            },
            {
             "op": "torch.Tensor.transpose",
+            "id": 27,
             "line": 61,
             "code": "attn_scores = queries @ keys.transpose(2, 3)  # Dot product for each head",
             "uses": [],
+            "inputs": [
+             {
+              "from": 24
+             }
+            ],
             "in": [
              [
               "B",
@@ -4888,13 +6565,23 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Attention scores Q·Kᵀ"
            },
            {
             "op": "torch.Tensor.matmul",
+            "id": 28,
             "line": 61,
             "code": "attn_scores = queries @ keys.transpose(2, 3)  # Dot product for each head",
             "uses": [],
+            "inputs": [
+             {
+              "from": 25
+             },
+             {
+              "from": 27
+             }
+            ],
             "in": [
              [
               "B",
@@ -4917,14 +6604,21 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Attention scores Q·Kᵀ"
            },
            {
             "op": "torch.Tensor.bool",
+            "id": 29,
             "line": 64,
             "code": "mask_bool = self.mask.bool()[:num_tokens, :num_tokens]",
             "uses": [
              "mask"
+            ],
+            "inputs": [
+             {
+              "tensor": "trf_blocks.0.att.mask"
+             }
             ],
             "in": [
              [
@@ -4938,13 +6632,20 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Causal mask"
            },
            {
             "op": "torch.Tensor.__getitem__",
+            "id": 30,
             "line": 64,
             "code": "mask_bool = self.mask.bool()[:num_tokens, :num_tokens]",
             "uses": [],
+            "inputs": [
+             {
+              "from": 29
+             }
+            ],
             "in": [
              [
               256,
@@ -4957,13 +6658,23 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Causal mask"
            },
            {
             "op": "torch.Tensor.masked_fill_",
+            "id": 31,
             "line": 67,
             "code": "attn_scores.masked_fill_(mask_bool, -torch.inf)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 28
+             },
+             {
+              "from": 30
+             }
+            ],
             "in": [
              [
               "B",
@@ -4984,13 +6695,20 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Causal mask"
            },
            {
             "op": "torch.Tensor.div",
+            "id": 32,
             "line": 69,
             "code": "attn_weights = torch.softmax(attn_scores / keys.shape[-1] ** 0.5, dim=-1)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 31
+             }
+            ],
             "in": [
              [
               "B",
@@ -5007,13 +6725,20 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Scale by √head_dim"
            },
            {
             "op": "torch.softmax",
+            "id": 33,
             "line": 69,
             "code": "attn_weights = torch.softmax(attn_scores / keys.shape[-1] ** 0.5, dim=-1)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 32
+             }
+            ],
             "in": [
              [
               "B",
@@ -5030,10 +6755,18 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Softmax over keys"
            },
            {
             "module": "trf_blocks.0.att.dropout",
+            "id": 34,
+            "inputs": [
+             {
+              "name": "input",
+              "from": 33
+             }
+            ],
             "in": [
              "B",
              12,
@@ -5051,13 +6784,23 @@ window.ARCHITECTURE = {
             "params": [],
             "buffers": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "role": "llm_training.model.gpt2.attention.MultiHeadAttention.dropout"
            },
            {
             "op": "torch.Tensor.matmul",
+            "id": 35,
             "line": 73,
             "code": "context_vec = (attn_weights @ values).transpose(1, 2)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 34
+             },
+             {
+              "from": 26
+             }
+            ],
             "in": [
              [
               "B",
@@ -5080,13 +6823,20 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Weighted sum of values"
            },
            {
             "op": "torch.Tensor.transpose",
+            "id": 36,
             "line": 73,
             "code": "context_vec = (attn_weights @ values).transpose(1, 2)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 35
+             }
+            ],
             "in": [
              [
               "B",
@@ -5103,13 +6853,20 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Merge heads"
            },
            {
             "op": "torch.Tensor.reshape",
+            "id": 37,
             "line": 76,
             "code": "context_vec = context_vec.reshape(b, num_tokens, self.d_out)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 36
+             }
+            ],
             "in": [
              [
               "B",
@@ -5125,10 +6882,19 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Merge heads"
            },
            {
             "module": "trf_blocks.0.att.out_proj",
+            "id": 38,
+            "inputs": [
+             {
+              "name": "input",
+              "from": 37
+             }
+            ],
+            "returned_by": 17,
             "in": [
              "B",
              "T",
@@ -5160,7 +6926,8 @@ window.ARCHITECTURE = {
             ],
             "buffers": [],
             "total": 590592,
-            "repeat": 1
+            "repeat": 1,
+            "role": "llm_training.model.gpt2.attention.MultiHeadAttention.out_proj"
            }
           ],
           "class": "llm_training.model.gpt2.attention.MultiHeadAttention",
@@ -5176,10 +6943,18 @@ window.ARCHITECTURE = {
            }
           ],
           "total": 2360064,
-          "repeat": 1
+          "repeat": 1,
+          "role": "llm_training.model.gpt2.model.TransformerBlock.att"
          },
          {
           "module": "trf_blocks.0.drop_resid",
+          "id": 39,
+          "inputs": [
+           {
+            "name": "input",
+            "from": 17
+           }
+          ],
           "in": [
            "B",
            "T",
@@ -5195,13 +6970,24 @@ window.ARCHITECTURE = {
           "params": [],
           "buffers": [],
           "total": 0,
-          "repeat": 1
+          "repeat": 1,
+          "role": "llm_training.model.gpt2.model.TransformerBlock.drop_resid"
          },
          {
           "op": "torch.Tensor.add",
+          "id": 40,
           "line": 37,
           "code": "x = x + shortcut  # Add the original input back",
           "uses": [],
+          "inputs": [
+           {
+            "from": 39
+           },
+           {
+            "from": 5,
+            "first_copy": true
+           }
+          ],
           "in": [
            [
             "B",
@@ -5221,10 +7007,18 @@ window.ARCHITECTURE = {
           ],
           "children": [],
           "total": 0,
-          "repeat": 1
+          "repeat": 1,
+          "label": "Residual connection"
          },
          {
           "module": "trf_blocks.0.norm2",
+          "id": 41,
+          "inputs": [
+           {
+            "name": "x",
+            "from": 40
+           }
+          ],
           "in": [
            "B",
            "T",
@@ -5238,9 +7032,15 @@ window.ARCHITECTURE = {
           "children": [
            {
             "op": "torch.Tensor.mean",
+            "id": 42,
             "line": 18,
             "code": "mean = x.mean(dim=-1, keepdim=True)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 40
+             }
+            ],
             "in": [
              [
               "B",
@@ -5255,13 +7055,20 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Mean over channels"
            },
            {
             "op": "torch.Tensor.var",
+            "id": 43,
             "line": 19,
             "code": "var = x.var(dim=-1, keepdim=True, unbiased=False)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 40
+             }
+            ],
             "in": [
              [
               "B",
@@ -5276,13 +7083,23 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Variance over channels"
            },
            {
             "op": "torch.Tensor.sub",
+            "id": 44,
             "line": 20,
             "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 40
+             },
+             {
+              "from": 42
+             }
+            ],
             "in": [
              [
               "B",
@@ -5302,13 +7119,20 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Normalize"
            },
            {
             "op": "torch.Tensor.add",
+            "id": 45,
             "line": 20,
             "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 43
+             }
+            ],
             "in": [
              [
               "B",
@@ -5323,13 +7147,20 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Normalize"
            },
            {
             "op": "torch.sqrt",
+            "id": 46,
             "line": 20,
             "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 45
+             }
+            ],
             "in": [
              [
               "B",
@@ -5344,13 +7175,23 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Normalize"
            },
            {
             "op": "torch.Tensor.div",
+            "id": 47,
             "line": 20,
             "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 44
+             },
+             {
+              "from": 46
+             }
+            ],
             "in": [
              [
               "B",
@@ -5370,15 +7211,25 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Normalize"
            },
            {
             "op": "torch.Tensor.mul",
+            "id": 48,
             "line": 21,
             "code": "return self.scale * norm_x + self.shift",
             "uses": [
              "scale"
             ],
+            "inputs": [
+             {
+              "tensor": "trf_blocks.0.norm2.scale"
+             },
+             {
+              "from": 47
+             }
+            ],
             "in": [
              [
               768
@@ -5396,15 +7247,26 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Learned scale and shift"
            },
            {
             "op": "torch.Tensor.add",
+            "id": 49,
             "line": 21,
             "code": "return self.scale * norm_x + self.shift",
             "uses": [
              "shift"
             ],
+            "inputs": [
+             {
+              "from": 48
+             },
+             {
+              "tensor": "trf_blocks.0.norm2.shift"
+             }
+            ],
+            "returned_by": 41,
             "in": [
              [
               "B",
@@ -5422,7 +7284,8 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Learned scale and shift"
            }
           ],
           "class": "llm_training.model.gpt2.layers.LayerNorm",
@@ -5444,10 +7307,18 @@ window.ARCHITECTURE = {
           ],
           "buffers": [],
           "total": 1536,
-          "repeat": 1
+          "repeat": 1,
+          "role": "llm_training.model.gpt2.model.TransformerBlock.norm2"
          },
          {
           "module": "trf_blocks.0.ff",
+          "id": 50,
+          "inputs": [
+           {
+            "name": "x",
+            "from": 41
+           }
+          ],
           "in": [
            "B",
            "T",
@@ -5461,6 +7332,14 @@ window.ARCHITECTURE = {
           "children": [
            {
             "module": "trf_blocks.0.ff.layers",
+            "id": 51,
+            "inputs": [
+             {
+              "name": "input",
+              "from": 41
+             }
+            ],
+            "returned_by": 50,
             "in": [
              "B",
              "T",
@@ -5474,6 +7353,13 @@ window.ARCHITECTURE = {
             "children": [
              {
               "module": "trf_blocks.0.ff.layers.0",
+              "id": 52,
+              "inputs": [
+               {
+                "name": "input",
+                "from": 41
+               }
+              ],
               "in": [
                "B",
                "T",
@@ -5505,10 +7391,18 @@ window.ARCHITECTURE = {
               ],
               "buffers": [],
               "total": 2362368,
-              "repeat": 1
+              "repeat": 1,
+              "role": "llm_training.model.gpt2.layers.FeedForward.layers.0"
              },
              {
               "module": "trf_blocks.0.ff.layers.1",
+              "id": 53,
+              "inputs": [
+               {
+                "name": "x",
+                "from": 52
+               }
+              ],
               "in": [
                "B",
                "T",
@@ -5522,9 +7416,15 @@ window.ARCHITECTURE = {
               "children": [
                {
                 "op": "torch.Tensor.mul",
+                "id": 54,
                 "line": 34,
                 "code": "return 0.5 * x * (1 + torch.tanh(self._sqrt_two_over_pi * (x + 0.044715 * torch.pow(x, 3))))",
                 "uses": [],
+                "inputs": [
+                 {
+                  "from": 52
+                 }
+                ],
                 "in": [
                  [
                   "B",
@@ -5539,13 +7439,20 @@ window.ARCHITECTURE = {
                 ],
                 "children": [],
                 "total": 0,
-                "repeat": 1
+                "repeat": 1,
+                "label": "GELU, tanh approximation"
                },
                {
                 "op": "torch.pow",
+                "id": 55,
                 "line": 34,
                 "code": "return 0.5 * x * (1 + torch.tanh(self._sqrt_two_over_pi * (x + 0.044715 * torch.pow(x, 3))))",
                 "uses": [],
+                "inputs": [
+                 {
+                  "from": 52
+                 }
+                ],
                 "in": [
                  [
                   "B",
@@ -5560,13 +7467,20 @@ window.ARCHITECTURE = {
                 ],
                 "children": [],
                 "total": 0,
-                "repeat": 1
+                "repeat": 1,
+                "label": "GELU, tanh approximation"
                },
                {
                 "op": "torch.Tensor.mul",
+                "id": 56,
                 "line": 34,
                 "code": "return 0.5 * x * (1 + torch.tanh(self._sqrt_two_over_pi * (x + 0.044715 * torch.pow(x, 3))))",
                 "uses": [],
+                "inputs": [
+                 {
+                  "from": 55
+                 }
+                ],
                 "in": [
                  [
                   "B",
@@ -5581,13 +7495,23 @@ window.ARCHITECTURE = {
                 ],
                 "children": [],
                 "total": 0,
-                "repeat": 1
+                "repeat": 1,
+                "label": "GELU, tanh approximation"
                },
                {
                 "op": "torch.Tensor.add",
+                "id": 57,
                 "line": 34,
                 "code": "return 0.5 * x * (1 + torch.tanh(self._sqrt_two_over_pi * (x + 0.044715 * torch.pow(x, 3))))",
                 "uses": [],
+                "inputs": [
+                 {
+                  "from": 52
+                 },
+                 {
+                  "from": 56
+                 }
+                ],
                 "in": [
                  [
                   "B",
@@ -5607,14 +7531,24 @@ window.ARCHITECTURE = {
                 ],
                 "children": [],
                 "total": 0,
-                "repeat": 1
+                "repeat": 1,
+                "label": "GELU, tanh approximation"
                },
                {
                 "op": "torch.Tensor.mul",
+                "id": 58,
                 "line": 34,
                 "code": "return 0.5 * x * (1 + torch.tanh(self._sqrt_two_over_pi * (x + 0.044715 * torch.pow(x, 3))))",
                 "uses": [
                  "_sqrt_two_over_pi"
+                ],
+                "inputs": [
+                 {
+                  "tensor": "trf_blocks.0.ff.layers.1._sqrt_two_over_pi"
+                 },
+                 {
+                  "from": 57
+                 }
                 ],
                 "in": [
                  [],
@@ -5631,13 +7565,20 @@ window.ARCHITECTURE = {
                 ],
                 "children": [],
                 "total": 0,
-                "repeat": 1
+                "repeat": 1,
+                "label": "GELU, tanh approximation"
                },
                {
                 "op": "torch.tanh",
+                "id": 59,
                 "line": 34,
                 "code": "return 0.5 * x * (1 + torch.tanh(self._sqrt_two_over_pi * (x + 0.044715 * torch.pow(x, 3))))",
                 "uses": [],
+                "inputs": [
+                 {
+                  "from": 58
+                 }
+                ],
                 "in": [
                  [
                   "B",
@@ -5652,13 +7593,20 @@ window.ARCHITECTURE = {
                 ],
                 "children": [],
                 "total": 0,
-                "repeat": 1
+                "repeat": 1,
+                "label": "GELU, tanh approximation"
                },
                {
                 "op": "torch.Tensor.add",
+                "id": 60,
                 "line": 34,
                 "code": "return 0.5 * x * (1 + torch.tanh(self._sqrt_two_over_pi * (x + 0.044715 * torch.pow(x, 3))))",
                 "uses": [],
+                "inputs": [
+                 {
+                  "from": 59
+                 }
+                ],
                 "in": [
                  [
                   "B",
@@ -5673,13 +7621,24 @@ window.ARCHITECTURE = {
                 ],
                 "children": [],
                 "total": 0,
-                "repeat": 1
+                "repeat": 1,
+                "label": "GELU, tanh approximation"
                },
                {
                 "op": "torch.Tensor.mul",
+                "id": 61,
                 "line": 34,
                 "code": "return 0.5 * x * (1 + torch.tanh(self._sqrt_two_over_pi * (x + 0.044715 * torch.pow(x, 3))))",
                 "uses": [],
+                "inputs": [
+                 {
+                  "from": 54
+                 },
+                 {
+                  "from": 60
+                 }
+                ],
+                "returned_by": 53,
                 "in": [
                  [
                   "B",
@@ -5699,7 +7658,8 @@ window.ARCHITECTURE = {
                 ],
                 "children": [],
                 "total": 0,
-                "repeat": 1
+                "repeat": 1,
+                "label": "GELU, tanh approximation"
                }
               ],
               "class": "llm_training.model.gpt2.layers.GELU",
@@ -5712,10 +7672,19 @@ window.ARCHITECTURE = {
                }
               ],
               "total": 0,
-              "repeat": 1
+              "repeat": 1,
+              "role": "llm_training.model.gpt2.layers.FeedForward.layers.1"
              },
              {
               "module": "trf_blocks.0.ff.layers.2",
+              "id": 62,
+              "inputs": [
+               {
+                "name": "input",
+                "from": 53
+               }
+              ],
+              "returned_by": 51,
               "in": [
                "B",
                "T",
@@ -5747,24 +7716,34 @@ window.ARCHITECTURE = {
               ],
               "buffers": [],
               "total": 2360064,
-              "repeat": 1
+              "repeat": 1,
+              "role": "llm_training.model.gpt2.layers.FeedForward.layers.2"
              }
             ],
             "class": "torch.nn.Sequential",
             "params": [],
             "buffers": [],
             "total": 4722432,
-            "repeat": 1
+            "repeat": 1,
+            "role": "llm_training.model.gpt2.layers.FeedForward.layers"
            }
           ],
           "class": "llm_training.model.gpt2.layers.FeedForward",
           "params": [],
           "buffers": [],
           "total": 4722432,
-          "repeat": 1
+          "repeat": 1,
+          "role": "llm_training.model.gpt2.model.TransformerBlock.ff"
          },
          {
           "module": "trf_blocks.0.drop_resid",
+          "id": 63,
+          "inputs": [
+           {
+            "name": "input",
+            "from": 50
+           }
+          ],
           "in": [
            "B",
            "T",
@@ -5780,13 +7759,24 @@ window.ARCHITECTURE = {
           "params": [],
           "buffers": [],
           "total": 0,
-          "repeat": 1
+          "repeat": 1,
+          "role": "llm_training.model.gpt2.model.TransformerBlock.drop_resid"
          },
          {
           "op": "torch.Tensor.add",
+          "id": 64,
           "line": 44,
           "code": "x = x + shortcut  # Add the original input back",
           "uses": [],
+          "inputs": [
+           {
+            "from": 63
+           },
+           {
+            "from": 40
+           }
+          ],
+          "returned_by": 7,
           "in": [
            [
             "B",
@@ -5806,7 +7796,8 @@ window.ARCHITECTURE = {
           ],
           "children": [],
           "total": 0,
-          "repeat": 1
+          "repeat": 1,
+          "label": "Residual connection"
          }
         ],
         "class": "llm_training.model.gpt2.model.TransformerBlock",
@@ -5814,17 +7805,27 @@ window.ARCHITECTURE = {
         "buffers": [],
         "total": 7085568,
         "repeat": 12,
-        "last": "trf_blocks.11"
+        "last": "trf_blocks.11",
+        "returned_by": 6,
+        "role": "llm_training.model.gpt2.model.GPTModel.trf_blocks"
        }
       ],
       "class": "torch.nn.Sequential",
       "params": [],
       "buffers": [],
       "total": 85026816,
-      "repeat": 1
+      "repeat": 1,
+      "role": "llm_training.model.gpt2.model.GPTModel.trf_blocks"
      },
      {
       "module": "final_norm",
+      "id": 703,
+      "inputs": [
+       {
+        "name": "x",
+        "from": 6
+       }
+      ],
       "in": [
        "B",
        "T",
@@ -5838,9 +7839,15 @@ window.ARCHITECTURE = {
       "children": [
        {
         "op": "torch.Tensor.mean",
+        "id": 704,
         "line": 18,
         "code": "mean = x.mean(dim=-1, keepdim=True)",
         "uses": [],
+        "inputs": [
+         {
+          "from": 6
+         }
+        ],
         "in": [
          [
           "B",
@@ -5855,13 +7862,20 @@ window.ARCHITECTURE = {
         ],
         "children": [],
         "total": 0,
-        "repeat": 1
+        "repeat": 1,
+        "label": "Mean over channels"
        },
        {
         "op": "torch.Tensor.var",
+        "id": 705,
         "line": 19,
         "code": "var = x.var(dim=-1, keepdim=True, unbiased=False)",
         "uses": [],
+        "inputs": [
+         {
+          "from": 6
+         }
+        ],
         "in": [
          [
           "B",
@@ -5876,13 +7890,23 @@ window.ARCHITECTURE = {
         ],
         "children": [],
         "total": 0,
-        "repeat": 1
+        "repeat": 1,
+        "label": "Variance over channels"
        },
        {
         "op": "torch.Tensor.sub",
+        "id": 706,
         "line": 20,
         "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
         "uses": [],
+        "inputs": [
+         {
+          "from": 6
+         },
+         {
+          "from": 704
+         }
+        ],
         "in": [
          [
           "B",
@@ -5902,13 +7926,20 @@ window.ARCHITECTURE = {
         ],
         "children": [],
         "total": 0,
-        "repeat": 1
+        "repeat": 1,
+        "label": "Normalize"
        },
        {
         "op": "torch.Tensor.add",
+        "id": 707,
         "line": 20,
         "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
         "uses": [],
+        "inputs": [
+         {
+          "from": 705
+         }
+        ],
         "in": [
          [
           "B",
@@ -5923,13 +7954,20 @@ window.ARCHITECTURE = {
         ],
         "children": [],
         "total": 0,
-        "repeat": 1
+        "repeat": 1,
+        "label": "Normalize"
        },
        {
         "op": "torch.sqrt",
+        "id": 708,
         "line": 20,
         "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
         "uses": [],
+        "inputs": [
+         {
+          "from": 707
+         }
+        ],
         "in": [
          [
           "B",
@@ -5944,13 +7982,23 @@ window.ARCHITECTURE = {
         ],
         "children": [],
         "total": 0,
-        "repeat": 1
+        "repeat": 1,
+        "label": "Normalize"
        },
        {
         "op": "torch.Tensor.div",
+        "id": 709,
         "line": 20,
         "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
         "uses": [],
+        "inputs": [
+         {
+          "from": 706
+         },
+         {
+          "from": 708
+         }
+        ],
         "in": [
          [
           "B",
@@ -5970,15 +8018,25 @@ window.ARCHITECTURE = {
         ],
         "children": [],
         "total": 0,
-        "repeat": 1
+        "repeat": 1,
+        "label": "Normalize"
        },
        {
         "op": "torch.Tensor.mul",
+        "id": 710,
         "line": 21,
         "code": "return self.scale * norm_x + self.shift",
         "uses": [
          "scale"
         ],
+        "inputs": [
+         {
+          "tensor": "final_norm.scale"
+         },
+         {
+          "from": 709
+         }
+        ],
         "in": [
          [
           768
@@ -5996,15 +8054,26 @@ window.ARCHITECTURE = {
         ],
         "children": [],
         "total": 0,
-        "repeat": 1
+        "repeat": 1,
+        "label": "Learned scale and shift"
        },
        {
         "op": "torch.Tensor.add",
+        "id": 711,
         "line": 21,
         "code": "return self.scale * norm_x + self.shift",
         "uses": [
          "shift"
         ],
+        "inputs": [
+         {
+          "from": 710
+         },
+         {
+          "tensor": "final_norm.shift"
+         }
+        ],
+        "returned_by": 703,
         "in": [
          [
           "B",
@@ -6022,7 +8091,8 @@ window.ARCHITECTURE = {
         ],
         "children": [],
         "total": 0,
-        "repeat": 1
+        "repeat": 1,
+        "label": "Learned scale and shift"
        }
       ],
       "class": "llm_training.model.gpt2.layers.LayerNorm",
@@ -6044,10 +8114,19 @@ window.ARCHITECTURE = {
       ],
       "buffers": [],
       "total": 1536,
-      "repeat": 1
+      "repeat": 1,
+      "role": "llm_training.model.gpt2.model.GPTModel.final_norm"
      },
      {
       "module": "out_head",
+      "id": 712,
+      "inputs": [
+       {
+        "name": "input",
+        "from": 703
+       }
+      ],
+      "returned_by": 0,
       "in": [
        "B",
        "T",
@@ -6072,7 +8151,8 @@ window.ARCHITECTURE = {
       ],
       "buffers": [],
       "total": 38597376,
-      "repeat": 1
+      "repeat": 1,
+      "role": "llm_training.model.gpt2.model.GPTModel.out_head"
      }
     ],
     "class": "llm_training.model.gpt2.model.GPTModel",
@@ -6104,6 +8184,13 @@ window.ARCHITECTURE = {
    "total": 51213824,
    "tree": {
     "module": "",
+    "id": 0,
+    "inputs": [
+     {
+      "name": "in_idx",
+      "input": true
+     }
+    ],
     "in": [
      "B",
      "T"
@@ -6116,6 +8203,13 @@ window.ARCHITECTURE = {
     "children": [
      {
       "module": "tok_emb",
+      "id": 1,
+      "inputs": [
+       {
+        "name": "input",
+        "input": true
+       }
+      ],
       "in": [
        "B",
        "T"
@@ -6139,23 +8233,34 @@ window.ARCHITECTURE = {
       ],
       "buffers": [],
       "total": 25731584,
-      "repeat": 1
+      "repeat": 1,
+      "role": "llm_training.model.gpt2.model.GPTModel.tok_emb"
      },
      {
       "op": "torch.arange",
+      "id": 2,
       "line": 71,
       "code": "pos_embeds = self.pos_emb(torch.arange(seq_len, device=in_idx.device))",
       "uses": [],
+      "inputs": [],
       "in": [],
       "out": [
        "T"
       ],
       "children": [],
       "total": 0,
-      "repeat": 1
+      "repeat": 1,
+      "label": "Position indices 0 … T−1"
      },
      {
       "module": "pos_emb",
+      "id": 3,
+      "inputs": [
+       {
+        "name": "input",
+        "from": 2
+       }
+      ],
       "in": [
        "T"
       ],
@@ -6177,13 +8282,23 @@ window.ARCHITECTURE = {
       ],
       "buffers": [],
       "total": 262144,
-      "repeat": 1
+      "repeat": 1,
+      "role": "llm_training.model.gpt2.model.GPTModel.pos_emb"
      },
      {
       "op": "torch.Tensor.add",
+      "id": 4,
       "line": 72,
       "code": "x = tok_embeds + pos_embeds  # Shape [batch_size, num_tokens, emb_size]",
       "uses": [],
+      "inputs": [
+       {
+        "from": 1
+       },
+       {
+        "from": 3
+       }
+      ],
       "in": [
        [
         "B",
@@ -6202,10 +8317,18 @@ window.ARCHITECTURE = {
       ],
       "children": [],
       "total": 0,
-      "repeat": 1
+      "repeat": 1,
+      "label": "Add position to token embeddings"
      },
      {
       "module": "drop_emb",
+      "id": 5,
+      "inputs": [
+       {
+        "name": "input",
+        "from": 4
+       }
+      ],
       "in": [
        "B",
        "T",
@@ -6221,10 +8344,18 @@ window.ARCHITECTURE = {
       "params": [],
       "buffers": [],
       "total": 0,
-      "repeat": 1
+      "repeat": 1,
+      "role": "llm_training.model.gpt2.model.GPTModel.drop_emb"
      },
      {
       "module": "trf_blocks",
+      "id": 6,
+      "inputs": [
+       {
+        "name": "input",
+        "from": 5
+       }
+      ],
       "in": [
        "B",
        "T",
@@ -6238,6 +8369,14 @@ window.ARCHITECTURE = {
       "children": [
        {
         "module": "trf_blocks.0",
+        "id": 7,
+        "inputs": [
+         {
+          "name": "x",
+          "from": 5,
+          "first_copy": true
+         }
+        ],
         "in": [
          "B",
          "T",
@@ -6251,6 +8390,14 @@ window.ARCHITECTURE = {
         "children": [
          {
           "module": "trf_blocks.0.norm1",
+          "id": 8,
+          "inputs": [
+           {
+            "name": "x",
+            "from": 5,
+            "first_copy": true
+           }
+          ],
           "in": [
            "B",
            "T",
@@ -6264,9 +8411,16 @@ window.ARCHITECTURE = {
           "children": [
            {
             "op": "torch.Tensor.mean",
+            "id": 9,
             "line": 18,
             "code": "mean = x.mean(dim=-1, keepdim=True)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 5,
+              "first_copy": true
+             }
+            ],
             "in": [
              [
               "B",
@@ -6281,13 +8435,21 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Mean over channels"
            },
            {
             "op": "torch.Tensor.var",
+            "id": 10,
             "line": 19,
             "code": "var = x.var(dim=-1, keepdim=True, unbiased=False)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 5,
+              "first_copy": true
+             }
+            ],
             "in": [
              [
               "B",
@@ -6302,13 +8464,24 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Variance over channels"
            },
            {
             "op": "torch.Tensor.sub",
+            "id": 11,
             "line": 20,
             "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 5,
+              "first_copy": true
+             },
+             {
+              "from": 9
+             }
+            ],
             "in": [
              [
               "B",
@@ -6328,13 +8501,20 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Normalize"
            },
            {
             "op": "torch.Tensor.add",
+            "id": 12,
             "line": 20,
             "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 10
+             }
+            ],
             "in": [
              [
               "B",
@@ -6349,13 +8529,20 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Normalize"
            },
            {
             "op": "torch.sqrt",
+            "id": 13,
             "line": 20,
             "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 12
+             }
+            ],
             "in": [
              [
               "B",
@@ -6370,13 +8557,23 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Normalize"
            },
            {
             "op": "torch.Tensor.div",
+            "id": 14,
             "line": 20,
             "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 11
+             },
+             {
+              "from": 13
+             }
+            ],
             "in": [
              [
               "B",
@@ -6396,15 +8593,25 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Normalize"
            },
            {
             "op": "torch.Tensor.mul",
+            "id": 15,
             "line": 21,
             "code": "return self.scale * norm_x + self.shift",
             "uses": [
              "scale"
             ],
+            "inputs": [
+             {
+              "tensor": "trf_blocks.0.norm1.scale"
+             },
+             {
+              "from": 14
+             }
+            ],
             "in": [
              [
               512
@@ -6422,15 +8629,26 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Learned scale and shift"
            },
            {
             "op": "torch.Tensor.add",
+            "id": 16,
             "line": 21,
             "code": "return self.scale * norm_x + self.shift",
             "uses": [
              "shift"
             ],
+            "inputs": [
+             {
+              "from": 15
+             },
+             {
+              "tensor": "trf_blocks.0.norm1.shift"
+             }
+            ],
+            "returned_by": 8,
             "in": [
              [
               "B",
@@ -6448,7 +8666,8 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Learned scale and shift"
            }
           ],
           "class": "llm_training.model.gpt2.layers.LayerNorm",
@@ -6470,10 +8689,18 @@ window.ARCHITECTURE = {
           ],
           "buffers": [],
           "total": 1024,
-          "repeat": 1
+          "repeat": 1,
+          "role": "llm_training.model.gpt2.model.TransformerBlock.norm1"
          },
          {
           "module": "trf_blocks.0.att",
+          "id": 17,
+          "inputs": [
+           {
+            "name": "x",
+            "from": 8
+           }
+          ],
           "in": [
            "B",
            "T",
@@ -6487,6 +8714,13 @@ window.ARCHITECTURE = {
           "children": [
            {
             "module": "trf_blocks.0.att.W_key",
+            "id": 18,
+            "inputs": [
+             {
+              "name": "input",
+              "from": 8
+             }
+            ],
             "in": [
              "B",
              "T",
@@ -6518,10 +8752,18 @@ window.ARCHITECTURE = {
             ],
             "buffers": [],
             "total": 262656,
-            "repeat": 1
+            "repeat": 1,
+            "role": "llm_training.model.gpt2.attention.MultiHeadAttention.W_key"
            },
            {
             "module": "trf_blocks.0.att.W_query",
+            "id": 19,
+            "inputs": [
+             {
+              "name": "input",
+              "from": 8
+             }
+            ],
             "in": [
              "B",
              "T",
@@ -6553,10 +8795,18 @@ window.ARCHITECTURE = {
             ],
             "buffers": [],
             "total": 262656,
-            "repeat": 1
+            "repeat": 1,
+            "role": "llm_training.model.gpt2.attention.MultiHeadAttention.W_query"
            },
            {
             "module": "trf_blocks.0.att.W_value",
+            "id": 20,
+            "inputs": [
+             {
+              "name": "input",
+              "from": 8
+             }
+            ],
             "in": [
              "B",
              "T",
@@ -6588,13 +8838,20 @@ window.ARCHITECTURE = {
             ],
             "buffers": [],
             "total": 262656,
-            "repeat": 1
+            "repeat": 1,
+            "role": "llm_training.model.gpt2.attention.MultiHeadAttention.W_value"
            },
            {
             "op": "torch.Tensor.view",
+            "id": 21,
             "line": 40,
             "code": "keys = keys.view(b, num_tokens, self.num_heads, self.head_dim)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 18
+             }
+            ],
             "in": [
              [
               "B",
@@ -6610,13 +8867,20 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Split keys into heads"
            },
            {
             "op": "torch.Tensor.view",
+            "id": 22,
             "line": 41,
             "code": "values = values.view(b, num_tokens, self.num_heads, self.head_dim)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 20
+             }
+            ],
             "in": [
              [
               "B",
@@ -6632,13 +8896,20 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Split values into heads"
            },
            {
             "op": "torch.Tensor.view",
+            "id": 23,
             "line": 42,
             "code": "queries = queries.view(b, num_tokens, self.num_heads, self.head_dim)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 19
+             }
+            ],
             "in": [
              [
               "B",
@@ -6654,13 +8925,20 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Split queries into heads"
            },
            {
             "op": "torch.Tensor.transpose",
+            "id": 24,
             "line": 45,
             "code": "keys = keys.transpose(1, 2)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 21
+             }
+            ],
             "in": [
              [
               "B",
@@ -6677,13 +8955,20 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Split keys into heads"
            },
            {
             "op": "torch.Tensor.transpose",
+            "id": 25,
             "line": 46,
             "code": "queries = queries.transpose(1, 2)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 23
+             }
+            ],
             "in": [
              [
               "B",
@@ -6700,13 +8985,20 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Split queries into heads"
            },
            {
             "op": "torch.Tensor.transpose",
+            "id": 26,
             "line": 47,
             "code": "values = values.transpose(1, 2)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 22
+             }
+            ],
             "in": [
              [
               "B",
@@ -6723,13 +9015,26 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Split values into heads"
            },
            {
             "op": "torch.nn.functional.scaled_dot_product_attention",
+            "id": 27,
             "line": 52,
             "code": "context_vec = torch.nn.functional.scaled_dot_product_attention(",
             "uses": [],
+            "inputs": [
+             {
+              "from": 25
+             },
+             {
+              "from": 24
+             },
+             {
+              "from": 26
+             }
+            ],
             "in": [
              [
               "B",
@@ -6758,13 +9063,20 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Fused attention: scores, mask, softmax, weighted sum"
            },
            {
             "op": "torch.Tensor.transpose",
+            "id": 28,
             "line": 58,
             "code": ").transpose(1, 2)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 27
+             }
+            ],
             "in": [
              [
               "B",
@@ -6781,13 +9093,20 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Merge heads"
            },
            {
             "op": "torch.Tensor.reshape",
+            "id": 29,
             "line": 76,
             "code": "context_vec = context_vec.reshape(b, num_tokens, self.d_out)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 28
+             }
+            ],
             "in": [
              [
               "B",
@@ -6803,10 +9122,19 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Merge heads"
            },
            {
             "module": "trf_blocks.0.att.out_proj",
+            "id": 30,
+            "inputs": [
+             {
+              "name": "input",
+              "from": 29
+             }
+            ],
+            "returned_by": 17,
             "in": [
              "B",
              "T",
@@ -6838,7 +9166,8 @@ window.ARCHITECTURE = {
             ],
             "buffers": [],
             "total": 262656,
-            "repeat": 1
+            "repeat": 1,
+            "role": "llm_training.model.gpt2.attention.MultiHeadAttention.out_proj"
            }
           ],
           "class": "llm_training.model.gpt2.attention.MultiHeadAttention",
@@ -6854,10 +9183,18 @@ window.ARCHITECTURE = {
            }
           ],
           "total": 1050624,
-          "repeat": 1
+          "repeat": 1,
+          "role": "llm_training.model.gpt2.model.TransformerBlock.att"
          },
          {
           "module": "trf_blocks.0.drop_resid",
+          "id": 31,
+          "inputs": [
+           {
+            "name": "input",
+            "from": 17
+           }
+          ],
           "in": [
            "B",
            "T",
@@ -6873,13 +9210,24 @@ window.ARCHITECTURE = {
           "params": [],
           "buffers": [],
           "total": 0,
-          "repeat": 1
+          "repeat": 1,
+          "role": "llm_training.model.gpt2.model.TransformerBlock.drop_resid"
          },
          {
           "op": "torch.Tensor.add",
+          "id": 32,
           "line": 37,
           "code": "x = x + shortcut  # Add the original input back",
           "uses": [],
+          "inputs": [
+           {
+            "from": 31
+           },
+           {
+            "from": 5,
+            "first_copy": true
+           }
+          ],
           "in": [
            [
             "B",
@@ -6899,10 +9247,18 @@ window.ARCHITECTURE = {
           ],
           "children": [],
           "total": 0,
-          "repeat": 1
+          "repeat": 1,
+          "label": "Residual connection"
          },
          {
           "module": "trf_blocks.0.norm2",
+          "id": 33,
+          "inputs": [
+           {
+            "name": "x",
+            "from": 32
+           }
+          ],
           "in": [
            "B",
            "T",
@@ -6916,9 +9272,15 @@ window.ARCHITECTURE = {
           "children": [
            {
             "op": "torch.Tensor.mean",
+            "id": 34,
             "line": 18,
             "code": "mean = x.mean(dim=-1, keepdim=True)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 32
+             }
+            ],
             "in": [
              [
               "B",
@@ -6933,13 +9295,20 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Mean over channels"
            },
            {
             "op": "torch.Tensor.var",
+            "id": 35,
             "line": 19,
             "code": "var = x.var(dim=-1, keepdim=True, unbiased=False)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 32
+             }
+            ],
             "in": [
              [
               "B",
@@ -6954,13 +9323,23 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Variance over channels"
            },
            {
             "op": "torch.Tensor.sub",
+            "id": 36,
             "line": 20,
             "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 32
+             },
+             {
+              "from": 34
+             }
+            ],
             "in": [
              [
               "B",
@@ -6980,13 +9359,20 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Normalize"
            },
            {
             "op": "torch.Tensor.add",
+            "id": 37,
             "line": 20,
             "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 35
+             }
+            ],
             "in": [
              [
               "B",
@@ -7001,13 +9387,20 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Normalize"
            },
            {
             "op": "torch.sqrt",
+            "id": 38,
             "line": 20,
             "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 37
+             }
+            ],
             "in": [
              [
               "B",
@@ -7022,13 +9415,23 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Normalize"
            },
            {
             "op": "torch.Tensor.div",
+            "id": 39,
             "line": 20,
             "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 36
+             },
+             {
+              "from": 38
+             }
+            ],
             "in": [
              [
               "B",
@@ -7048,15 +9451,25 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Normalize"
            },
            {
             "op": "torch.Tensor.mul",
+            "id": 40,
             "line": 21,
             "code": "return self.scale * norm_x + self.shift",
             "uses": [
              "scale"
             ],
+            "inputs": [
+             {
+              "tensor": "trf_blocks.0.norm2.scale"
+             },
+             {
+              "from": 39
+             }
+            ],
             "in": [
              [
               512
@@ -7074,15 +9487,26 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Learned scale and shift"
            },
            {
             "op": "torch.Tensor.add",
+            "id": 41,
             "line": 21,
             "code": "return self.scale * norm_x + self.shift",
             "uses": [
              "shift"
             ],
+            "inputs": [
+             {
+              "from": 40
+             },
+             {
+              "tensor": "trf_blocks.0.norm2.shift"
+             }
+            ],
+            "returned_by": 33,
             "in": [
              [
               "B",
@@ -7100,7 +9524,8 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Learned scale and shift"
            }
           ],
           "class": "llm_training.model.gpt2.layers.LayerNorm",
@@ -7122,10 +9547,18 @@ window.ARCHITECTURE = {
           ],
           "buffers": [],
           "total": 1024,
-          "repeat": 1
+          "repeat": 1,
+          "role": "llm_training.model.gpt2.model.TransformerBlock.norm2"
          },
          {
           "module": "trf_blocks.0.ff",
+          "id": 42,
+          "inputs": [
+           {
+            "name": "x",
+            "from": 33
+           }
+          ],
           "in": [
            "B",
            "T",
@@ -7139,6 +9572,14 @@ window.ARCHITECTURE = {
           "children": [
            {
             "module": "trf_blocks.0.ff.layers",
+            "id": 43,
+            "inputs": [
+             {
+              "name": "input",
+              "from": 33
+             }
+            ],
+            "returned_by": 42,
             "in": [
              "B",
              "T",
@@ -7152,6 +9593,13 @@ window.ARCHITECTURE = {
             "children": [
              {
               "module": "trf_blocks.0.ff.layers.0",
+              "id": 44,
+              "inputs": [
+               {
+                "name": "input",
+                "from": 33
+               }
+              ],
               "in": [
                "B",
                "T",
@@ -7183,10 +9631,18 @@ window.ARCHITECTURE = {
               ],
               "buffers": [],
               "total": 1050624,
-              "repeat": 1
+              "repeat": 1,
+              "role": "llm_training.model.gpt2.layers.FeedForward.layers.0"
              },
              {
               "module": "trf_blocks.0.ff.layers.1",
+              "id": 45,
+              "inputs": [
+               {
+                "name": "x",
+                "from": 44
+               }
+              ],
               "in": [
                "B",
                "T",
@@ -7200,9 +9656,15 @@ window.ARCHITECTURE = {
               "children": [
                {
                 "op": "torch.Tensor.mul",
+                "id": 46,
                 "line": 34,
                 "code": "return 0.5 * x * (1 + torch.tanh(self._sqrt_two_over_pi * (x + 0.044715 * torch.pow(x, 3))))",
                 "uses": [],
+                "inputs": [
+                 {
+                  "from": 44
+                 }
+                ],
                 "in": [
                  [
                   "B",
@@ -7217,13 +9679,20 @@ window.ARCHITECTURE = {
                 ],
                 "children": [],
                 "total": 0,
-                "repeat": 1
+                "repeat": 1,
+                "label": "GELU, tanh approximation"
                },
                {
                 "op": "torch.pow",
+                "id": 47,
                 "line": 34,
                 "code": "return 0.5 * x * (1 + torch.tanh(self._sqrt_two_over_pi * (x + 0.044715 * torch.pow(x, 3))))",
                 "uses": [],
+                "inputs": [
+                 {
+                  "from": 44
+                 }
+                ],
                 "in": [
                  [
                   "B",
@@ -7238,13 +9707,20 @@ window.ARCHITECTURE = {
                 ],
                 "children": [],
                 "total": 0,
-                "repeat": 1
+                "repeat": 1,
+                "label": "GELU, tanh approximation"
                },
                {
                 "op": "torch.Tensor.mul",
+                "id": 48,
                 "line": 34,
                 "code": "return 0.5 * x * (1 + torch.tanh(self._sqrt_two_over_pi * (x + 0.044715 * torch.pow(x, 3))))",
                 "uses": [],
+                "inputs": [
+                 {
+                  "from": 47
+                 }
+                ],
                 "in": [
                  [
                   "B",
@@ -7259,13 +9735,23 @@ window.ARCHITECTURE = {
                 ],
                 "children": [],
                 "total": 0,
-                "repeat": 1
+                "repeat": 1,
+                "label": "GELU, tanh approximation"
                },
                {
                 "op": "torch.Tensor.add",
+                "id": 49,
                 "line": 34,
                 "code": "return 0.5 * x * (1 + torch.tanh(self._sqrt_two_over_pi * (x + 0.044715 * torch.pow(x, 3))))",
                 "uses": [],
+                "inputs": [
+                 {
+                  "from": 44
+                 },
+                 {
+                  "from": 48
+                 }
+                ],
                 "in": [
                  [
                   "B",
@@ -7285,14 +9771,24 @@ window.ARCHITECTURE = {
                 ],
                 "children": [],
                 "total": 0,
-                "repeat": 1
+                "repeat": 1,
+                "label": "GELU, tanh approximation"
                },
                {
                 "op": "torch.Tensor.mul",
+                "id": 50,
                 "line": 34,
                 "code": "return 0.5 * x * (1 + torch.tanh(self._sqrt_two_over_pi * (x + 0.044715 * torch.pow(x, 3))))",
                 "uses": [
                  "_sqrt_two_over_pi"
+                ],
+                "inputs": [
+                 {
+                  "tensor": "trf_blocks.0.ff.layers.1._sqrt_two_over_pi"
+                 },
+                 {
+                  "from": 49
+                 }
                 ],
                 "in": [
                  [],
@@ -7309,13 +9805,20 @@ window.ARCHITECTURE = {
                 ],
                 "children": [],
                 "total": 0,
-                "repeat": 1
+                "repeat": 1,
+                "label": "GELU, tanh approximation"
                },
                {
                 "op": "torch.tanh",
+                "id": 51,
                 "line": 34,
                 "code": "return 0.5 * x * (1 + torch.tanh(self._sqrt_two_over_pi * (x + 0.044715 * torch.pow(x, 3))))",
                 "uses": [],
+                "inputs": [
+                 {
+                  "from": 50
+                 }
+                ],
                 "in": [
                  [
                   "B",
@@ -7330,13 +9833,20 @@ window.ARCHITECTURE = {
                 ],
                 "children": [],
                 "total": 0,
-                "repeat": 1
+                "repeat": 1,
+                "label": "GELU, tanh approximation"
                },
                {
                 "op": "torch.Tensor.add",
+                "id": 52,
                 "line": 34,
                 "code": "return 0.5 * x * (1 + torch.tanh(self._sqrt_two_over_pi * (x + 0.044715 * torch.pow(x, 3))))",
                 "uses": [],
+                "inputs": [
+                 {
+                  "from": 51
+                 }
+                ],
                 "in": [
                  [
                   "B",
@@ -7351,13 +9861,24 @@ window.ARCHITECTURE = {
                 ],
                 "children": [],
                 "total": 0,
-                "repeat": 1
+                "repeat": 1,
+                "label": "GELU, tanh approximation"
                },
                {
                 "op": "torch.Tensor.mul",
+                "id": 53,
                 "line": 34,
                 "code": "return 0.5 * x * (1 + torch.tanh(self._sqrt_two_over_pi * (x + 0.044715 * torch.pow(x, 3))))",
                 "uses": [],
+                "inputs": [
+                 {
+                  "from": 46
+                 },
+                 {
+                  "from": 52
+                 }
+                ],
+                "returned_by": 45,
                 "in": [
                  [
                   "B",
@@ -7377,7 +9898,8 @@ window.ARCHITECTURE = {
                 ],
                 "children": [],
                 "total": 0,
-                "repeat": 1
+                "repeat": 1,
+                "label": "GELU, tanh approximation"
                }
               ],
               "class": "llm_training.model.gpt2.layers.GELU",
@@ -7390,10 +9912,19 @@ window.ARCHITECTURE = {
                }
               ],
               "total": 0,
-              "repeat": 1
+              "repeat": 1,
+              "role": "llm_training.model.gpt2.layers.FeedForward.layers.1"
              },
              {
               "module": "trf_blocks.0.ff.layers.2",
+              "id": 54,
+              "inputs": [
+               {
+                "name": "input",
+                "from": 45
+               }
+              ],
+              "returned_by": 43,
               "in": [
                "B",
                "T",
@@ -7425,24 +9956,34 @@ window.ARCHITECTURE = {
               ],
               "buffers": [],
               "total": 1049088,
-              "repeat": 1
+              "repeat": 1,
+              "role": "llm_training.model.gpt2.layers.FeedForward.layers.2"
              }
             ],
             "class": "torch.nn.Sequential",
             "params": [],
             "buffers": [],
             "total": 2099712,
-            "repeat": 1
+            "repeat": 1,
+            "role": "llm_training.model.gpt2.layers.FeedForward.layers"
            }
           ],
           "class": "llm_training.model.gpt2.layers.FeedForward",
           "params": [],
           "buffers": [],
           "total": 2099712,
-          "repeat": 1
+          "repeat": 1,
+          "role": "llm_training.model.gpt2.model.TransformerBlock.ff"
          },
          {
           "module": "trf_blocks.0.drop_resid",
+          "id": 55,
+          "inputs": [
+           {
+            "name": "input",
+            "from": 42
+           }
+          ],
           "in": [
            "B",
            "T",
@@ -7458,13 +9999,24 @@ window.ARCHITECTURE = {
           "params": [],
           "buffers": [],
           "total": 0,
-          "repeat": 1
+          "repeat": 1,
+          "role": "llm_training.model.gpt2.model.TransformerBlock.drop_resid"
          },
          {
           "op": "torch.Tensor.add",
+          "id": 56,
           "line": 44,
           "code": "x = x + shortcut  # Add the original input back",
           "uses": [],
+          "inputs": [
+           {
+            "from": 55
+           },
+           {
+            "from": 32
+           }
+          ],
+          "returned_by": 7,
           "in": [
            [
             "B",
@@ -7484,7 +10036,8 @@ window.ARCHITECTURE = {
           ],
           "children": [],
           "total": 0,
-          "repeat": 1
+          "repeat": 1,
+          "label": "Residual connection"
          }
         ],
         "class": "llm_training.model.gpt2.model.TransformerBlock",
@@ -7492,17 +10045,27 @@ window.ARCHITECTURE = {
         "buffers": [],
         "total": 3152384,
         "repeat": 8,
-        "last": "trf_blocks.7"
+        "last": "trf_blocks.7",
+        "returned_by": 6,
+        "role": "llm_training.model.gpt2.model.GPTModel.trf_blocks"
        }
       ],
       "class": "torch.nn.Sequential",
       "params": [],
       "buffers": [],
       "total": 25219072,
-      "repeat": 1
+      "repeat": 1,
+      "role": "llm_training.model.gpt2.model.GPTModel.trf_blocks"
      },
      {
       "module": "final_norm",
+      "id": 407,
+      "inputs": [
+       {
+        "name": "x",
+        "from": 6
+       }
+      ],
       "in": [
        "B",
        "T",
@@ -7516,9 +10079,15 @@ window.ARCHITECTURE = {
       "children": [
        {
         "op": "torch.Tensor.mean",
+        "id": 408,
         "line": 18,
         "code": "mean = x.mean(dim=-1, keepdim=True)",
         "uses": [],
+        "inputs": [
+         {
+          "from": 6
+         }
+        ],
         "in": [
          [
           "B",
@@ -7533,13 +10102,20 @@ window.ARCHITECTURE = {
         ],
         "children": [],
         "total": 0,
-        "repeat": 1
+        "repeat": 1,
+        "label": "Mean over channels"
        },
        {
         "op": "torch.Tensor.var",
+        "id": 409,
         "line": 19,
         "code": "var = x.var(dim=-1, keepdim=True, unbiased=False)",
         "uses": [],
+        "inputs": [
+         {
+          "from": 6
+         }
+        ],
         "in": [
          [
           "B",
@@ -7554,13 +10130,23 @@ window.ARCHITECTURE = {
         ],
         "children": [],
         "total": 0,
-        "repeat": 1
+        "repeat": 1,
+        "label": "Variance over channels"
        },
        {
         "op": "torch.Tensor.sub",
+        "id": 410,
         "line": 20,
         "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
         "uses": [],
+        "inputs": [
+         {
+          "from": 6
+         },
+         {
+          "from": 408
+         }
+        ],
         "in": [
          [
           "B",
@@ -7580,13 +10166,20 @@ window.ARCHITECTURE = {
         ],
         "children": [],
         "total": 0,
-        "repeat": 1
+        "repeat": 1,
+        "label": "Normalize"
        },
        {
         "op": "torch.Tensor.add",
+        "id": 411,
         "line": 20,
         "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
         "uses": [],
+        "inputs": [
+         {
+          "from": 409
+         }
+        ],
         "in": [
          [
           "B",
@@ -7601,13 +10194,20 @@ window.ARCHITECTURE = {
         ],
         "children": [],
         "total": 0,
-        "repeat": 1
+        "repeat": 1,
+        "label": "Normalize"
        },
        {
         "op": "torch.sqrt",
+        "id": 412,
         "line": 20,
         "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
         "uses": [],
+        "inputs": [
+         {
+          "from": 411
+         }
+        ],
         "in": [
          [
           "B",
@@ -7622,13 +10222,23 @@ window.ARCHITECTURE = {
         ],
         "children": [],
         "total": 0,
-        "repeat": 1
+        "repeat": 1,
+        "label": "Normalize"
        },
        {
         "op": "torch.Tensor.div",
+        "id": 413,
         "line": 20,
         "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
         "uses": [],
+        "inputs": [
+         {
+          "from": 410
+         },
+         {
+          "from": 412
+         }
+        ],
         "in": [
          [
           "B",
@@ -7648,15 +10258,25 @@ window.ARCHITECTURE = {
         ],
         "children": [],
         "total": 0,
-        "repeat": 1
+        "repeat": 1,
+        "label": "Normalize"
        },
        {
         "op": "torch.Tensor.mul",
+        "id": 414,
         "line": 21,
         "code": "return self.scale * norm_x + self.shift",
         "uses": [
          "scale"
         ],
+        "inputs": [
+         {
+          "tensor": "final_norm.scale"
+         },
+         {
+          "from": 413
+         }
+        ],
         "in": [
          [
           512
@@ -7674,15 +10294,26 @@ window.ARCHITECTURE = {
         ],
         "children": [],
         "total": 0,
-        "repeat": 1
+        "repeat": 1,
+        "label": "Learned scale and shift"
        },
        {
         "op": "torch.Tensor.add",
+        "id": 415,
         "line": 21,
         "code": "return self.scale * norm_x + self.shift",
         "uses": [
          "shift"
         ],
+        "inputs": [
+         {
+          "from": 414
+         },
+         {
+          "tensor": "final_norm.shift"
+         }
+        ],
+        "returned_by": 407,
         "in": [
          [
           "B",
@@ -7700,7 +10331,8 @@ window.ARCHITECTURE = {
         ],
         "children": [],
         "total": 0,
-        "repeat": 1
+        "repeat": 1,
+        "label": "Learned scale and shift"
        }
       ],
       "class": "llm_training.model.gpt2.layers.LayerNorm",
@@ -7722,10 +10354,19 @@ window.ARCHITECTURE = {
       ],
       "buffers": [],
       "total": 1024,
-      "repeat": 1
+      "repeat": 1,
+      "role": "llm_training.model.gpt2.model.GPTModel.final_norm"
      },
      {
       "module": "out_head",
+      "id": 416,
+      "inputs": [
+       {
+        "name": "input",
+        "from": 407
+       }
+      ],
+      "returned_by": 0,
       "in": [
        "B",
        "T",
@@ -7751,7 +10392,8 @@ window.ARCHITECTURE = {
       ],
       "buffers": [],
       "total": 0,
-      "repeat": 1
+      "repeat": 1,
+      "role": "llm_training.model.gpt2.model.GPTModel.out_head"
      }
     ],
     "class": "llm_training.model.gpt2.model.GPTModel",
@@ -7783,6 +10425,13 @@ window.ARCHITECTURE = {
    "total": 354823168,
    "tree": {
     "module": "",
+    "id": 0,
+    "inputs": [
+     {
+      "name": "in_idx",
+      "input": true
+     }
+    ],
     "in": [
      "B",
      "T"
@@ -7795,6 +10444,13 @@ window.ARCHITECTURE = {
     "children": [
      {
       "module": "tok_emb",
+      "id": 1,
+      "inputs": [
+       {
+        "name": "input",
+        "input": true
+       }
+      ],
       "in": [
        "B",
        "T"
@@ -7818,23 +10474,34 @@ window.ARCHITECTURE = {
       ],
       "buffers": [],
       "total": 51463168,
-      "repeat": 1
+      "repeat": 1,
+      "role": "llm_training.model.gpt2.model.GPTModel.tok_emb"
      },
      {
       "op": "torch.arange",
+      "id": 2,
       "line": 71,
       "code": "pos_embeds = self.pos_emb(torch.arange(seq_len, device=in_idx.device))",
       "uses": [],
+      "inputs": [],
       "in": [],
       "out": [
        "T"
       ],
       "children": [],
       "total": 0,
-      "repeat": 1
+      "repeat": 1,
+      "label": "Position indices 0 … T−1"
      },
      {
       "module": "pos_emb",
+      "id": 3,
+      "inputs": [
+       {
+        "name": "input",
+        "from": 2
+       }
+      ],
       "in": [
        "T"
       ],
@@ -7856,13 +10523,23 @@ window.ARCHITECTURE = {
       ],
       "buffers": [],
       "total": 1048576,
-      "repeat": 1
+      "repeat": 1,
+      "role": "llm_training.model.gpt2.model.GPTModel.pos_emb"
      },
      {
       "op": "torch.Tensor.add",
+      "id": 4,
       "line": 72,
       "code": "x = tok_embeds + pos_embeds  # Shape [batch_size, num_tokens, emb_size]",
       "uses": [],
+      "inputs": [
+       {
+        "from": 1
+       },
+       {
+        "from": 3
+       }
+      ],
       "in": [
        [
         "B",
@@ -7881,10 +10558,18 @@ window.ARCHITECTURE = {
       ],
       "children": [],
       "total": 0,
-      "repeat": 1
+      "repeat": 1,
+      "label": "Add position to token embeddings"
      },
      {
       "module": "drop_emb",
+      "id": 5,
+      "inputs": [
+       {
+        "name": "input",
+        "from": 4
+       }
+      ],
       "in": [
        "B",
        "T",
@@ -7900,10 +10585,18 @@ window.ARCHITECTURE = {
       "params": [],
       "buffers": [],
       "total": 0,
-      "repeat": 1
+      "repeat": 1,
+      "role": "llm_training.model.gpt2.model.GPTModel.drop_emb"
      },
      {
       "module": "trf_blocks",
+      "id": 6,
+      "inputs": [
+       {
+        "name": "input",
+        "from": 5
+       }
+      ],
       "in": [
        "B",
        "T",
@@ -7917,6 +10610,14 @@ window.ARCHITECTURE = {
       "children": [
        {
         "module": "trf_blocks.0",
+        "id": 7,
+        "inputs": [
+         {
+          "name": "x",
+          "from": 5,
+          "first_copy": true
+         }
+        ],
         "in": [
          "B",
          "T",
@@ -7930,6 +10631,14 @@ window.ARCHITECTURE = {
         "children": [
          {
           "module": "trf_blocks.0.norm1",
+          "id": 8,
+          "inputs": [
+           {
+            "name": "x",
+            "from": 5,
+            "first_copy": true
+           }
+          ],
           "in": [
            "B",
            "T",
@@ -7943,9 +10652,16 @@ window.ARCHITECTURE = {
           "children": [
            {
             "op": "torch.Tensor.mean",
+            "id": 9,
             "line": 18,
             "code": "mean = x.mean(dim=-1, keepdim=True)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 5,
+              "first_copy": true
+             }
+            ],
             "in": [
              [
               "B",
@@ -7960,13 +10676,21 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Mean over channels"
            },
            {
             "op": "torch.Tensor.var",
+            "id": 10,
             "line": 19,
             "code": "var = x.var(dim=-1, keepdim=True, unbiased=False)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 5,
+              "first_copy": true
+             }
+            ],
             "in": [
              [
               "B",
@@ -7981,13 +10705,24 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Variance over channels"
            },
            {
             "op": "torch.Tensor.sub",
+            "id": 11,
             "line": 20,
             "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 5,
+              "first_copy": true
+             },
+             {
+              "from": 9
+             }
+            ],
             "in": [
              [
               "B",
@@ -8007,13 +10742,20 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Normalize"
            },
            {
             "op": "torch.Tensor.add",
+            "id": 12,
             "line": 20,
             "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 10
+             }
+            ],
             "in": [
              [
               "B",
@@ -8028,13 +10770,20 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Normalize"
            },
            {
             "op": "torch.sqrt",
+            "id": 13,
             "line": 20,
             "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 12
+             }
+            ],
             "in": [
              [
               "B",
@@ -8049,13 +10798,23 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Normalize"
            },
            {
             "op": "torch.Tensor.div",
+            "id": 14,
             "line": 20,
             "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 11
+             },
+             {
+              "from": 13
+             }
+            ],
             "in": [
              [
               "B",
@@ -8075,15 +10834,25 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Normalize"
            },
            {
             "op": "torch.Tensor.mul",
+            "id": 15,
             "line": 21,
             "code": "return self.scale * norm_x + self.shift",
             "uses": [
              "scale"
             ],
+            "inputs": [
+             {
+              "tensor": "trf_blocks.0.norm1.scale"
+             },
+             {
+              "from": 14
+             }
+            ],
             "in": [
              [
               1024
@@ -8101,15 +10870,26 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Learned scale and shift"
            },
            {
             "op": "torch.Tensor.add",
+            "id": 16,
             "line": 21,
             "code": "return self.scale * norm_x + self.shift",
             "uses": [
              "shift"
             ],
+            "inputs": [
+             {
+              "from": 15
+             },
+             {
+              "tensor": "trf_blocks.0.norm1.shift"
+             }
+            ],
+            "returned_by": 8,
             "in": [
              [
               "B",
@@ -8127,7 +10907,8 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Learned scale and shift"
            }
           ],
           "class": "llm_training.model.gpt2.layers.LayerNorm",
@@ -8149,10 +10930,18 @@ window.ARCHITECTURE = {
           ],
           "buffers": [],
           "total": 2048,
-          "repeat": 1
+          "repeat": 1,
+          "role": "llm_training.model.gpt2.model.TransformerBlock.norm1"
          },
          {
           "module": "trf_blocks.0.att",
+          "id": 17,
+          "inputs": [
+           {
+            "name": "x",
+            "from": 8
+           }
+          ],
           "in": [
            "B",
            "T",
@@ -8166,6 +10955,13 @@ window.ARCHITECTURE = {
           "children": [
            {
             "module": "trf_blocks.0.att.W_key",
+            "id": 18,
+            "inputs": [
+             {
+              "name": "input",
+              "from": 8
+             }
+            ],
             "in": [
              "B",
              "T",
@@ -8197,10 +10993,18 @@ window.ARCHITECTURE = {
             ],
             "buffers": [],
             "total": 1049600,
-            "repeat": 1
+            "repeat": 1,
+            "role": "llm_training.model.gpt2.attention.MultiHeadAttention.W_key"
            },
            {
             "module": "trf_blocks.0.att.W_query",
+            "id": 19,
+            "inputs": [
+             {
+              "name": "input",
+              "from": 8
+             }
+            ],
             "in": [
              "B",
              "T",
@@ -8232,10 +11036,18 @@ window.ARCHITECTURE = {
             ],
             "buffers": [],
             "total": 1049600,
-            "repeat": 1
+            "repeat": 1,
+            "role": "llm_training.model.gpt2.attention.MultiHeadAttention.W_query"
            },
            {
             "module": "trf_blocks.0.att.W_value",
+            "id": 20,
+            "inputs": [
+             {
+              "name": "input",
+              "from": 8
+             }
+            ],
             "in": [
              "B",
              "T",
@@ -8267,13 +11079,20 @@ window.ARCHITECTURE = {
             ],
             "buffers": [],
             "total": 1049600,
-            "repeat": 1
+            "repeat": 1,
+            "role": "llm_training.model.gpt2.attention.MultiHeadAttention.W_value"
            },
            {
             "op": "torch.Tensor.view",
+            "id": 21,
             "line": 40,
             "code": "keys = keys.view(b, num_tokens, self.num_heads, self.head_dim)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 18
+             }
+            ],
             "in": [
              [
               "B",
@@ -8289,13 +11108,20 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Split keys into heads"
            },
            {
             "op": "torch.Tensor.view",
+            "id": 22,
             "line": 41,
             "code": "values = values.view(b, num_tokens, self.num_heads, self.head_dim)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 20
+             }
+            ],
             "in": [
              [
               "B",
@@ -8311,13 +11137,20 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Split values into heads"
            },
            {
             "op": "torch.Tensor.view",
+            "id": 23,
             "line": 42,
             "code": "queries = queries.view(b, num_tokens, self.num_heads, self.head_dim)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 19
+             }
+            ],
             "in": [
              [
               "B",
@@ -8333,13 +11166,20 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Split queries into heads"
            },
            {
             "op": "torch.Tensor.transpose",
+            "id": 24,
             "line": 45,
             "code": "keys = keys.transpose(1, 2)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 21
+             }
+            ],
             "in": [
              [
               "B",
@@ -8356,13 +11196,20 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Split keys into heads"
            },
            {
             "op": "torch.Tensor.transpose",
+            "id": 25,
             "line": 46,
             "code": "queries = queries.transpose(1, 2)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 23
+             }
+            ],
             "in": [
              [
               "B",
@@ -8379,13 +11226,20 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Split queries into heads"
            },
            {
             "op": "torch.Tensor.transpose",
+            "id": 26,
             "line": 47,
             "code": "values = values.transpose(1, 2)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 22
+             }
+            ],
             "in": [
              [
               "B",
@@ -8402,13 +11256,26 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Split values into heads"
            },
            {
             "op": "torch.nn.functional.scaled_dot_product_attention",
+            "id": 27,
             "line": 52,
             "code": "context_vec = torch.nn.functional.scaled_dot_product_attention(",
             "uses": [],
+            "inputs": [
+             {
+              "from": 25
+             },
+             {
+              "from": 24
+             },
+             {
+              "from": 26
+             }
+            ],
             "in": [
              [
               "B",
@@ -8437,13 +11304,20 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Fused attention: scores, mask, softmax, weighted sum"
            },
            {
             "op": "torch.Tensor.transpose",
+            "id": 28,
             "line": 58,
             "code": ").transpose(1, 2)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 27
+             }
+            ],
             "in": [
              [
               "B",
@@ -8460,13 +11334,20 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Merge heads"
            },
            {
             "op": "torch.Tensor.reshape",
+            "id": 29,
             "line": 76,
             "code": "context_vec = context_vec.reshape(b, num_tokens, self.d_out)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 28
+             }
+            ],
             "in": [
              [
               "B",
@@ -8482,10 +11363,19 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Merge heads"
            },
            {
             "module": "trf_blocks.0.att.out_proj",
+            "id": 30,
+            "inputs": [
+             {
+              "name": "input",
+              "from": 29
+             }
+            ],
+            "returned_by": 17,
             "in": [
              "B",
              "T",
@@ -8517,7 +11407,8 @@ window.ARCHITECTURE = {
             ],
             "buffers": [],
             "total": 1049600,
-            "repeat": 1
+            "repeat": 1,
+            "role": "llm_training.model.gpt2.attention.MultiHeadAttention.out_proj"
            }
           ],
           "class": "llm_training.model.gpt2.attention.MultiHeadAttention",
@@ -8533,10 +11424,18 @@ window.ARCHITECTURE = {
            }
           ],
           "total": 4198400,
-          "repeat": 1
+          "repeat": 1,
+          "role": "llm_training.model.gpt2.model.TransformerBlock.att"
          },
          {
           "module": "trf_blocks.0.drop_resid",
+          "id": 31,
+          "inputs": [
+           {
+            "name": "input",
+            "from": 17
+           }
+          ],
           "in": [
            "B",
            "T",
@@ -8552,13 +11451,24 @@ window.ARCHITECTURE = {
           "params": [],
           "buffers": [],
           "total": 0,
-          "repeat": 1
+          "repeat": 1,
+          "role": "llm_training.model.gpt2.model.TransformerBlock.drop_resid"
          },
          {
           "op": "torch.Tensor.add",
+          "id": 32,
           "line": 37,
           "code": "x = x + shortcut  # Add the original input back",
           "uses": [],
+          "inputs": [
+           {
+            "from": 31
+           },
+           {
+            "from": 5,
+            "first_copy": true
+           }
+          ],
           "in": [
            [
             "B",
@@ -8578,10 +11488,18 @@ window.ARCHITECTURE = {
           ],
           "children": [],
           "total": 0,
-          "repeat": 1
+          "repeat": 1,
+          "label": "Residual connection"
          },
          {
           "module": "trf_blocks.0.norm2",
+          "id": 33,
+          "inputs": [
+           {
+            "name": "x",
+            "from": 32
+           }
+          ],
           "in": [
            "B",
            "T",
@@ -8595,9 +11513,15 @@ window.ARCHITECTURE = {
           "children": [
            {
             "op": "torch.Tensor.mean",
+            "id": 34,
             "line": 18,
             "code": "mean = x.mean(dim=-1, keepdim=True)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 32
+             }
+            ],
             "in": [
              [
               "B",
@@ -8612,13 +11536,20 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Mean over channels"
            },
            {
             "op": "torch.Tensor.var",
+            "id": 35,
             "line": 19,
             "code": "var = x.var(dim=-1, keepdim=True, unbiased=False)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 32
+             }
+            ],
             "in": [
              [
               "B",
@@ -8633,13 +11564,23 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Variance over channels"
            },
            {
             "op": "torch.Tensor.sub",
+            "id": 36,
             "line": 20,
             "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 32
+             },
+             {
+              "from": 34
+             }
+            ],
             "in": [
              [
               "B",
@@ -8659,13 +11600,20 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Normalize"
            },
            {
             "op": "torch.Tensor.add",
+            "id": 37,
             "line": 20,
             "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 35
+             }
+            ],
             "in": [
              [
               "B",
@@ -8680,13 +11628,20 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Normalize"
            },
            {
             "op": "torch.sqrt",
+            "id": 38,
             "line": 20,
             "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 37
+             }
+            ],
             "in": [
              [
               "B",
@@ -8701,13 +11656,23 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Normalize"
            },
            {
             "op": "torch.Tensor.div",
+            "id": 39,
             "line": 20,
             "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 36
+             },
+             {
+              "from": 38
+             }
+            ],
             "in": [
              [
               "B",
@@ -8727,15 +11692,25 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Normalize"
            },
            {
             "op": "torch.Tensor.mul",
+            "id": 40,
             "line": 21,
             "code": "return self.scale * norm_x + self.shift",
             "uses": [
              "scale"
             ],
+            "inputs": [
+             {
+              "tensor": "trf_blocks.0.norm2.scale"
+             },
+             {
+              "from": 39
+             }
+            ],
             "in": [
              [
               1024
@@ -8753,15 +11728,26 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Learned scale and shift"
            },
            {
             "op": "torch.Tensor.add",
+            "id": 41,
             "line": 21,
             "code": "return self.scale * norm_x + self.shift",
             "uses": [
              "shift"
             ],
+            "inputs": [
+             {
+              "from": 40
+             },
+             {
+              "tensor": "trf_blocks.0.norm2.shift"
+             }
+            ],
+            "returned_by": 33,
             "in": [
              [
               "B",
@@ -8779,7 +11765,8 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Learned scale and shift"
            }
           ],
           "class": "llm_training.model.gpt2.layers.LayerNorm",
@@ -8801,10 +11788,18 @@ window.ARCHITECTURE = {
           ],
           "buffers": [],
           "total": 2048,
-          "repeat": 1
+          "repeat": 1,
+          "role": "llm_training.model.gpt2.model.TransformerBlock.norm2"
          },
          {
           "module": "trf_blocks.0.ff",
+          "id": 42,
+          "inputs": [
+           {
+            "name": "x",
+            "from": 33
+           }
+          ],
           "in": [
            "B",
            "T",
@@ -8818,6 +11813,14 @@ window.ARCHITECTURE = {
           "children": [
            {
             "module": "trf_blocks.0.ff.layers",
+            "id": 43,
+            "inputs": [
+             {
+              "name": "input",
+              "from": 33
+             }
+            ],
+            "returned_by": 42,
             "in": [
              "B",
              "T",
@@ -8831,6 +11834,13 @@ window.ARCHITECTURE = {
             "children": [
              {
               "module": "trf_blocks.0.ff.layers.0",
+              "id": 44,
+              "inputs": [
+               {
+                "name": "input",
+                "from": 33
+               }
+              ],
               "in": [
                "B",
                "T",
@@ -8862,10 +11872,18 @@ window.ARCHITECTURE = {
               ],
               "buffers": [],
               "total": 4198400,
-              "repeat": 1
+              "repeat": 1,
+              "role": "llm_training.model.gpt2.layers.FeedForward.layers.0"
              },
              {
               "module": "trf_blocks.0.ff.layers.1",
+              "id": 45,
+              "inputs": [
+               {
+                "name": "x",
+                "from": 44
+               }
+              ],
               "in": [
                "B",
                "T",
@@ -8879,9 +11897,15 @@ window.ARCHITECTURE = {
               "children": [
                {
                 "op": "torch.Tensor.mul",
+                "id": 46,
                 "line": 34,
                 "code": "return 0.5 * x * (1 + torch.tanh(self._sqrt_two_over_pi * (x + 0.044715 * torch.pow(x, 3))))",
                 "uses": [],
+                "inputs": [
+                 {
+                  "from": 44
+                 }
+                ],
                 "in": [
                  [
                   "B",
@@ -8896,13 +11920,20 @@ window.ARCHITECTURE = {
                 ],
                 "children": [],
                 "total": 0,
-                "repeat": 1
+                "repeat": 1,
+                "label": "GELU, tanh approximation"
                },
                {
                 "op": "torch.pow",
+                "id": 47,
                 "line": 34,
                 "code": "return 0.5 * x * (1 + torch.tanh(self._sqrt_two_over_pi * (x + 0.044715 * torch.pow(x, 3))))",
                 "uses": [],
+                "inputs": [
+                 {
+                  "from": 44
+                 }
+                ],
                 "in": [
                  [
                   "B",
@@ -8917,13 +11948,20 @@ window.ARCHITECTURE = {
                 ],
                 "children": [],
                 "total": 0,
-                "repeat": 1
+                "repeat": 1,
+                "label": "GELU, tanh approximation"
                },
                {
                 "op": "torch.Tensor.mul",
+                "id": 48,
                 "line": 34,
                 "code": "return 0.5 * x * (1 + torch.tanh(self._sqrt_two_over_pi * (x + 0.044715 * torch.pow(x, 3))))",
                 "uses": [],
+                "inputs": [
+                 {
+                  "from": 47
+                 }
+                ],
                 "in": [
                  [
                   "B",
@@ -8938,13 +11976,23 @@ window.ARCHITECTURE = {
                 ],
                 "children": [],
                 "total": 0,
-                "repeat": 1
+                "repeat": 1,
+                "label": "GELU, tanh approximation"
                },
                {
                 "op": "torch.Tensor.add",
+                "id": 49,
                 "line": 34,
                 "code": "return 0.5 * x * (1 + torch.tanh(self._sqrt_two_over_pi * (x + 0.044715 * torch.pow(x, 3))))",
                 "uses": [],
+                "inputs": [
+                 {
+                  "from": 44
+                 },
+                 {
+                  "from": 48
+                 }
+                ],
                 "in": [
                  [
                   "B",
@@ -8964,14 +12012,24 @@ window.ARCHITECTURE = {
                 ],
                 "children": [],
                 "total": 0,
-                "repeat": 1
+                "repeat": 1,
+                "label": "GELU, tanh approximation"
                },
                {
                 "op": "torch.Tensor.mul",
+                "id": 50,
                 "line": 34,
                 "code": "return 0.5 * x * (1 + torch.tanh(self._sqrt_two_over_pi * (x + 0.044715 * torch.pow(x, 3))))",
                 "uses": [
                  "_sqrt_two_over_pi"
+                ],
+                "inputs": [
+                 {
+                  "tensor": "trf_blocks.0.ff.layers.1._sqrt_two_over_pi"
+                 },
+                 {
+                  "from": 49
+                 }
                 ],
                 "in": [
                  [],
@@ -8988,13 +12046,20 @@ window.ARCHITECTURE = {
                 ],
                 "children": [],
                 "total": 0,
-                "repeat": 1
+                "repeat": 1,
+                "label": "GELU, tanh approximation"
                },
                {
                 "op": "torch.tanh",
+                "id": 51,
                 "line": 34,
                 "code": "return 0.5 * x * (1 + torch.tanh(self._sqrt_two_over_pi * (x + 0.044715 * torch.pow(x, 3))))",
                 "uses": [],
+                "inputs": [
+                 {
+                  "from": 50
+                 }
+                ],
                 "in": [
                  [
                   "B",
@@ -9009,13 +12074,20 @@ window.ARCHITECTURE = {
                 ],
                 "children": [],
                 "total": 0,
-                "repeat": 1
+                "repeat": 1,
+                "label": "GELU, tanh approximation"
                },
                {
                 "op": "torch.Tensor.add",
+                "id": 52,
                 "line": 34,
                 "code": "return 0.5 * x * (1 + torch.tanh(self._sqrt_two_over_pi * (x + 0.044715 * torch.pow(x, 3))))",
                 "uses": [],
+                "inputs": [
+                 {
+                  "from": 51
+                 }
+                ],
                 "in": [
                  [
                   "B",
@@ -9030,13 +12102,24 @@ window.ARCHITECTURE = {
                 ],
                 "children": [],
                 "total": 0,
-                "repeat": 1
+                "repeat": 1,
+                "label": "GELU, tanh approximation"
                },
                {
                 "op": "torch.Tensor.mul",
+                "id": 53,
                 "line": 34,
                 "code": "return 0.5 * x * (1 + torch.tanh(self._sqrt_two_over_pi * (x + 0.044715 * torch.pow(x, 3))))",
                 "uses": [],
+                "inputs": [
+                 {
+                  "from": 46
+                 },
+                 {
+                  "from": 52
+                 }
+                ],
+                "returned_by": 45,
                 "in": [
                  [
                   "B",
@@ -9056,7 +12139,8 @@ window.ARCHITECTURE = {
                 ],
                 "children": [],
                 "total": 0,
-                "repeat": 1
+                "repeat": 1,
+                "label": "GELU, tanh approximation"
                }
               ],
               "class": "llm_training.model.gpt2.layers.GELU",
@@ -9069,10 +12153,19 @@ window.ARCHITECTURE = {
                }
               ],
               "total": 0,
-              "repeat": 1
+              "repeat": 1,
+              "role": "llm_training.model.gpt2.layers.FeedForward.layers.1"
              },
              {
               "module": "trf_blocks.0.ff.layers.2",
+              "id": 54,
+              "inputs": [
+               {
+                "name": "input",
+                "from": 45
+               }
+              ],
+              "returned_by": 43,
               "in": [
                "B",
                "T",
@@ -9104,24 +12197,34 @@ window.ARCHITECTURE = {
               ],
               "buffers": [],
               "total": 4195328,
-              "repeat": 1
+              "repeat": 1,
+              "role": "llm_training.model.gpt2.layers.FeedForward.layers.2"
              }
             ],
             "class": "torch.nn.Sequential",
             "params": [],
             "buffers": [],
             "total": 8393728,
-            "repeat": 1
+            "repeat": 1,
+            "role": "llm_training.model.gpt2.layers.FeedForward.layers"
            }
           ],
           "class": "llm_training.model.gpt2.layers.FeedForward",
           "params": [],
           "buffers": [],
           "total": 8393728,
-          "repeat": 1
+          "repeat": 1,
+          "role": "llm_training.model.gpt2.model.TransformerBlock.ff"
          },
          {
           "module": "trf_blocks.0.drop_resid",
+          "id": 55,
+          "inputs": [
+           {
+            "name": "input",
+            "from": 42
+           }
+          ],
           "in": [
            "B",
            "T",
@@ -9137,13 +12240,24 @@ window.ARCHITECTURE = {
           "params": [],
           "buffers": [],
           "total": 0,
-          "repeat": 1
+          "repeat": 1,
+          "role": "llm_training.model.gpt2.model.TransformerBlock.drop_resid"
          },
          {
           "op": "torch.Tensor.add",
+          "id": 56,
           "line": 44,
           "code": "x = x + shortcut  # Add the original input back",
           "uses": [],
+          "inputs": [
+           {
+            "from": 55
+           },
+           {
+            "from": 32
+           }
+          ],
+          "returned_by": 7,
           "in": [
            [
             "B",
@@ -9163,7 +12277,8 @@ window.ARCHITECTURE = {
           ],
           "children": [],
           "total": 0,
-          "repeat": 1
+          "repeat": 1,
+          "label": "Residual connection"
          }
         ],
         "class": "llm_training.model.gpt2.model.TransformerBlock",
@@ -9171,17 +12286,27 @@ window.ARCHITECTURE = {
         "buffers": [],
         "total": 12596224,
         "repeat": 24,
-        "last": "trf_blocks.23"
+        "last": "trf_blocks.23",
+        "returned_by": 6,
+        "role": "llm_training.model.gpt2.model.GPTModel.trf_blocks"
        }
       ],
       "class": "torch.nn.Sequential",
       "params": [],
       "buffers": [],
       "total": 302309376,
-      "repeat": 1
+      "repeat": 1,
+      "role": "llm_training.model.gpt2.model.GPTModel.trf_blocks"
      },
      {
       "module": "final_norm",
+      "id": 1207,
+      "inputs": [
+       {
+        "name": "x",
+        "from": 6
+       }
+      ],
       "in": [
        "B",
        "T",
@@ -9195,9 +12320,15 @@ window.ARCHITECTURE = {
       "children": [
        {
         "op": "torch.Tensor.mean",
+        "id": 1208,
         "line": 18,
         "code": "mean = x.mean(dim=-1, keepdim=True)",
         "uses": [],
+        "inputs": [
+         {
+          "from": 6
+         }
+        ],
         "in": [
          [
           "B",
@@ -9212,13 +12343,20 @@ window.ARCHITECTURE = {
         ],
         "children": [],
         "total": 0,
-        "repeat": 1
+        "repeat": 1,
+        "label": "Mean over channels"
        },
        {
         "op": "torch.Tensor.var",
+        "id": 1209,
         "line": 19,
         "code": "var = x.var(dim=-1, keepdim=True, unbiased=False)",
         "uses": [],
+        "inputs": [
+         {
+          "from": 6
+         }
+        ],
         "in": [
          [
           "B",
@@ -9233,13 +12371,23 @@ window.ARCHITECTURE = {
         ],
         "children": [],
         "total": 0,
-        "repeat": 1
+        "repeat": 1,
+        "label": "Variance over channels"
        },
        {
         "op": "torch.Tensor.sub",
+        "id": 1210,
         "line": 20,
         "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
         "uses": [],
+        "inputs": [
+         {
+          "from": 6
+         },
+         {
+          "from": 1208
+         }
+        ],
         "in": [
          [
           "B",
@@ -9259,13 +12407,20 @@ window.ARCHITECTURE = {
         ],
         "children": [],
         "total": 0,
-        "repeat": 1
+        "repeat": 1,
+        "label": "Normalize"
        },
        {
         "op": "torch.Tensor.add",
+        "id": 1211,
         "line": 20,
         "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
         "uses": [],
+        "inputs": [
+         {
+          "from": 1209
+         }
+        ],
         "in": [
          [
           "B",
@@ -9280,13 +12435,20 @@ window.ARCHITECTURE = {
         ],
         "children": [],
         "total": 0,
-        "repeat": 1
+        "repeat": 1,
+        "label": "Normalize"
        },
        {
         "op": "torch.sqrt",
+        "id": 1212,
         "line": 20,
         "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
         "uses": [],
+        "inputs": [
+         {
+          "from": 1211
+         }
+        ],
         "in": [
          [
           "B",
@@ -9301,13 +12463,23 @@ window.ARCHITECTURE = {
         ],
         "children": [],
         "total": 0,
-        "repeat": 1
+        "repeat": 1,
+        "label": "Normalize"
        },
        {
         "op": "torch.Tensor.div",
+        "id": 1213,
         "line": 20,
         "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
         "uses": [],
+        "inputs": [
+         {
+          "from": 1210
+         },
+         {
+          "from": 1212
+         }
+        ],
         "in": [
          [
           "B",
@@ -9327,15 +12499,25 @@ window.ARCHITECTURE = {
         ],
         "children": [],
         "total": 0,
-        "repeat": 1
+        "repeat": 1,
+        "label": "Normalize"
        },
        {
         "op": "torch.Tensor.mul",
+        "id": 1214,
         "line": 21,
         "code": "return self.scale * norm_x + self.shift",
         "uses": [
          "scale"
         ],
+        "inputs": [
+         {
+          "tensor": "final_norm.scale"
+         },
+         {
+          "from": 1213
+         }
+        ],
         "in": [
          [
           1024
@@ -9353,15 +12535,26 @@ window.ARCHITECTURE = {
         ],
         "children": [],
         "total": 0,
-        "repeat": 1
+        "repeat": 1,
+        "label": "Learned scale and shift"
        },
        {
         "op": "torch.Tensor.add",
+        "id": 1215,
         "line": 21,
         "code": "return self.scale * norm_x + self.shift",
         "uses": [
          "shift"
         ],
+        "inputs": [
+         {
+          "from": 1214
+         },
+         {
+          "tensor": "final_norm.shift"
+         }
+        ],
+        "returned_by": 1207,
         "in": [
          [
           "B",
@@ -9379,7 +12572,8 @@ window.ARCHITECTURE = {
         ],
         "children": [],
         "total": 0,
-        "repeat": 1
+        "repeat": 1,
+        "label": "Learned scale and shift"
        }
       ],
       "class": "llm_training.model.gpt2.layers.LayerNorm",
@@ -9401,10 +12595,19 @@ window.ARCHITECTURE = {
       ],
       "buffers": [],
       "total": 2048,
-      "repeat": 1
+      "repeat": 1,
+      "role": "llm_training.model.gpt2.model.GPTModel.final_norm"
      },
      {
       "module": "out_head",
+      "id": 1216,
+      "inputs": [
+       {
+        "name": "input",
+        "from": 1207
+       }
+      ],
+      "returned_by": 0,
       "in": [
        "B",
        "T",
@@ -9430,7 +12633,8 @@ window.ARCHITECTURE = {
       ],
       "buffers": [],
       "total": 0,
-      "repeat": 1
+      "repeat": 1,
+      "role": "llm_training.model.gpt2.model.GPTModel.out_head"
      }
     ],
     "class": "llm_training.model.gpt2.model.GPTModel",
@@ -9466,6 +12670,13 @@ window.ARCHITECTURE = {
    "total": 596049920,
    "tree": {
     "module": "",
+    "id": 0,
+    "inputs": [
+     {
+      "name": "in_idx",
+      "input": true
+     }
+    ],
     "in": [
      "B",
      "T"
@@ -9478,6 +12689,13 @@ window.ARCHITECTURE = {
     "children": [
      {
       "module": "tok_emb",
+      "id": 1,
+      "inputs": [
+       {
+        "name": "input",
+        "input": true
+       }
+      ],
       "in": [
        "B",
        "T"
@@ -9501,13 +12719,16 @@ window.ARCHITECTURE = {
       ],
       "buffers": [],
       "total": 155582464,
-      "repeat": 1
+      "repeat": 1,
+      "role": "llm_training.model.qwen3.model.Qwen3Model.tok_emb"
      },
      {
       "op": "torch.ones",
+      "id": 2,
       "line": 81,
       "code": "torch.ones(num_tokens, num_tokens, device=x.device, dtype=torch.bool), diagonal=1",
       "uses": [],
+      "inputs": [],
       "in": [],
       "out": [
        "T",
@@ -9515,13 +12736,20 @@ window.ARCHITECTURE = {
       ],
       "children": [],
       "total": 0,
-      "repeat": 1
+      "repeat": 1,
+      "label": "Causal mask"
      },
      {
       "op": "torch.triu",
+      "id": 3,
       "line": 80,
       "code": "mask = torch.triu(",
       "uses": [],
+      "inputs": [
+       {
+        "from": 2
+       }
+      ],
       "in": [
        [
         "T",
@@ -9534,13 +12762,20 @@ window.ARCHITECTURE = {
       ],
       "children": [],
       "total": 0,
-      "repeat": 1
+      "repeat": 1,
+      "label": "Causal mask"
      },
      {
       "op": "torch.Tensor.__getitem__",
+      "id": 4,
       "line": 92,
       "code": "mask = mask[None, None, :, :]  # broadcast mask",
       "uses": [],
+      "inputs": [
+       {
+        "from": 3
+       }
+      ],
       "in": [
        [
         "T",
@@ -9555,10 +12790,31 @@ window.ARCHITECTURE = {
       ],
       "children": [],
       "total": 0,
-      "repeat": 1
+      "repeat": 1,
+      "label": "Causal mask"
      },
      {
       "module": "trf_blocks.0",
+      "id": 5,
+      "inputs": [
+       {
+        "name": "x",
+        "from": 1,
+        "first_copy": true
+       },
+       {
+        "name": "mask",
+        "from": 4
+       },
+       {
+        "name": "cos",
+        "tensor": "cos"
+       },
+       {
+        "name": "sin",
+        "tensor": "sin"
+       }
+      ],
       "in": [
        "B",
        "T",
@@ -9572,6 +12828,14 @@ window.ARCHITECTURE = {
       "children": [
        {
         "module": "trf_blocks.0.norm1",
+        "id": 6,
+        "inputs": [
+         {
+          "name": "x",
+          "from": 1,
+          "first_copy": true
+         }
+        ],
         "in": [
          "B",
          "T",
@@ -9585,9 +12849,17 @@ window.ARCHITECTURE = {
         "children": [
          {
           "op": "torch.Tensor.to",
+          "id": 7,
           "line": 36,
           "code": "x = x.to(torch.float32)",
           "uses": [],
+          "inputs": [
+           {
+            "from": 1,
+            "first_copy": true
+           }
+          ],
+          "unchanged": true,
           "in": [
            [
             "B",
@@ -9602,13 +12874,21 @@ window.ARCHITECTURE = {
           ],
           "children": [],
           "total": 0,
-          "repeat": 1
+          "repeat": 1,
+          "label": "Compute in float32"
          },
          {
           "op": "torch.Tensor.pow",
+          "id": 8,
           "line": 38,
           "code": "variance = x.pow(2).mean(dim=-1, keepdim=True)",
           "uses": [],
+          "inputs": [
+           {
+            "from": 1,
+            "first_copy": true
+           }
+          ],
           "in": [
            [
             "B",
@@ -9623,13 +12903,20 @@ window.ARCHITECTURE = {
           ],
           "children": [],
           "total": 0,
-          "repeat": 1
+          "repeat": 1,
+          "label": "Mean square over channels"
          },
          {
           "op": "torch.Tensor.mean",
+          "id": 9,
           "line": 38,
           "code": "variance = x.pow(2).mean(dim=-1, keepdim=True)",
           "uses": [],
+          "inputs": [
+           {
+            "from": 8
+           }
+          ],
           "in": [
            [
             "B",
@@ -9644,13 +12931,20 @@ window.ARCHITECTURE = {
           ],
           "children": [],
           "total": 0,
-          "repeat": 1
+          "repeat": 1,
+          "label": "Mean square over channels"
          },
          {
           "op": "torch.Tensor.add",
+          "id": 10,
           "line": 39,
           "code": "norm_x = x * torch.rsqrt(variance + self.eps)",
           "uses": [],
+          "inputs": [
+           {
+            "from": 9
+           }
+          ],
           "in": [
            [
             "B",
@@ -9665,13 +12959,20 @@ window.ARCHITECTURE = {
           ],
           "children": [],
           "total": 0,
-          "repeat": 1
+          "repeat": 1,
+          "label": "Divide by the root mean square"
          },
          {
           "op": "torch.rsqrt",
+          "id": 11,
           "line": 39,
           "code": "norm_x = x * torch.rsqrt(variance + self.eps)",
           "uses": [],
+          "inputs": [
+           {
+            "from": 10
+           }
+          ],
           "in": [
            [
             "B",
@@ -9686,13 +12987,24 @@ window.ARCHITECTURE = {
           ],
           "children": [],
           "total": 0,
-          "repeat": 1
+          "repeat": 1,
+          "label": "Divide by the root mean square"
          },
          {
           "op": "torch.Tensor.mul",
+          "id": 12,
           "line": 39,
           "code": "norm_x = x * torch.rsqrt(variance + self.eps)",
           "uses": [],
+          "inputs": [
+           {
+            "from": 1,
+            "first_copy": true
+           },
+           {
+            "from": 11
+           }
+          ],
           "in": [
            [
             "B",
@@ -9712,15 +13024,26 @@ window.ARCHITECTURE = {
           ],
           "children": [],
           "total": 0,
-          "repeat": 1
+          "repeat": 1,
+          "label": "Divide by the root mean square"
          },
          {
           "op": "torch.Tensor.mul",
+          "id": 13,
           "line": 40,
           "code": "norm_x = norm_x * self.scale",
           "uses": [
            "scale"
           ],
+          "inputs": [
+           {
+            "from": 12
+           },
+           {
+            "tensor": "trf_blocks.0.norm1.scale"
+           }
+          ],
+          "returned_by": 6,
           "in": [
            [
             "B",
@@ -9738,13 +13061,21 @@ window.ARCHITECTURE = {
           ],
           "children": [],
           "total": 0,
-          "repeat": 1
+          "repeat": 1,
+          "label": "Learned scale"
          },
          {
           "op": "torch.Tensor.to",
+          "id": 14,
           "line": 45,
           "code": "return norm_x.to(input_dtype)",
           "uses": [],
+          "inputs": [
+           {
+            "from": 13
+           }
+          ],
+          "unchanged": true,
           "in": [
            [
             "B",
@@ -9759,7 +13090,8 @@ window.ARCHITECTURE = {
           ],
           "children": [],
           "total": 0,
-          "repeat": 1
+          "repeat": 1,
+          "label": "Cast back to the input dtype"
          }
         ],
         "class": "llm_training.model.qwen3.layers.RMSNorm",
@@ -9774,10 +13106,31 @@ window.ARCHITECTURE = {
         ],
         "buffers": [],
         "total": 1024,
-        "repeat": 1
+        "repeat": 1,
+        "role": "llm_training.model.qwen3.model.TransformerBlock.norm1"
        },
        {
         "module": "trf_blocks.0.att",
+        "id": 15,
+        "inputs": [
+         {
+          "name": "x",
+          "from": 6
+         },
+         {
+          "name": "mask",
+          "from": 4
+         },
+         {
+          "name": "cos",
+          "tensor": "cos"
+         },
+         {
+          "name": "sin",
+          "tensor": "sin"
+         }
+        ],
+        "returned_by": 5,
         "in": [
          "B",
          "T",
@@ -9791,6 +13144,13 @@ window.ARCHITECTURE = {
         "children": [
          {
           "module": "trf_blocks.0.att.W_query",
+          "id": 16,
+          "inputs": [
+           {
+            "name": "input",
+            "from": 6
+           }
+          ],
           "in": [
            "B",
            "T",
@@ -9815,10 +13175,18 @@ window.ARCHITECTURE = {
           ],
           "buffers": [],
           "total": 2097152,
-          "repeat": 1
+          "repeat": 1,
+          "role": "llm_training.model.qwen3.attention.GroupedQueryAttention.W_query"
          },
          {
           "module": "trf_blocks.0.att.W_key",
+          "id": 17,
+          "inputs": [
+           {
+            "name": "input",
+            "from": 6
+           }
+          ],
           "in": [
            "B",
            "T",
@@ -9843,10 +13211,18 @@ window.ARCHITECTURE = {
           ],
           "buffers": [],
           "total": 1048576,
-          "repeat": 1
+          "repeat": 1,
+          "role": "llm_training.model.qwen3.attention.GroupedQueryAttention.W_key"
          },
          {
           "module": "trf_blocks.0.att.W_value",
+          "id": 18,
+          "inputs": [
+           {
+            "name": "input",
+            "from": 6
+           }
+          ],
           "in": [
            "B",
            "T",
@@ -9871,13 +13247,20 @@ window.ARCHITECTURE = {
           ],
           "buffers": [],
           "total": 1048576,
-          "repeat": 1
+          "repeat": 1,
+          "role": "llm_training.model.qwen3.attention.GroupedQueryAttention.W_value"
          },
          {
           "op": "torch.Tensor.view",
+          "id": 19,
           "line": 56,
           "code": "queries = queries.view(b, num_tokens, self.num_heads, self.head_dim).transpose(1, 2)",
           "uses": [],
+          "inputs": [
+           {
+            "from": 16
+           }
+          ],
           "in": [
            [
             "B",
@@ -9893,13 +13276,20 @@ window.ARCHITECTURE = {
           ],
           "children": [],
           "total": 0,
-          "repeat": 1
+          "repeat": 1,
+          "label": "Split queries into heads"
          },
          {
           "op": "torch.Tensor.transpose",
+          "id": 20,
           "line": 56,
           "code": "queries = queries.view(b, num_tokens, self.num_heads, self.head_dim).transpose(1, 2)",
           "uses": [],
+          "inputs": [
+           {
+            "from": 19
+           }
+          ],
           "in": [
            [
             "B",
@@ -9916,13 +13306,20 @@ window.ARCHITECTURE = {
           ],
           "children": [],
           "total": 0,
-          "repeat": 1
+          "repeat": 1,
+          "label": "Split queries into heads"
          },
          {
           "op": "torch.Tensor.view",
+          "id": 21,
           "line": 57,
           "code": "keys_new = keys.view(b, num_tokens, self.num_kv_groups, self.head_dim).transpose(1, 2)",
           "uses": [],
+          "inputs": [
+           {
+            "from": 17
+           }
+          ],
           "in": [
            [
             "B",
@@ -9938,13 +13335,20 @@ window.ARCHITECTURE = {
           ],
           "children": [],
           "total": 0,
-          "repeat": 1
+          "repeat": 1,
+          "label": "Split keys into heads"
          },
          {
           "op": "torch.Tensor.transpose",
+          "id": 22,
           "line": 57,
           "code": "keys_new = keys.view(b, num_tokens, self.num_kv_groups, self.head_dim).transpose(1, 2)",
           "uses": [],
+          "inputs": [
+           {
+            "from": 21
+           }
+          ],
           "in": [
            [
             "B",
@@ -9961,13 +13365,20 @@ window.ARCHITECTURE = {
           ],
           "children": [],
           "total": 0,
-          "repeat": 1
+          "repeat": 1,
+          "label": "Split keys into heads"
          },
          {
           "op": "torch.Tensor.view",
+          "id": 23,
           "line": 58,
           "code": "values_new = values.view(b, num_tokens, self.num_kv_groups, self.head_dim).transpose(1, 2)",
           "uses": [],
+          "inputs": [
+           {
+            "from": 18
+           }
+          ],
           "in": [
            [
             "B",
@@ -9983,13 +13394,21 @@ window.ARCHITECTURE = {
           ],
           "children": [],
           "total": 0,
-          "repeat": 1
+          "repeat": 1,
+          "label": "Split values into heads"
          },
          {
           "op": "torch.Tensor.transpose",
+          "id": 24,
           "line": 58,
           "code": "values_new = values.view(b, num_tokens, self.num_kv_groups, self.head_dim).transpose(1, 2)",
           "uses": [],
+          "inputs": [
+           {
+            "from": 23
+           }
+          ],
+          "returned_by": 15,
           "in": [
            [
             "B",
@@ -10006,10 +13425,18 @@ window.ARCHITECTURE = {
           ],
           "children": [],
           "total": 0,
-          "repeat": 1
+          "repeat": 1,
+          "label": "Split values into heads"
          },
          {
           "module": "trf_blocks.0.att.q_norm",
+          "id": 25,
+          "inputs": [
+           {
+            "name": "x",
+            "from": 20
+           }
+          ],
           "in": [
            "B",
            16,
@@ -10025,9 +13452,16 @@ window.ARCHITECTURE = {
           "children": [
            {
             "op": "torch.Tensor.to",
+            "id": 26,
             "line": 36,
             "code": "x = x.to(torch.float32)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 20
+             }
+            ],
+            "unchanged": true,
             "in": [
              [
               "B",
@@ -10044,13 +13478,20 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Compute in float32"
            },
            {
             "op": "torch.Tensor.pow",
+            "id": 27,
             "line": 38,
             "code": "variance = x.pow(2).mean(dim=-1, keepdim=True)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 20
+             }
+            ],
             "in": [
              [
               "B",
@@ -10067,13 +13508,20 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Mean square over channels"
            },
            {
             "op": "torch.Tensor.mean",
+            "id": 28,
             "line": 38,
             "code": "variance = x.pow(2).mean(dim=-1, keepdim=True)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 27
+             }
+            ],
             "in": [
              [
               "B",
@@ -10090,13 +13538,20 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Mean square over channels"
            },
            {
             "op": "torch.Tensor.add",
+            "id": 29,
             "line": 39,
             "code": "norm_x = x * torch.rsqrt(variance + self.eps)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 28
+             }
+            ],
             "in": [
              [
               "B",
@@ -10113,13 +13568,20 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Divide by the root mean square"
            },
            {
             "op": "torch.rsqrt",
+            "id": 30,
             "line": 39,
             "code": "norm_x = x * torch.rsqrt(variance + self.eps)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 29
+             }
+            ],
             "in": [
              [
               "B",
@@ -10136,13 +13598,23 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Divide by the root mean square"
            },
            {
             "op": "torch.Tensor.mul",
+            "id": 31,
             "line": 39,
             "code": "norm_x = x * torch.rsqrt(variance + self.eps)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 20
+             },
+             {
+              "from": 30
+             }
+            ],
             "in": [
              [
               "B",
@@ -10165,15 +13637,26 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Divide by the root mean square"
            },
            {
             "op": "torch.Tensor.mul",
+            "id": 32,
             "line": 40,
             "code": "norm_x = norm_x * self.scale",
             "uses": [
              "scale"
             ],
+            "inputs": [
+             {
+              "from": 31
+             },
+             {
+              "tensor": "trf_blocks.0.att.q_norm.scale"
+             }
+            ],
+            "returned_by": 25,
             "in": [
              [
               "B",
@@ -10193,13 +13676,21 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Learned scale"
            },
            {
             "op": "torch.Tensor.to",
+            "id": 33,
             "line": 45,
             "code": "return norm_x.to(input_dtype)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 32
+             }
+            ],
+            "unchanged": true,
             "in": [
              [
               "B",
@@ -10216,7 +13707,8 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Cast back to the input dtype"
            }
           ],
           "class": "llm_training.model.qwen3.layers.RMSNorm",
@@ -10231,10 +13723,18 @@ window.ARCHITECTURE = {
           ],
           "buffers": [],
           "total": 128,
-          "repeat": 1
+          "repeat": 1,
+          "role": "llm_training.model.qwen3.attention.GroupedQueryAttention.q_norm"
          },
          {
           "module": "trf_blocks.0.att.k_norm",
+          "id": 34,
+          "inputs": [
+           {
+            "name": "x",
+            "from": 22
+           }
+          ],
           "in": [
            "B",
            8,
@@ -10250,9 +13750,16 @@ window.ARCHITECTURE = {
           "children": [
            {
             "op": "torch.Tensor.to",
+            "id": 35,
             "line": 36,
             "code": "x = x.to(torch.float32)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 22
+             }
+            ],
+            "unchanged": true,
             "in": [
              [
               "B",
@@ -10269,13 +13776,20 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Compute in float32"
            },
            {
             "op": "torch.Tensor.pow",
+            "id": 36,
             "line": 38,
             "code": "variance = x.pow(2).mean(dim=-1, keepdim=True)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 22
+             }
+            ],
             "in": [
              [
               "B",
@@ -10292,13 +13806,20 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Mean square over channels"
            },
            {
             "op": "torch.Tensor.mean",
+            "id": 37,
             "line": 38,
             "code": "variance = x.pow(2).mean(dim=-1, keepdim=True)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 36
+             }
+            ],
             "in": [
              [
               "B",
@@ -10315,13 +13836,20 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Mean square over channels"
            },
            {
             "op": "torch.Tensor.add",
+            "id": 38,
             "line": 39,
             "code": "norm_x = x * torch.rsqrt(variance + self.eps)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 37
+             }
+            ],
             "in": [
              [
               "B",
@@ -10338,13 +13866,20 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Divide by the root mean square"
            },
            {
             "op": "torch.rsqrt",
+            "id": 39,
             "line": 39,
             "code": "norm_x = x * torch.rsqrt(variance + self.eps)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 38
+             }
+            ],
             "in": [
              [
               "B",
@@ -10361,13 +13896,23 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Divide by the root mean square"
            },
            {
             "op": "torch.Tensor.mul",
+            "id": 40,
             "line": 39,
             "code": "norm_x = x * torch.rsqrt(variance + self.eps)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 22
+             },
+             {
+              "from": 39
+             }
+            ],
             "in": [
              [
               "B",
@@ -10390,15 +13935,26 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Divide by the root mean square"
            },
            {
             "op": "torch.Tensor.mul",
+            "id": 41,
             "line": 40,
             "code": "norm_x = norm_x * self.scale",
             "uses": [
              "scale"
             ],
+            "inputs": [
+             {
+              "from": 40
+             },
+             {
+              "tensor": "trf_blocks.0.att.k_norm.scale"
+             }
+            ],
+            "returned_by": 34,
             "in": [
              [
               "B",
@@ -10418,13 +13974,21 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Learned scale"
            },
            {
             "op": "torch.Tensor.to",
+            "id": 42,
             "line": 45,
             "code": "return norm_x.to(input_dtype)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 41
+             }
+            ],
+            "unchanged": true,
             "in": [
              [
               "B",
@@ -10441,7 +14005,8 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Cast back to the input dtype"
            }
           ],
           "class": "llm_training.model.qwen3.layers.RMSNorm",
@@ -10456,11 +14021,27 @@ window.ARCHITECTURE = {
           ],
           "buffers": [],
           "total": 128,
-          "repeat": 1
+          "repeat": 1,
+          "role": "llm_training.model.qwen3.attention.GroupedQueryAttention.k_norm"
          },
          {
           "function": "llm_training.model.qwen3.rope.apply_rope",
+          "id": 43,
           "line": 67,
+          "inputs": [
+           {
+            "name": "x",
+            "from": 25
+           },
+           {
+            "name": "cos",
+            "tensor": "cos"
+           },
+           {
+            "name": "sin",
+            "tensor": "sin"
+           }
+          ],
           "in": [
            "B",
            16,
@@ -10476,9 +14057,15 @@ window.ARCHITECTURE = {
           "children": [
            {
             "op": "torch.Tensor.__getitem__",
+            "id": 44,
             "line": 92,
             "code": "x1 = x[..., : head_dim // 2]  # First half",
             "uses": [],
+            "inputs": [
+             {
+              "from": 25
+             }
+            ],
             "in": [
              [
               "B",
@@ -10495,13 +14082,20 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "First half of each head"
            },
            {
             "op": "torch.Tensor.__getitem__",
+            "id": 45,
             "line": 93,
             "code": "x2 = x[..., head_dim // 2 :]  # Second half",
             "uses": [],
+            "inputs": [
+             {
+              "from": 25
+             }
+            ],
             "in": [
              [
               "B",
@@ -10518,15 +14112,22 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Second half of each head"
            },
            {
             "op": "torch.Tensor.__getitem__",
+            "id": 46,
             "line": 97,
             "code": "cos[offset : offset + seq_len, :].unsqueeze(0).unsqueeze(0)",
             "uses": [
              "cos"
             ],
+            "inputs": [
+             {
+              "tensor": "cos"
+             }
+            ],
             "in": [
              [
               40960,
@@ -10539,13 +14140,20 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Cosines for positions 0 … T−1"
            },
            {
             "op": "torch.Tensor.unsqueeze",
+            "id": 47,
             "line": 97,
             "code": "cos[offset : offset + seq_len, :].unsqueeze(0).unsqueeze(0)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 46
+             }
+            ],
             "in": [
              [
               "T",
@@ -10559,13 +14167,20 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Cosines for positions 0 … T−1"
            },
            {
             "op": "torch.Tensor.unsqueeze",
+            "id": 48,
             "line": 97,
             "code": "cos[offset : offset + seq_len, :].unsqueeze(0).unsqueeze(0)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 47
+             }
+            ],
             "in": [
              [
               1,
@@ -10581,15 +14196,22 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Cosines for positions 0 … T−1"
            },
            {
             "op": "torch.Tensor.__getitem__",
+            "id": 49,
             "line": 99,
             "code": "sin = sin[offset : offset + seq_len, :].unsqueeze(0).unsqueeze(0)",
             "uses": [
              "sin"
             ],
+            "inputs": [
+             {
+              "tensor": "sin"
+             }
+            ],
             "in": [
              [
               40960,
@@ -10602,13 +14224,20 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Sines for positions 0 … T−1"
            },
            {
             "op": "torch.Tensor.unsqueeze",
+            "id": 50,
             "line": 99,
             "code": "sin = sin[offset : offset + seq_len, :].unsqueeze(0).unsqueeze(0)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 49
+             }
+            ],
             "in": [
              [
               "T",
@@ -10622,13 +14251,20 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Sines for positions 0 … T−1"
            },
            {
             "op": "torch.Tensor.unsqueeze",
+            "id": 51,
             "line": 99,
             "code": "sin = sin[offset : offset + seq_len, :].unsqueeze(0).unsqueeze(0)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 50
+             }
+            ],
             "in": [
              [
               1,
@@ -10644,13 +14280,20 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Sines for positions 0 … T−1"
            },
            {
             "op": "torch.Tensor.neg",
+            "id": 52,
             "line": 102,
             "code": "rotated = torch.cat((-x2, x1), dim=-1)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 45
+             }
+            ],
             "in": [
              [
               "B",
@@ -10667,13 +14310,23 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Swap halves: (−x₂, x₁)"
            },
            {
             "op": "torch.cat",
+            "id": 53,
             "line": 102,
             "code": "rotated = torch.cat((-x2, x1), dim=-1)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 52
+             },
+             {
+              "from": 44
+             }
+            ],
             "in": [
              [
               "B",
@@ -10696,13 +14349,23 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Swap halves: (−x₂, x₁)"
            },
            {
             "op": "torch.Tensor.mul",
+            "id": 54,
             "line": 103,
             "code": "x_rotated = (x * cos) + (rotated * sin)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 25
+             },
+             {
+              "from": 48
+             }
+            ],
             "in": [
              [
               "B",
@@ -10725,13 +14388,23 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Rotate each channel pair"
            },
            {
             "op": "torch.Tensor.mul",
+            "id": 55,
             "line": 103,
             "code": "x_rotated = (x * cos) + (rotated * sin)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 53
+             },
+             {
+              "from": 51
+             }
+            ],
             "in": [
              [
               "B",
@@ -10754,13 +14427,24 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Rotate each channel pair"
            },
            {
             "op": "torch.Tensor.add",
+            "id": 56,
             "line": 103,
             "code": "x_rotated = (x * cos) + (rotated * sin)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 54
+             },
+             {
+              "from": 55
+             }
+            ],
+            "returned_by": 43,
             "in": [
              [
               "B",
@@ -10783,13 +14467,21 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Rotate each channel pair"
            },
            {
             "op": "torch.Tensor.to",
+            "id": 57,
             "line": 106,
             "code": "return x_rotated.to(dtype=x.dtype)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 56
+             }
+            ],
+            "unchanged": true,
             "in": [
              [
               "B",
@@ -10806,7 +14498,8 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Cast back to the input dtype"
            }
           ],
           "total": 0,
@@ -10814,7 +14507,23 @@ window.ARCHITECTURE = {
          },
          {
           "function": "llm_training.model.qwen3.rope.apply_rope",
+          "id": 58,
           "line": 68,
+          "inputs": [
+           {
+            "name": "x",
+            "from": 34
+           },
+           {
+            "name": "cos",
+            "tensor": "cos"
+           },
+           {
+            "name": "sin",
+            "tensor": "sin"
+           }
+          ],
+          "returned_by": 15,
           "in": [
            "B",
            8,
@@ -10830,9 +14539,15 @@ window.ARCHITECTURE = {
           "children": [
            {
             "op": "torch.Tensor.__getitem__",
+            "id": 59,
             "line": 92,
             "code": "x1 = x[..., : head_dim // 2]  # First half",
             "uses": [],
+            "inputs": [
+             {
+              "from": 34
+             }
+            ],
             "in": [
              [
               "B",
@@ -10849,13 +14564,20 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "First half of each head"
            },
            {
             "op": "torch.Tensor.__getitem__",
+            "id": 60,
             "line": 93,
             "code": "x2 = x[..., head_dim // 2 :]  # Second half",
             "uses": [],
+            "inputs": [
+             {
+              "from": 34
+             }
+            ],
             "in": [
              [
               "B",
@@ -10872,15 +14594,22 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Second half of each head"
            },
            {
             "op": "torch.Tensor.__getitem__",
+            "id": 61,
             "line": 97,
             "code": "cos[offset : offset + seq_len, :].unsqueeze(0).unsqueeze(0)",
             "uses": [
              "cos"
             ],
+            "inputs": [
+             {
+              "tensor": "cos"
+             }
+            ],
             "in": [
              [
               40960,
@@ -10893,13 +14622,20 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Cosines for positions 0 … T−1"
            },
            {
             "op": "torch.Tensor.unsqueeze",
+            "id": 62,
             "line": 97,
             "code": "cos[offset : offset + seq_len, :].unsqueeze(0).unsqueeze(0)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 61
+             }
+            ],
             "in": [
              [
               "T",
@@ -10913,13 +14649,20 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Cosines for positions 0 … T−1"
            },
            {
             "op": "torch.Tensor.unsqueeze",
+            "id": 63,
             "line": 97,
             "code": "cos[offset : offset + seq_len, :].unsqueeze(0).unsqueeze(0)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 62
+             }
+            ],
             "in": [
              [
               1,
@@ -10935,15 +14678,22 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Cosines for positions 0 … T−1"
            },
            {
             "op": "torch.Tensor.__getitem__",
+            "id": 64,
             "line": 99,
             "code": "sin = sin[offset : offset + seq_len, :].unsqueeze(0).unsqueeze(0)",
             "uses": [
              "sin"
             ],
+            "inputs": [
+             {
+              "tensor": "sin"
+             }
+            ],
             "in": [
              [
               40960,
@@ -10956,13 +14706,20 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Sines for positions 0 … T−1"
            },
            {
             "op": "torch.Tensor.unsqueeze",
+            "id": 65,
             "line": 99,
             "code": "sin = sin[offset : offset + seq_len, :].unsqueeze(0).unsqueeze(0)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 64
+             }
+            ],
             "in": [
              [
               "T",
@@ -10976,13 +14733,20 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Sines for positions 0 … T−1"
            },
            {
             "op": "torch.Tensor.unsqueeze",
+            "id": 66,
             "line": 99,
             "code": "sin = sin[offset : offset + seq_len, :].unsqueeze(0).unsqueeze(0)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 65
+             }
+            ],
             "in": [
              [
               1,
@@ -10998,13 +14762,20 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Sines for positions 0 … T−1"
            },
            {
             "op": "torch.Tensor.neg",
+            "id": 67,
             "line": 102,
             "code": "rotated = torch.cat((-x2, x1), dim=-1)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 60
+             }
+            ],
             "in": [
              [
               "B",
@@ -11021,13 +14792,23 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Swap halves: (−x₂, x₁)"
            },
            {
             "op": "torch.cat",
+            "id": 68,
             "line": 102,
             "code": "rotated = torch.cat((-x2, x1), dim=-1)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 67
+             },
+             {
+              "from": 59
+             }
+            ],
             "in": [
              [
               "B",
@@ -11050,13 +14831,23 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Swap halves: (−x₂, x₁)"
            },
            {
             "op": "torch.Tensor.mul",
+            "id": 69,
             "line": 103,
             "code": "x_rotated = (x * cos) + (rotated * sin)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 34
+             },
+             {
+              "from": 63
+             }
+            ],
             "in": [
              [
               "B",
@@ -11079,13 +14870,23 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Rotate each channel pair"
            },
            {
             "op": "torch.Tensor.mul",
+            "id": 70,
             "line": 103,
             "code": "x_rotated = (x * cos) + (rotated * sin)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 68
+             },
+             {
+              "from": 66
+             }
+            ],
             "in": [
              [
               "B",
@@ -11108,13 +14909,24 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Rotate each channel pair"
            },
            {
             "op": "torch.Tensor.add",
+            "id": 71,
             "line": 103,
             "code": "x_rotated = (x * cos) + (rotated * sin)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 69
+             },
+             {
+              "from": 70
+             }
+            ],
+            "returned_by": 58,
             "in": [
              [
               "B",
@@ -11137,13 +14949,21 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Rotate each channel pair"
            },
            {
             "op": "torch.Tensor.to",
+            "id": 72,
             "line": 106,
             "code": "return x_rotated.to(dtype=x.dtype)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 71
+             }
+            ],
+            "unchanged": true,
             "in": [
              [
               "B",
@@ -11160,7 +14980,8 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Cast back to the input dtype"
            }
           ],
           "total": 0,
@@ -11168,9 +14989,15 @@ window.ARCHITECTURE = {
          },
          {
           "op": "torch.Tensor.repeat_interleave",
+          "id": 73,
           "line": 80,
           "code": "keys = keys.repeat_interleave(self.group_size, dim=1)",
           "uses": [],
+          "inputs": [
+           {
+            "from": 58
+           }
+          ],
           "in": [
            [
             "B",
@@ -11187,13 +15014,20 @@ window.ARCHITECTURE = {
           ],
           "children": [],
           "total": 0,
-          "repeat": 1
+          "repeat": 1,
+          "label": "Share each key head with its query group"
          },
          {
           "op": "torch.Tensor.repeat_interleave",
+          "id": 74,
           "line": 81,
           "code": "values = values.repeat_interleave(self.group_size, dim=1)",
           "uses": [],
+          "inputs": [
+           {
+            "from": 24
+           }
+          ],
           "in": [
            [
             "B",
@@ -11210,13 +15044,20 @@ window.ARCHITECTURE = {
           ],
           "children": [],
           "total": 0,
-          "repeat": 1
+          "repeat": 1,
+          "label": "Share each value head with its query group"
          },
          {
           "op": "torch.Tensor.transpose",
+          "id": 75,
           "line": 99,
           "code": "attn_scores = queries @ keys.transpose(2, 3)",
           "uses": [],
+          "inputs": [
+           {
+            "from": 73
+           }
+          ],
           "in": [
            [
             "B",
@@ -11233,13 +15074,23 @@ window.ARCHITECTURE = {
           ],
           "children": [],
           "total": 0,
-          "repeat": 1
+          "repeat": 1,
+          "label": "Attention scores Q·Kᵀ"
          },
          {
           "op": "torch.Tensor.matmul",
+          "id": 76,
           "line": 99,
           "code": "attn_scores = queries @ keys.transpose(2, 3)",
           "uses": [],
+          "inputs": [
+           {
+            "from": 43
+           },
+           {
+            "from": 75
+           }
+          ],
           "in": [
            [
             "B",
@@ -11262,13 +15113,23 @@ window.ARCHITECTURE = {
           ],
           "children": [],
           "total": 0,
-          "repeat": 1
+          "repeat": 1,
+          "label": "Attention scores Q·Kᵀ"
          },
          {
           "op": "torch.Tensor.masked_fill",
+          "id": 77,
           "line": 100,
           "code": "attn_scores = attn_scores.masked_fill(mask, -torch.inf)",
           "uses": [],
+          "inputs": [
+           {
+            "from": 76
+           },
+           {
+            "from": 4
+           }
+          ],
           "in": [
            [
             "B",
@@ -11291,13 +15152,20 @@ window.ARCHITECTURE = {
           ],
           "children": [],
           "total": 0,
-          "repeat": 1
+          "repeat": 1,
+          "label": "Causal mask"
          },
          {
           "op": "torch.Tensor.div",
+          "id": 78,
           "line": 101,
           "code": "attn_weights = torch.softmax(attn_scores / self.head_dim**0.5, dim=-1)",
           "uses": [],
+          "inputs": [
+           {
+            "from": 77
+           }
+          ],
           "in": [
            [
             "B",
@@ -11314,13 +15182,20 @@ window.ARCHITECTURE = {
           ],
           "children": [],
           "total": 0,
-          "repeat": 1
+          "repeat": 1,
+          "label": "Scale by √head_dim"
          },
          {
           "op": "torch.softmax",
+          "id": 79,
           "line": 101,
           "code": "attn_weights = torch.softmax(attn_scores / self.head_dim**0.5, dim=-1)",
           "uses": [],
+          "inputs": [
+           {
+            "from": 78
+           }
+          ],
           "in": [
            [
             "B",
@@ -11337,13 +15212,23 @@ window.ARCHITECTURE = {
           ],
           "children": [],
           "total": 0,
-          "repeat": 1
+          "repeat": 1,
+          "label": "Softmax over keys"
          },
          {
           "op": "torch.Tensor.matmul",
+          "id": 80,
           "line": 103,
           "code": "context = (attn_weights @ values).transpose(1, 2).reshape(b, num_tokens, self.d_out)",
           "uses": [],
+          "inputs": [
+           {
+            "from": 79
+           },
+           {
+            "from": 74
+           }
+          ],
           "in": [
            [
             "B",
@@ -11366,13 +15251,20 @@ window.ARCHITECTURE = {
           ],
           "children": [],
           "total": 0,
-          "repeat": 1
+          "repeat": 1,
+          "label": "Weighted sum of values"
          },
          {
           "op": "torch.Tensor.transpose",
+          "id": 81,
           "line": 103,
           "code": "context = (attn_weights @ values).transpose(1, 2).reshape(b, num_tokens, self.d_out)",
           "uses": [],
+          "inputs": [
+           {
+            "from": 80
+           }
+          ],
           "in": [
            [
             "B",
@@ -11389,13 +15281,20 @@ window.ARCHITECTURE = {
           ],
           "children": [],
           "total": 0,
-          "repeat": 1
+          "repeat": 1,
+          "label": "Merge heads"
          },
          {
           "op": "torch.Tensor.reshape",
+          "id": 82,
           "line": 103,
           "code": "context = (attn_weights @ values).transpose(1, 2).reshape(b, num_tokens, self.d_out)",
           "uses": [],
+          "inputs": [
+           {
+            "from": 81
+           }
+          ],
           "in": [
            [
             "B",
@@ -11411,10 +15310,19 @@ window.ARCHITECTURE = {
           ],
           "children": [],
           "total": 0,
-          "repeat": 1
+          "repeat": 1,
+          "label": "Merge heads"
          },
          {
           "module": "trf_blocks.0.att.out_proj",
+          "id": 83,
+          "inputs": [
+           {
+            "name": "input",
+            "from": 82
+           }
+          ],
+          "returned_by": 15,
           "in": [
            "B",
            "T",
@@ -11439,20 +15347,32 @@ window.ARCHITECTURE = {
           ],
           "buffers": [],
           "total": 2097152,
-          "repeat": 1
+          "repeat": 1,
+          "role": "llm_training.model.qwen3.attention.GroupedQueryAttention.out_proj"
          }
         ],
         "class": "llm_training.model.qwen3.attention.GroupedQueryAttention",
         "params": [],
         "buffers": [],
         "total": 6291712,
-        "repeat": 1
+        "repeat": 1,
+        "role": "llm_training.model.qwen3.model.TransformerBlock.att"
        },
        {
         "op": "torch.Tensor.add",
+        "id": 84,
         "line": 132,
         "code": "x = x + shortcut  # Add the original input back",
         "uses": [],
+        "inputs": [
+         {
+          "from": 15
+         },
+         {
+          "from": 1,
+          "first_copy": true
+         }
+        ],
         "in": [
          [
           "B",
@@ -11472,10 +15392,18 @@ window.ARCHITECTURE = {
         ],
         "children": [],
         "total": 0,
-        "repeat": 1
+        "repeat": 1,
+        "label": "Residual connection"
        },
        {
         "module": "trf_blocks.0.norm2",
+        "id": 85,
+        "inputs": [
+         {
+          "name": "x",
+          "from": 84
+         }
+        ],
         "in": [
          "B",
          "T",
@@ -11489,9 +15417,16 @@ window.ARCHITECTURE = {
         "children": [
          {
           "op": "torch.Tensor.to",
+          "id": 86,
           "line": 36,
           "code": "x = x.to(torch.float32)",
           "uses": [],
+          "inputs": [
+           {
+            "from": 84
+           }
+          ],
+          "unchanged": true,
           "in": [
            [
             "B",
@@ -11506,13 +15441,20 @@ window.ARCHITECTURE = {
           ],
           "children": [],
           "total": 0,
-          "repeat": 1
+          "repeat": 1,
+          "label": "Compute in float32"
          },
          {
           "op": "torch.Tensor.pow",
+          "id": 87,
           "line": 38,
           "code": "variance = x.pow(2).mean(dim=-1, keepdim=True)",
           "uses": [],
+          "inputs": [
+           {
+            "from": 84
+           }
+          ],
           "in": [
            [
             "B",
@@ -11527,13 +15469,20 @@ window.ARCHITECTURE = {
           ],
           "children": [],
           "total": 0,
-          "repeat": 1
+          "repeat": 1,
+          "label": "Mean square over channels"
          },
          {
           "op": "torch.Tensor.mean",
+          "id": 88,
           "line": 38,
           "code": "variance = x.pow(2).mean(dim=-1, keepdim=True)",
           "uses": [],
+          "inputs": [
+           {
+            "from": 87
+           }
+          ],
           "in": [
            [
             "B",
@@ -11548,13 +15497,20 @@ window.ARCHITECTURE = {
           ],
           "children": [],
           "total": 0,
-          "repeat": 1
+          "repeat": 1,
+          "label": "Mean square over channels"
          },
          {
           "op": "torch.Tensor.add",
+          "id": 89,
           "line": 39,
           "code": "norm_x = x * torch.rsqrt(variance + self.eps)",
           "uses": [],
+          "inputs": [
+           {
+            "from": 88
+           }
+          ],
           "in": [
            [
             "B",
@@ -11569,13 +15525,20 @@ window.ARCHITECTURE = {
           ],
           "children": [],
           "total": 0,
-          "repeat": 1
+          "repeat": 1,
+          "label": "Divide by the root mean square"
          },
          {
           "op": "torch.rsqrt",
+          "id": 90,
           "line": 39,
           "code": "norm_x = x * torch.rsqrt(variance + self.eps)",
           "uses": [],
+          "inputs": [
+           {
+            "from": 89
+           }
+          ],
           "in": [
            [
             "B",
@@ -11590,13 +15553,23 @@ window.ARCHITECTURE = {
           ],
           "children": [],
           "total": 0,
-          "repeat": 1
+          "repeat": 1,
+          "label": "Divide by the root mean square"
          },
          {
           "op": "torch.Tensor.mul",
+          "id": 91,
           "line": 39,
           "code": "norm_x = x * torch.rsqrt(variance + self.eps)",
           "uses": [],
+          "inputs": [
+           {
+            "from": 84
+           },
+           {
+            "from": 90
+           }
+          ],
           "in": [
            [
             "B",
@@ -11616,15 +15589,26 @@ window.ARCHITECTURE = {
           ],
           "children": [],
           "total": 0,
-          "repeat": 1
+          "repeat": 1,
+          "label": "Divide by the root mean square"
          },
          {
           "op": "torch.Tensor.mul",
+          "id": 92,
           "line": 40,
           "code": "norm_x = norm_x * self.scale",
           "uses": [
            "scale"
           ],
+          "inputs": [
+           {
+            "from": 91
+           },
+           {
+            "tensor": "trf_blocks.0.norm2.scale"
+           }
+          ],
+          "returned_by": 85,
           "in": [
            [
             "B",
@@ -11642,13 +15626,21 @@ window.ARCHITECTURE = {
           ],
           "children": [],
           "total": 0,
-          "repeat": 1
+          "repeat": 1,
+          "label": "Learned scale"
          },
          {
           "op": "torch.Tensor.to",
+          "id": 93,
           "line": 45,
           "code": "return norm_x.to(input_dtype)",
           "uses": [],
+          "inputs": [
+           {
+            "from": 92
+           }
+          ],
+          "unchanged": true,
           "in": [
            [
             "B",
@@ -11663,7 +15655,8 @@ window.ARCHITECTURE = {
           ],
           "children": [],
           "total": 0,
-          "repeat": 1
+          "repeat": 1,
+          "label": "Cast back to the input dtype"
          }
         ],
         "class": "llm_training.model.qwen3.layers.RMSNorm",
@@ -11678,10 +15671,18 @@ window.ARCHITECTURE = {
         ],
         "buffers": [],
         "total": 1024,
-        "repeat": 1
+        "repeat": 1,
+        "role": "llm_training.model.qwen3.model.TransformerBlock.norm2"
        },
        {
         "module": "trf_blocks.0.ff",
+        "id": 94,
+        "inputs": [
+         {
+          "name": "x",
+          "from": 85
+         }
+        ],
         "in": [
          "B",
          "T",
@@ -11695,6 +15696,13 @@ window.ARCHITECTURE = {
         "children": [
          {
           "module": "trf_blocks.0.ff.fc1",
+          "id": 95,
+          "inputs": [
+           {
+            "name": "input",
+            "from": 85
+           }
+          ],
           "in": [
            "B",
            "T",
@@ -11719,10 +15727,18 @@ window.ARCHITECTURE = {
           ],
           "buffers": [],
           "total": 3145728,
-          "repeat": 1
+          "repeat": 1,
+          "role": "llm_training.model.qwen3.layers.FeedForward.fc1"
          },
          {
           "module": "trf_blocks.0.ff.fc2",
+          "id": 96,
+          "inputs": [
+           {
+            "name": "input",
+            "from": 85
+           }
+          ],
           "in": [
            "B",
            "T",
@@ -11747,13 +15763,20 @@ window.ARCHITECTURE = {
           ],
           "buffers": [],
           "total": 3145728,
-          "repeat": 1
+          "repeat": 1,
+          "role": "llm_training.model.qwen3.layers.FeedForward.fc2"
          },
          {
           "op": "torch.nn.functional.silu",
+          "id": 97,
           "line": 20,
           "code": "x = nn.functional.silu(x_fc1) * x_fc2",
           "uses": [],
+          "inputs": [
+           {
+            "from": 95
+           }
+          ],
           "in": [
            [
             "B",
@@ -11768,13 +15791,23 @@ window.ARCHITECTURE = {
           ],
           "children": [],
           "total": 0,
-          "repeat": 1
+          "repeat": 1,
+          "label": "SwiGLU gate: SiLU(fc1)"
          },
          {
           "op": "torch.Tensor.mul",
+          "id": 98,
           "line": 20,
           "code": "x = nn.functional.silu(x_fc1) * x_fc2",
           "uses": [],
+          "inputs": [
+           {
+            "from": 97
+           },
+           {
+            "from": 96
+           }
+          ],
           "in": [
            [
             "B",
@@ -11794,10 +15827,19 @@ window.ARCHITECTURE = {
           ],
           "children": [],
           "total": 0,
-          "repeat": 1
+          "repeat": 1,
+          "label": "SwiGLU: gate × fc2"
          },
          {
           "module": "trf_blocks.0.ff.fc3",
+          "id": 99,
+          "inputs": [
+           {
+            "name": "input",
+            "from": 98
+           }
+          ],
+          "returned_by": 94,
           "in": [
            "B",
            "T",
@@ -11822,20 +15864,32 @@ window.ARCHITECTURE = {
           ],
           "buffers": [],
           "total": 3145728,
-          "repeat": 1
+          "repeat": 1,
+          "role": "llm_training.model.qwen3.layers.FeedForward.fc3"
          }
         ],
         "class": "llm_training.model.qwen3.layers.FeedForward",
         "params": [],
         "buffers": [],
         "total": 9437184,
-        "repeat": 1
+        "repeat": 1,
+        "role": "llm_training.model.qwen3.model.TransformerBlock.ff"
        },
        {
         "op": "torch.Tensor.add",
+        "id": 100,
         "line": 138,
         "code": "x = x + shortcut  # Add the original input back",
         "uses": [],
+        "inputs": [
+         {
+          "from": 94
+         },
+         {
+          "from": 84
+         }
+        ],
+        "returned_by": 5,
         "in": [
          [
           "B",
@@ -11855,7 +15909,8 @@ window.ARCHITECTURE = {
         ],
         "children": [],
         "total": 0,
-        "repeat": 1
+        "repeat": 1,
+        "label": "Residual connection"
        }
       ],
       "class": "llm_training.model.qwen3.model.TransformerBlock",
@@ -11863,10 +15918,18 @@ window.ARCHITECTURE = {
       "buffers": [],
       "total": 15730944,
       "repeat": 28,
-      "last": "trf_blocks.27"
+      "last": "trf_blocks.27",
+      "role": "llm_training.model.qwen3.model.Qwen3Model.trf_blocks"
      },
      {
       "module": "final_norm",
+      "id": 2693,
+      "inputs": [
+       {
+        "name": "x",
+        "from": 5
+       }
+      ],
       "in": [
        "B",
        "T",
@@ -11880,9 +15943,16 @@ window.ARCHITECTURE = {
       "children": [
        {
         "op": "torch.Tensor.to",
+        "id": 2694,
         "line": 36,
         "code": "x = x.to(torch.float32)",
         "uses": [],
+        "inputs": [
+         {
+          "from": 5
+         }
+        ],
+        "unchanged": true,
         "in": [
          [
           "B",
@@ -11897,13 +15967,20 @@ window.ARCHITECTURE = {
         ],
         "children": [],
         "total": 0,
-        "repeat": 1
+        "repeat": 1,
+        "label": "Compute in float32"
        },
        {
         "op": "torch.Tensor.pow",
+        "id": 2695,
         "line": 38,
         "code": "variance = x.pow(2).mean(dim=-1, keepdim=True)",
         "uses": [],
+        "inputs": [
+         {
+          "from": 5
+         }
+        ],
         "in": [
          [
           "B",
@@ -11918,13 +15995,20 @@ window.ARCHITECTURE = {
         ],
         "children": [],
         "total": 0,
-        "repeat": 1
+        "repeat": 1,
+        "label": "Mean square over channels"
        },
        {
         "op": "torch.Tensor.mean",
+        "id": 2696,
         "line": 38,
         "code": "variance = x.pow(2).mean(dim=-1, keepdim=True)",
         "uses": [],
+        "inputs": [
+         {
+          "from": 2695
+         }
+        ],
         "in": [
          [
           "B",
@@ -11939,13 +16023,20 @@ window.ARCHITECTURE = {
         ],
         "children": [],
         "total": 0,
-        "repeat": 1
+        "repeat": 1,
+        "label": "Mean square over channels"
        },
        {
         "op": "torch.Tensor.add",
+        "id": 2697,
         "line": 39,
         "code": "norm_x = x * torch.rsqrt(variance + self.eps)",
         "uses": [],
+        "inputs": [
+         {
+          "from": 2696
+         }
+        ],
         "in": [
          [
           "B",
@@ -11960,13 +16051,20 @@ window.ARCHITECTURE = {
         ],
         "children": [],
         "total": 0,
-        "repeat": 1
+        "repeat": 1,
+        "label": "Divide by the root mean square"
        },
        {
         "op": "torch.rsqrt",
+        "id": 2698,
         "line": 39,
         "code": "norm_x = x * torch.rsqrt(variance + self.eps)",
         "uses": [],
+        "inputs": [
+         {
+          "from": 2697
+         }
+        ],
         "in": [
          [
           "B",
@@ -11981,13 +16079,23 @@ window.ARCHITECTURE = {
         ],
         "children": [],
         "total": 0,
-        "repeat": 1
+        "repeat": 1,
+        "label": "Divide by the root mean square"
        },
        {
         "op": "torch.Tensor.mul",
+        "id": 2699,
         "line": 39,
         "code": "norm_x = x * torch.rsqrt(variance + self.eps)",
         "uses": [],
+        "inputs": [
+         {
+          "from": 5
+         },
+         {
+          "from": 2698
+         }
+        ],
         "in": [
          [
           "B",
@@ -12007,15 +16115,26 @@ window.ARCHITECTURE = {
         ],
         "children": [],
         "total": 0,
-        "repeat": 1
+        "repeat": 1,
+        "label": "Divide by the root mean square"
        },
        {
         "op": "torch.Tensor.mul",
+        "id": 2700,
         "line": 40,
         "code": "norm_x = norm_x * self.scale",
         "uses": [
          "scale"
         ],
+        "inputs": [
+         {
+          "from": 2699
+         },
+         {
+          "tensor": "final_norm.scale"
+         }
+        ],
+        "returned_by": 2693,
         "in": [
          [
           "B",
@@ -12033,13 +16152,21 @@ window.ARCHITECTURE = {
         ],
         "children": [],
         "total": 0,
-        "repeat": 1
+        "repeat": 1,
+        "label": "Learned scale"
        },
        {
         "op": "torch.Tensor.to",
+        "id": 2701,
         "line": 45,
         "code": "return norm_x.to(input_dtype)",
         "uses": [],
+        "inputs": [
+         {
+          "from": 2700
+         }
+        ],
+        "unchanged": true,
         "in": [
          [
           "B",
@@ -12054,7 +16181,8 @@ window.ARCHITECTURE = {
         ],
         "children": [],
         "total": 0,
-        "repeat": 1
+        "repeat": 1,
+        "label": "Cast back to the input dtype"
        }
       ],
       "class": "llm_training.model.qwen3.layers.RMSNorm",
@@ -12069,10 +16197,19 @@ window.ARCHITECTURE = {
       ],
       "buffers": [],
       "total": 1024,
-      "repeat": 1
+      "repeat": 1,
+      "role": "llm_training.model.qwen3.model.Qwen3Model.final_norm"
      },
      {
       "module": "out_head",
+      "id": 2702,
+      "inputs": [
+       {
+        "name": "input",
+        "from": 2693
+       }
+      ],
+      "returned_by": 0,
       "in": [
        "B",
        "T",
@@ -12098,7 +16235,8 @@ window.ARCHITECTURE = {
       ],
       "buffers": [],
       "total": 0,
-      "repeat": 1
+      "repeat": 1,
+      "role": "llm_training.model.qwen3.model.Qwen3Model.out_head"
      }
     ],
     "class": "llm_training.model.qwen3.model.Qwen3Model",
@@ -12148,6 +16286,13 @@ window.ARCHITECTURE = {
    "total": 751632384,
    "tree": {
     "module": "",
+    "id": 0,
+    "inputs": [
+     {
+      "name": "in_idx",
+      "input": true
+     }
+    ],
     "in": [
      "B",
      "T"
@@ -12160,6 +16305,13 @@ window.ARCHITECTURE = {
     "children": [
      {
       "module": "tok_emb",
+      "id": 1,
+      "inputs": [
+       {
+        "name": "input",
+        "input": true
+       }
+      ],
       "in": [
        "B",
        "T"
@@ -12183,13 +16335,16 @@ window.ARCHITECTURE = {
       ],
       "buffers": [],
       "total": 155582464,
-      "repeat": 1
+      "repeat": 1,
+      "role": "llm_training.model.qwen3.model.Qwen3Model.tok_emb"
      },
      {
       "op": "torch.ones",
+      "id": 2,
       "line": 81,
       "code": "torch.ones(num_tokens, num_tokens, device=x.device, dtype=torch.bool), diagonal=1",
       "uses": [],
+      "inputs": [],
       "in": [],
       "out": [
        "T",
@@ -12197,13 +16352,20 @@ window.ARCHITECTURE = {
       ],
       "children": [],
       "total": 0,
-      "repeat": 1
+      "repeat": 1,
+      "label": "Causal mask"
      },
      {
       "op": "torch.triu",
+      "id": 3,
       "line": 80,
       "code": "mask = torch.triu(",
       "uses": [],
+      "inputs": [
+       {
+        "from": 2
+       }
+      ],
       "in": [
        [
         "T",
@@ -12216,13 +16378,20 @@ window.ARCHITECTURE = {
       ],
       "children": [],
       "total": 0,
-      "repeat": 1
+      "repeat": 1,
+      "label": "Causal mask"
      },
      {
       "op": "torch.Tensor.__getitem__",
+      "id": 4,
       "line": 92,
       "code": "mask = mask[None, None, :, :]  # broadcast mask",
       "uses": [],
+      "inputs": [
+       {
+        "from": 3
+       }
+      ],
       "in": [
        [
         "T",
@@ -12237,10 +16406,31 @@ window.ARCHITECTURE = {
       ],
       "children": [],
       "total": 0,
-      "repeat": 1
+      "repeat": 1,
+      "label": "Causal mask"
      },
      {
       "module": "trf_blocks.0",
+      "id": 5,
+      "inputs": [
+       {
+        "name": "x",
+        "from": 1,
+        "first_copy": true
+       },
+       {
+        "name": "mask",
+        "from": 4
+       },
+       {
+        "name": "cos",
+        "tensor": "cos"
+       },
+       {
+        "name": "sin",
+        "tensor": "sin"
+       }
+      ],
       "in": [
        "B",
        "T",
@@ -12254,6 +16444,14 @@ window.ARCHITECTURE = {
       "children": [
        {
         "module": "trf_blocks.0.norm1",
+        "id": 6,
+        "inputs": [
+         {
+          "name": "x",
+          "from": 1,
+          "first_copy": true
+         }
+        ],
         "in": [
          "B",
          "T",
@@ -12267,9 +16465,17 @@ window.ARCHITECTURE = {
         "children": [
          {
           "op": "torch.Tensor.to",
+          "id": 7,
           "line": 36,
           "code": "x = x.to(torch.float32)",
           "uses": [],
+          "inputs": [
+           {
+            "from": 1,
+            "first_copy": true
+           }
+          ],
+          "unchanged": true,
           "in": [
            [
             "B",
@@ -12284,13 +16490,21 @@ window.ARCHITECTURE = {
           ],
           "children": [],
           "total": 0,
-          "repeat": 1
+          "repeat": 1,
+          "label": "Compute in float32"
          },
          {
           "op": "torch.Tensor.pow",
+          "id": 8,
           "line": 38,
           "code": "variance = x.pow(2).mean(dim=-1, keepdim=True)",
           "uses": [],
+          "inputs": [
+           {
+            "from": 1,
+            "first_copy": true
+           }
+          ],
           "in": [
            [
             "B",
@@ -12305,13 +16519,20 @@ window.ARCHITECTURE = {
           ],
           "children": [],
           "total": 0,
-          "repeat": 1
+          "repeat": 1,
+          "label": "Mean square over channels"
          },
          {
           "op": "torch.Tensor.mean",
+          "id": 9,
           "line": 38,
           "code": "variance = x.pow(2).mean(dim=-1, keepdim=True)",
           "uses": [],
+          "inputs": [
+           {
+            "from": 8
+           }
+          ],
           "in": [
            [
             "B",
@@ -12326,13 +16547,20 @@ window.ARCHITECTURE = {
           ],
           "children": [],
           "total": 0,
-          "repeat": 1
+          "repeat": 1,
+          "label": "Mean square over channels"
          },
          {
           "op": "torch.Tensor.add",
+          "id": 10,
           "line": 39,
           "code": "norm_x = x * torch.rsqrt(variance + self.eps)",
           "uses": [],
+          "inputs": [
+           {
+            "from": 9
+           }
+          ],
           "in": [
            [
             "B",
@@ -12347,13 +16575,20 @@ window.ARCHITECTURE = {
           ],
           "children": [],
           "total": 0,
-          "repeat": 1
+          "repeat": 1,
+          "label": "Divide by the root mean square"
          },
          {
           "op": "torch.rsqrt",
+          "id": 11,
           "line": 39,
           "code": "norm_x = x * torch.rsqrt(variance + self.eps)",
           "uses": [],
+          "inputs": [
+           {
+            "from": 10
+           }
+          ],
           "in": [
            [
             "B",
@@ -12368,13 +16603,24 @@ window.ARCHITECTURE = {
           ],
           "children": [],
           "total": 0,
-          "repeat": 1
+          "repeat": 1,
+          "label": "Divide by the root mean square"
          },
          {
           "op": "torch.Tensor.mul",
+          "id": 12,
           "line": 39,
           "code": "norm_x = x * torch.rsqrt(variance + self.eps)",
           "uses": [],
+          "inputs": [
+           {
+            "from": 1,
+            "first_copy": true
+           },
+           {
+            "from": 11
+           }
+          ],
           "in": [
            [
             "B",
@@ -12394,15 +16640,26 @@ window.ARCHITECTURE = {
           ],
           "children": [],
           "total": 0,
-          "repeat": 1
+          "repeat": 1,
+          "label": "Divide by the root mean square"
          },
          {
           "op": "torch.Tensor.mul",
+          "id": 13,
           "line": 40,
           "code": "norm_x = norm_x * self.scale",
           "uses": [
            "scale"
           ],
+          "inputs": [
+           {
+            "from": 12
+           },
+           {
+            "tensor": "trf_blocks.0.norm1.scale"
+           }
+          ],
+          "returned_by": 6,
           "in": [
            [
             "B",
@@ -12420,13 +16677,21 @@ window.ARCHITECTURE = {
           ],
           "children": [],
           "total": 0,
-          "repeat": 1
+          "repeat": 1,
+          "label": "Learned scale"
          },
          {
           "op": "torch.Tensor.to",
+          "id": 14,
           "line": 45,
           "code": "return norm_x.to(input_dtype)",
           "uses": [],
+          "inputs": [
+           {
+            "from": 13
+           }
+          ],
+          "unchanged": true,
           "in": [
            [
             "B",
@@ -12441,7 +16706,8 @@ window.ARCHITECTURE = {
           ],
           "children": [],
           "total": 0,
-          "repeat": 1
+          "repeat": 1,
+          "label": "Cast back to the input dtype"
          }
         ],
         "class": "llm_training.model.qwen3.layers.RMSNorm",
@@ -12456,10 +16722,31 @@ window.ARCHITECTURE = {
         ],
         "buffers": [],
         "total": 1024,
-        "repeat": 1
+        "repeat": 1,
+        "role": "llm_training.model.qwen3.model.TransformerBlock.norm1"
        },
        {
         "module": "trf_blocks.0.att",
+        "id": 15,
+        "inputs": [
+         {
+          "name": "x",
+          "from": 6
+         },
+         {
+          "name": "mask",
+          "from": 4
+         },
+         {
+          "name": "cos",
+          "tensor": "cos"
+         },
+         {
+          "name": "sin",
+          "tensor": "sin"
+         }
+        ],
+        "returned_by": 5,
         "in": [
          "B",
          "T",
@@ -12473,6 +16760,13 @@ window.ARCHITECTURE = {
         "children": [
          {
           "module": "trf_blocks.0.att.W_query",
+          "id": 16,
+          "inputs": [
+           {
+            "name": "input",
+            "from": 6
+           }
+          ],
           "in": [
            "B",
            "T",
@@ -12497,10 +16791,18 @@ window.ARCHITECTURE = {
           ],
           "buffers": [],
           "total": 2097152,
-          "repeat": 1
+          "repeat": 1,
+          "role": "llm_training.model.qwen3.attention.GroupedQueryAttention.W_query"
          },
          {
           "module": "trf_blocks.0.att.W_key",
+          "id": 17,
+          "inputs": [
+           {
+            "name": "input",
+            "from": 6
+           }
+          ],
           "in": [
            "B",
            "T",
@@ -12525,10 +16827,18 @@ window.ARCHITECTURE = {
           ],
           "buffers": [],
           "total": 1048576,
-          "repeat": 1
+          "repeat": 1,
+          "role": "llm_training.model.qwen3.attention.GroupedQueryAttention.W_key"
          },
          {
           "module": "trf_blocks.0.att.W_value",
+          "id": 18,
+          "inputs": [
+           {
+            "name": "input",
+            "from": 6
+           }
+          ],
           "in": [
            "B",
            "T",
@@ -12553,13 +16863,20 @@ window.ARCHITECTURE = {
           ],
           "buffers": [],
           "total": 1048576,
-          "repeat": 1
+          "repeat": 1,
+          "role": "llm_training.model.qwen3.attention.GroupedQueryAttention.W_value"
          },
          {
           "op": "torch.Tensor.view",
+          "id": 19,
           "line": 56,
           "code": "queries = queries.view(b, num_tokens, self.num_heads, self.head_dim).transpose(1, 2)",
           "uses": [],
+          "inputs": [
+           {
+            "from": 16
+           }
+          ],
           "in": [
            [
             "B",
@@ -12575,13 +16892,20 @@ window.ARCHITECTURE = {
           ],
           "children": [],
           "total": 0,
-          "repeat": 1
+          "repeat": 1,
+          "label": "Split queries into heads"
          },
          {
           "op": "torch.Tensor.transpose",
+          "id": 20,
           "line": 56,
           "code": "queries = queries.view(b, num_tokens, self.num_heads, self.head_dim).transpose(1, 2)",
           "uses": [],
+          "inputs": [
+           {
+            "from": 19
+           }
+          ],
           "in": [
            [
             "B",
@@ -12598,13 +16922,20 @@ window.ARCHITECTURE = {
           ],
           "children": [],
           "total": 0,
-          "repeat": 1
+          "repeat": 1,
+          "label": "Split queries into heads"
          },
          {
           "op": "torch.Tensor.view",
+          "id": 21,
           "line": 57,
           "code": "keys_new = keys.view(b, num_tokens, self.num_kv_groups, self.head_dim).transpose(1, 2)",
           "uses": [],
+          "inputs": [
+           {
+            "from": 17
+           }
+          ],
           "in": [
            [
             "B",
@@ -12620,13 +16951,20 @@ window.ARCHITECTURE = {
           ],
           "children": [],
           "total": 0,
-          "repeat": 1
+          "repeat": 1,
+          "label": "Split keys into heads"
          },
          {
           "op": "torch.Tensor.transpose",
+          "id": 22,
           "line": 57,
           "code": "keys_new = keys.view(b, num_tokens, self.num_kv_groups, self.head_dim).transpose(1, 2)",
           "uses": [],
+          "inputs": [
+           {
+            "from": 21
+           }
+          ],
           "in": [
            [
             "B",
@@ -12643,13 +16981,20 @@ window.ARCHITECTURE = {
           ],
           "children": [],
           "total": 0,
-          "repeat": 1
+          "repeat": 1,
+          "label": "Split keys into heads"
          },
          {
           "op": "torch.Tensor.view",
+          "id": 23,
           "line": 58,
           "code": "values_new = values.view(b, num_tokens, self.num_kv_groups, self.head_dim).transpose(1, 2)",
           "uses": [],
+          "inputs": [
+           {
+            "from": 18
+           }
+          ],
           "in": [
            [
             "B",
@@ -12665,13 +17010,21 @@ window.ARCHITECTURE = {
           ],
           "children": [],
           "total": 0,
-          "repeat": 1
+          "repeat": 1,
+          "label": "Split values into heads"
          },
          {
           "op": "torch.Tensor.transpose",
+          "id": 24,
           "line": 58,
           "code": "values_new = values.view(b, num_tokens, self.num_kv_groups, self.head_dim).transpose(1, 2)",
           "uses": [],
+          "inputs": [
+           {
+            "from": 23
+           }
+          ],
+          "returned_by": 15,
           "in": [
            [
             "B",
@@ -12688,10 +17041,18 @@ window.ARCHITECTURE = {
           ],
           "children": [],
           "total": 0,
-          "repeat": 1
+          "repeat": 1,
+          "label": "Split values into heads"
          },
          {
           "module": "trf_blocks.0.att.q_norm",
+          "id": 25,
+          "inputs": [
+           {
+            "name": "x",
+            "from": 20
+           }
+          ],
           "in": [
            "B",
            16,
@@ -12707,9 +17068,16 @@ window.ARCHITECTURE = {
           "children": [
            {
             "op": "torch.Tensor.to",
+            "id": 26,
             "line": 36,
             "code": "x = x.to(torch.float32)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 20
+             }
+            ],
+            "unchanged": true,
             "in": [
              [
               "B",
@@ -12726,13 +17094,20 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Compute in float32"
            },
            {
             "op": "torch.Tensor.pow",
+            "id": 27,
             "line": 38,
             "code": "variance = x.pow(2).mean(dim=-1, keepdim=True)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 20
+             }
+            ],
             "in": [
              [
               "B",
@@ -12749,13 +17124,20 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Mean square over channels"
            },
            {
             "op": "torch.Tensor.mean",
+            "id": 28,
             "line": 38,
             "code": "variance = x.pow(2).mean(dim=-1, keepdim=True)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 27
+             }
+            ],
             "in": [
              [
               "B",
@@ -12772,13 +17154,20 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Mean square over channels"
            },
            {
             "op": "torch.Tensor.add",
+            "id": 29,
             "line": 39,
             "code": "norm_x = x * torch.rsqrt(variance + self.eps)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 28
+             }
+            ],
             "in": [
              [
               "B",
@@ -12795,13 +17184,20 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Divide by the root mean square"
            },
            {
             "op": "torch.rsqrt",
+            "id": 30,
             "line": 39,
             "code": "norm_x = x * torch.rsqrt(variance + self.eps)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 29
+             }
+            ],
             "in": [
              [
               "B",
@@ -12818,13 +17214,23 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Divide by the root mean square"
            },
            {
             "op": "torch.Tensor.mul",
+            "id": 31,
             "line": 39,
             "code": "norm_x = x * torch.rsqrt(variance + self.eps)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 20
+             },
+             {
+              "from": 30
+             }
+            ],
             "in": [
              [
               "B",
@@ -12847,15 +17253,26 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Divide by the root mean square"
            },
            {
             "op": "torch.Tensor.mul",
+            "id": 32,
             "line": 40,
             "code": "norm_x = norm_x * self.scale",
             "uses": [
              "scale"
             ],
+            "inputs": [
+             {
+              "from": 31
+             },
+             {
+              "tensor": "trf_blocks.0.att.q_norm.scale"
+             }
+            ],
+            "returned_by": 25,
             "in": [
              [
               "B",
@@ -12875,13 +17292,21 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Learned scale"
            },
            {
             "op": "torch.Tensor.to",
+            "id": 33,
             "line": 45,
             "code": "return norm_x.to(input_dtype)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 32
+             }
+            ],
+            "unchanged": true,
             "in": [
              [
               "B",
@@ -12898,7 +17323,8 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Cast back to the input dtype"
            }
           ],
           "class": "llm_training.model.qwen3.layers.RMSNorm",
@@ -12913,10 +17339,18 @@ window.ARCHITECTURE = {
           ],
           "buffers": [],
           "total": 128,
-          "repeat": 1
+          "repeat": 1,
+          "role": "llm_training.model.qwen3.attention.GroupedQueryAttention.q_norm"
          },
          {
           "module": "trf_blocks.0.att.k_norm",
+          "id": 34,
+          "inputs": [
+           {
+            "name": "x",
+            "from": 22
+           }
+          ],
           "in": [
            "B",
            8,
@@ -12932,9 +17366,16 @@ window.ARCHITECTURE = {
           "children": [
            {
             "op": "torch.Tensor.to",
+            "id": 35,
             "line": 36,
             "code": "x = x.to(torch.float32)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 22
+             }
+            ],
+            "unchanged": true,
             "in": [
              [
               "B",
@@ -12951,13 +17392,20 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Compute in float32"
            },
            {
             "op": "torch.Tensor.pow",
+            "id": 36,
             "line": 38,
             "code": "variance = x.pow(2).mean(dim=-1, keepdim=True)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 22
+             }
+            ],
             "in": [
              [
               "B",
@@ -12974,13 +17422,20 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Mean square over channels"
            },
            {
             "op": "torch.Tensor.mean",
+            "id": 37,
             "line": 38,
             "code": "variance = x.pow(2).mean(dim=-1, keepdim=True)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 36
+             }
+            ],
             "in": [
              [
               "B",
@@ -12997,13 +17452,20 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Mean square over channels"
            },
            {
             "op": "torch.Tensor.add",
+            "id": 38,
             "line": 39,
             "code": "norm_x = x * torch.rsqrt(variance + self.eps)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 37
+             }
+            ],
             "in": [
              [
               "B",
@@ -13020,13 +17482,20 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Divide by the root mean square"
            },
            {
             "op": "torch.rsqrt",
+            "id": 39,
             "line": 39,
             "code": "norm_x = x * torch.rsqrt(variance + self.eps)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 38
+             }
+            ],
             "in": [
              [
               "B",
@@ -13043,13 +17512,23 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Divide by the root mean square"
            },
            {
             "op": "torch.Tensor.mul",
+            "id": 40,
             "line": 39,
             "code": "norm_x = x * torch.rsqrt(variance + self.eps)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 22
+             },
+             {
+              "from": 39
+             }
+            ],
             "in": [
              [
               "B",
@@ -13072,15 +17551,26 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Divide by the root mean square"
            },
            {
             "op": "torch.Tensor.mul",
+            "id": 41,
             "line": 40,
             "code": "norm_x = norm_x * self.scale",
             "uses": [
              "scale"
             ],
+            "inputs": [
+             {
+              "from": 40
+             },
+             {
+              "tensor": "trf_blocks.0.att.k_norm.scale"
+             }
+            ],
+            "returned_by": 34,
             "in": [
              [
               "B",
@@ -13100,13 +17590,21 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Learned scale"
            },
            {
             "op": "torch.Tensor.to",
+            "id": 42,
             "line": 45,
             "code": "return norm_x.to(input_dtype)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 41
+             }
+            ],
+            "unchanged": true,
             "in": [
              [
               "B",
@@ -13123,7 +17621,8 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Cast back to the input dtype"
            }
           ],
           "class": "llm_training.model.qwen3.layers.RMSNorm",
@@ -13138,11 +17637,27 @@ window.ARCHITECTURE = {
           ],
           "buffers": [],
           "total": 128,
-          "repeat": 1
+          "repeat": 1,
+          "role": "llm_training.model.qwen3.attention.GroupedQueryAttention.k_norm"
          },
          {
           "function": "llm_training.model.qwen3.rope.apply_rope",
+          "id": 43,
           "line": 67,
+          "inputs": [
+           {
+            "name": "x",
+            "from": 25
+           },
+           {
+            "name": "cos",
+            "tensor": "cos"
+           },
+           {
+            "name": "sin",
+            "tensor": "sin"
+           }
+          ],
           "in": [
            "B",
            16,
@@ -13158,9 +17673,15 @@ window.ARCHITECTURE = {
           "children": [
            {
             "op": "torch.Tensor.__getitem__",
+            "id": 44,
             "line": 92,
             "code": "x1 = x[..., : head_dim // 2]  # First half",
             "uses": [],
+            "inputs": [
+             {
+              "from": 25
+             }
+            ],
             "in": [
              [
               "B",
@@ -13177,13 +17698,20 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "First half of each head"
            },
            {
             "op": "torch.Tensor.__getitem__",
+            "id": 45,
             "line": 93,
             "code": "x2 = x[..., head_dim // 2 :]  # Second half",
             "uses": [],
+            "inputs": [
+             {
+              "from": 25
+             }
+            ],
             "in": [
              [
               "B",
@@ -13200,15 +17728,22 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Second half of each head"
            },
            {
             "op": "torch.Tensor.__getitem__",
+            "id": 46,
             "line": 97,
             "code": "cos[offset : offset + seq_len, :].unsqueeze(0).unsqueeze(0)",
             "uses": [
              "cos"
             ],
+            "inputs": [
+             {
+              "tensor": "cos"
+             }
+            ],
             "in": [
              [
               40960,
@@ -13221,13 +17756,20 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Cosines for positions 0 … T−1"
            },
            {
             "op": "torch.Tensor.unsqueeze",
+            "id": 47,
             "line": 97,
             "code": "cos[offset : offset + seq_len, :].unsqueeze(0).unsqueeze(0)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 46
+             }
+            ],
             "in": [
              [
               "T",
@@ -13241,13 +17783,20 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Cosines for positions 0 … T−1"
            },
            {
             "op": "torch.Tensor.unsqueeze",
+            "id": 48,
             "line": 97,
             "code": "cos[offset : offset + seq_len, :].unsqueeze(0).unsqueeze(0)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 47
+             }
+            ],
             "in": [
              [
               1,
@@ -13263,15 +17812,22 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Cosines for positions 0 … T−1"
            },
            {
             "op": "torch.Tensor.__getitem__",
+            "id": 49,
             "line": 99,
             "code": "sin = sin[offset : offset + seq_len, :].unsqueeze(0).unsqueeze(0)",
             "uses": [
              "sin"
             ],
+            "inputs": [
+             {
+              "tensor": "sin"
+             }
+            ],
             "in": [
              [
               40960,
@@ -13284,13 +17840,20 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Sines for positions 0 … T−1"
            },
            {
             "op": "torch.Tensor.unsqueeze",
+            "id": 50,
             "line": 99,
             "code": "sin = sin[offset : offset + seq_len, :].unsqueeze(0).unsqueeze(0)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 49
+             }
+            ],
             "in": [
              [
               "T",
@@ -13304,13 +17867,20 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Sines for positions 0 … T−1"
            },
            {
             "op": "torch.Tensor.unsqueeze",
+            "id": 51,
             "line": 99,
             "code": "sin = sin[offset : offset + seq_len, :].unsqueeze(0).unsqueeze(0)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 50
+             }
+            ],
             "in": [
              [
               1,
@@ -13326,13 +17896,20 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Sines for positions 0 … T−1"
            },
            {
             "op": "torch.Tensor.neg",
+            "id": 52,
             "line": 102,
             "code": "rotated = torch.cat((-x2, x1), dim=-1)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 45
+             }
+            ],
             "in": [
              [
               "B",
@@ -13349,13 +17926,23 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Swap halves: (−x₂, x₁)"
            },
            {
             "op": "torch.cat",
+            "id": 53,
             "line": 102,
             "code": "rotated = torch.cat((-x2, x1), dim=-1)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 52
+             },
+             {
+              "from": 44
+             }
+            ],
             "in": [
              [
               "B",
@@ -13378,13 +17965,23 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Swap halves: (−x₂, x₁)"
            },
            {
             "op": "torch.Tensor.mul",
+            "id": 54,
             "line": 103,
             "code": "x_rotated = (x * cos) + (rotated * sin)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 25
+             },
+             {
+              "from": 48
+             }
+            ],
             "in": [
              [
               "B",
@@ -13407,13 +18004,23 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Rotate each channel pair"
            },
            {
             "op": "torch.Tensor.mul",
+            "id": 55,
             "line": 103,
             "code": "x_rotated = (x * cos) + (rotated * sin)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 53
+             },
+             {
+              "from": 51
+             }
+            ],
             "in": [
              [
               "B",
@@ -13436,13 +18043,24 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Rotate each channel pair"
            },
            {
             "op": "torch.Tensor.add",
+            "id": 56,
             "line": 103,
             "code": "x_rotated = (x * cos) + (rotated * sin)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 54
+             },
+             {
+              "from": 55
+             }
+            ],
+            "returned_by": 43,
             "in": [
              [
               "B",
@@ -13465,13 +18083,21 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Rotate each channel pair"
            },
            {
             "op": "torch.Tensor.to",
+            "id": 57,
             "line": 106,
             "code": "return x_rotated.to(dtype=x.dtype)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 56
+             }
+            ],
+            "unchanged": true,
             "in": [
              [
               "B",
@@ -13488,7 +18114,8 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Cast back to the input dtype"
            }
           ],
           "total": 0,
@@ -13496,7 +18123,23 @@ window.ARCHITECTURE = {
          },
          {
           "function": "llm_training.model.qwen3.rope.apply_rope",
+          "id": 58,
           "line": 68,
+          "inputs": [
+           {
+            "name": "x",
+            "from": 34
+           },
+           {
+            "name": "cos",
+            "tensor": "cos"
+           },
+           {
+            "name": "sin",
+            "tensor": "sin"
+           }
+          ],
+          "returned_by": 15,
           "in": [
            "B",
            8,
@@ -13512,9 +18155,15 @@ window.ARCHITECTURE = {
           "children": [
            {
             "op": "torch.Tensor.__getitem__",
+            "id": 59,
             "line": 92,
             "code": "x1 = x[..., : head_dim // 2]  # First half",
             "uses": [],
+            "inputs": [
+             {
+              "from": 34
+             }
+            ],
             "in": [
              [
               "B",
@@ -13531,13 +18180,20 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "First half of each head"
            },
            {
             "op": "torch.Tensor.__getitem__",
+            "id": 60,
             "line": 93,
             "code": "x2 = x[..., head_dim // 2 :]  # Second half",
             "uses": [],
+            "inputs": [
+             {
+              "from": 34
+             }
+            ],
             "in": [
              [
               "B",
@@ -13554,15 +18210,22 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Second half of each head"
            },
            {
             "op": "torch.Tensor.__getitem__",
+            "id": 61,
             "line": 97,
             "code": "cos[offset : offset + seq_len, :].unsqueeze(0).unsqueeze(0)",
             "uses": [
              "cos"
             ],
+            "inputs": [
+             {
+              "tensor": "cos"
+             }
+            ],
             "in": [
              [
               40960,
@@ -13575,13 +18238,20 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Cosines for positions 0 … T−1"
            },
            {
             "op": "torch.Tensor.unsqueeze",
+            "id": 62,
             "line": 97,
             "code": "cos[offset : offset + seq_len, :].unsqueeze(0).unsqueeze(0)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 61
+             }
+            ],
             "in": [
              [
               "T",
@@ -13595,13 +18265,20 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Cosines for positions 0 … T−1"
            },
            {
             "op": "torch.Tensor.unsqueeze",
+            "id": 63,
             "line": 97,
             "code": "cos[offset : offset + seq_len, :].unsqueeze(0).unsqueeze(0)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 62
+             }
+            ],
             "in": [
              [
               1,
@@ -13617,15 +18294,22 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Cosines for positions 0 … T−1"
            },
            {
             "op": "torch.Tensor.__getitem__",
+            "id": 64,
             "line": 99,
             "code": "sin = sin[offset : offset + seq_len, :].unsqueeze(0).unsqueeze(0)",
             "uses": [
              "sin"
             ],
+            "inputs": [
+             {
+              "tensor": "sin"
+             }
+            ],
             "in": [
              [
               40960,
@@ -13638,13 +18322,20 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Sines for positions 0 … T−1"
            },
            {
             "op": "torch.Tensor.unsqueeze",
+            "id": 65,
             "line": 99,
             "code": "sin = sin[offset : offset + seq_len, :].unsqueeze(0).unsqueeze(0)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 64
+             }
+            ],
             "in": [
              [
               "T",
@@ -13658,13 +18349,20 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Sines for positions 0 … T−1"
            },
            {
             "op": "torch.Tensor.unsqueeze",
+            "id": 66,
             "line": 99,
             "code": "sin = sin[offset : offset + seq_len, :].unsqueeze(0).unsqueeze(0)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 65
+             }
+            ],
             "in": [
              [
               1,
@@ -13680,13 +18378,20 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Sines for positions 0 … T−1"
            },
            {
             "op": "torch.Tensor.neg",
+            "id": 67,
             "line": 102,
             "code": "rotated = torch.cat((-x2, x1), dim=-1)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 60
+             }
+            ],
             "in": [
              [
               "B",
@@ -13703,13 +18408,23 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Swap halves: (−x₂, x₁)"
            },
            {
             "op": "torch.cat",
+            "id": 68,
             "line": 102,
             "code": "rotated = torch.cat((-x2, x1), dim=-1)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 67
+             },
+             {
+              "from": 59
+             }
+            ],
             "in": [
              [
               "B",
@@ -13732,13 +18447,23 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Swap halves: (−x₂, x₁)"
            },
            {
             "op": "torch.Tensor.mul",
+            "id": 69,
             "line": 103,
             "code": "x_rotated = (x * cos) + (rotated * sin)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 34
+             },
+             {
+              "from": 63
+             }
+            ],
             "in": [
              [
               "B",
@@ -13761,13 +18486,23 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Rotate each channel pair"
            },
            {
             "op": "torch.Tensor.mul",
+            "id": 70,
             "line": 103,
             "code": "x_rotated = (x * cos) + (rotated * sin)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 68
+             },
+             {
+              "from": 66
+             }
+            ],
             "in": [
              [
               "B",
@@ -13790,13 +18525,24 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Rotate each channel pair"
            },
            {
             "op": "torch.Tensor.add",
+            "id": 71,
             "line": 103,
             "code": "x_rotated = (x * cos) + (rotated * sin)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 69
+             },
+             {
+              "from": 70
+             }
+            ],
+            "returned_by": 58,
             "in": [
              [
               "B",
@@ -13819,13 +18565,21 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Rotate each channel pair"
            },
            {
             "op": "torch.Tensor.to",
+            "id": 72,
             "line": 106,
             "code": "return x_rotated.to(dtype=x.dtype)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 71
+             }
+            ],
+            "unchanged": true,
             "in": [
              [
               "B",
@@ -13842,7 +18596,8 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Cast back to the input dtype"
            }
           ],
           "total": 0,
@@ -13850,9 +18605,15 @@ window.ARCHITECTURE = {
          },
          {
           "op": "torch.Tensor.repeat_interleave",
+          "id": 73,
           "line": 80,
           "code": "keys = keys.repeat_interleave(self.group_size, dim=1)",
           "uses": [],
+          "inputs": [
+           {
+            "from": 58
+           }
+          ],
           "in": [
            [
             "B",
@@ -13869,13 +18630,20 @@ window.ARCHITECTURE = {
           ],
           "children": [],
           "total": 0,
-          "repeat": 1
+          "repeat": 1,
+          "label": "Share each key head with its query group"
          },
          {
           "op": "torch.Tensor.repeat_interleave",
+          "id": 74,
           "line": 81,
           "code": "values = values.repeat_interleave(self.group_size, dim=1)",
           "uses": [],
+          "inputs": [
+           {
+            "from": 24
+           }
+          ],
           "in": [
            [
             "B",
@@ -13892,13 +18660,26 @@ window.ARCHITECTURE = {
           ],
           "children": [],
           "total": 0,
-          "repeat": 1
+          "repeat": 1,
+          "label": "Share each value head with its query group"
          },
          {
           "op": "torch.nn.functional.scaled_dot_product_attention",
+          "id": 75,
           "line": 88,
           "code": "context = torch.nn.functional.scaled_dot_product_attention(",
           "uses": [],
+          "inputs": [
+           {
+            "from": 43
+           },
+           {
+            "from": 73
+           },
+           {
+            "from": 74
+           }
+          ],
           "in": [
            [
             "B",
@@ -13927,13 +18708,20 @@ window.ARCHITECTURE = {
           ],
           "children": [],
           "total": 0,
-          "repeat": 1
+          "repeat": 1,
+          "label": "Fused attention: scores, mask, softmax, weighted sum"
          },
          {
           "op": "torch.Tensor.transpose",
+          "id": 76,
           "line": 95,
           "code": "context = context.transpose(1, 2).reshape(b, num_tokens, self.d_out)",
           "uses": [],
+          "inputs": [
+           {
+            "from": 75
+           }
+          ],
           "in": [
            [
             "B",
@@ -13950,13 +18738,20 @@ window.ARCHITECTURE = {
           ],
           "children": [],
           "total": 0,
-          "repeat": 1
+          "repeat": 1,
+          "label": "Merge heads"
          },
          {
           "op": "torch.Tensor.reshape",
+          "id": 77,
           "line": 95,
           "code": "context = context.transpose(1, 2).reshape(b, num_tokens, self.d_out)",
           "uses": [],
+          "inputs": [
+           {
+            "from": 76
+           }
+          ],
           "in": [
            [
             "B",
@@ -13972,10 +18767,19 @@ window.ARCHITECTURE = {
           ],
           "children": [],
           "total": 0,
-          "repeat": 1
+          "repeat": 1,
+          "label": "Merge heads"
          },
          {
           "module": "trf_blocks.0.att.out_proj",
+          "id": 78,
+          "inputs": [
+           {
+            "name": "input",
+            "from": 77
+           }
+          ],
+          "returned_by": 15,
           "in": [
            "B",
            "T",
@@ -14000,20 +18804,32 @@ window.ARCHITECTURE = {
           ],
           "buffers": [],
           "total": 2097152,
-          "repeat": 1
+          "repeat": 1,
+          "role": "llm_training.model.qwen3.attention.GroupedQueryAttention.out_proj"
          }
         ],
         "class": "llm_training.model.qwen3.attention.GroupedQueryAttention",
         "params": [],
         "buffers": [],
         "total": 6291712,
-        "repeat": 1
+        "repeat": 1,
+        "role": "llm_training.model.qwen3.model.TransformerBlock.att"
        },
        {
         "op": "torch.Tensor.add",
+        "id": 79,
         "line": 132,
         "code": "x = x + shortcut  # Add the original input back",
         "uses": [],
+        "inputs": [
+         {
+          "from": 15
+         },
+         {
+          "from": 1,
+          "first_copy": true
+         }
+        ],
         "in": [
          [
           "B",
@@ -14033,10 +18849,18 @@ window.ARCHITECTURE = {
         ],
         "children": [],
         "total": 0,
-        "repeat": 1
+        "repeat": 1,
+        "label": "Residual connection"
        },
        {
         "module": "trf_blocks.0.norm2",
+        "id": 80,
+        "inputs": [
+         {
+          "name": "x",
+          "from": 79
+         }
+        ],
         "in": [
          "B",
          "T",
@@ -14050,9 +18874,16 @@ window.ARCHITECTURE = {
         "children": [
          {
           "op": "torch.Tensor.to",
+          "id": 81,
           "line": 36,
           "code": "x = x.to(torch.float32)",
           "uses": [],
+          "inputs": [
+           {
+            "from": 79
+           }
+          ],
+          "unchanged": true,
           "in": [
            [
             "B",
@@ -14067,13 +18898,20 @@ window.ARCHITECTURE = {
           ],
           "children": [],
           "total": 0,
-          "repeat": 1
+          "repeat": 1,
+          "label": "Compute in float32"
          },
          {
           "op": "torch.Tensor.pow",
+          "id": 82,
           "line": 38,
           "code": "variance = x.pow(2).mean(dim=-1, keepdim=True)",
           "uses": [],
+          "inputs": [
+           {
+            "from": 79
+           }
+          ],
           "in": [
            [
             "B",
@@ -14088,13 +18926,20 @@ window.ARCHITECTURE = {
           ],
           "children": [],
           "total": 0,
-          "repeat": 1
+          "repeat": 1,
+          "label": "Mean square over channels"
          },
          {
           "op": "torch.Tensor.mean",
+          "id": 83,
           "line": 38,
           "code": "variance = x.pow(2).mean(dim=-1, keepdim=True)",
           "uses": [],
+          "inputs": [
+           {
+            "from": 82
+           }
+          ],
           "in": [
            [
             "B",
@@ -14109,13 +18954,20 @@ window.ARCHITECTURE = {
           ],
           "children": [],
           "total": 0,
-          "repeat": 1
+          "repeat": 1,
+          "label": "Mean square over channels"
          },
          {
           "op": "torch.Tensor.add",
+          "id": 84,
           "line": 39,
           "code": "norm_x = x * torch.rsqrt(variance + self.eps)",
           "uses": [],
+          "inputs": [
+           {
+            "from": 83
+           }
+          ],
           "in": [
            [
             "B",
@@ -14130,13 +18982,20 @@ window.ARCHITECTURE = {
           ],
           "children": [],
           "total": 0,
-          "repeat": 1
+          "repeat": 1,
+          "label": "Divide by the root mean square"
          },
          {
           "op": "torch.rsqrt",
+          "id": 85,
           "line": 39,
           "code": "norm_x = x * torch.rsqrt(variance + self.eps)",
           "uses": [],
+          "inputs": [
+           {
+            "from": 84
+           }
+          ],
           "in": [
            [
             "B",
@@ -14151,13 +19010,23 @@ window.ARCHITECTURE = {
           ],
           "children": [],
           "total": 0,
-          "repeat": 1
+          "repeat": 1,
+          "label": "Divide by the root mean square"
          },
          {
           "op": "torch.Tensor.mul",
+          "id": 86,
           "line": 39,
           "code": "norm_x = x * torch.rsqrt(variance + self.eps)",
           "uses": [],
+          "inputs": [
+           {
+            "from": 79
+           },
+           {
+            "from": 85
+           }
+          ],
           "in": [
            [
             "B",
@@ -14177,15 +19046,26 @@ window.ARCHITECTURE = {
           ],
           "children": [],
           "total": 0,
-          "repeat": 1
+          "repeat": 1,
+          "label": "Divide by the root mean square"
          },
          {
           "op": "torch.Tensor.mul",
+          "id": 87,
           "line": 40,
           "code": "norm_x = norm_x * self.scale",
           "uses": [
            "scale"
           ],
+          "inputs": [
+           {
+            "from": 86
+           },
+           {
+            "tensor": "trf_blocks.0.norm2.scale"
+           }
+          ],
+          "returned_by": 80,
           "in": [
            [
             "B",
@@ -14203,13 +19083,21 @@ window.ARCHITECTURE = {
           ],
           "children": [],
           "total": 0,
-          "repeat": 1
+          "repeat": 1,
+          "label": "Learned scale"
          },
          {
           "op": "torch.Tensor.to",
+          "id": 88,
           "line": 45,
           "code": "return norm_x.to(input_dtype)",
           "uses": [],
+          "inputs": [
+           {
+            "from": 87
+           }
+          ],
+          "unchanged": true,
           "in": [
            [
             "B",
@@ -14224,7 +19112,8 @@ window.ARCHITECTURE = {
           ],
           "children": [],
           "total": 0,
-          "repeat": 1
+          "repeat": 1,
+          "label": "Cast back to the input dtype"
          }
         ],
         "class": "llm_training.model.qwen3.layers.RMSNorm",
@@ -14239,10 +19128,18 @@ window.ARCHITECTURE = {
         ],
         "buffers": [],
         "total": 1024,
-        "repeat": 1
+        "repeat": 1,
+        "role": "llm_training.model.qwen3.model.TransformerBlock.norm2"
        },
        {
         "module": "trf_blocks.0.ff",
+        "id": 89,
+        "inputs": [
+         {
+          "name": "x",
+          "from": 80
+         }
+        ],
         "in": [
          "B",
          "T",
@@ -14256,6 +19153,13 @@ window.ARCHITECTURE = {
         "children": [
          {
           "module": "trf_blocks.0.ff.fc1",
+          "id": 90,
+          "inputs": [
+           {
+            "name": "input",
+            "from": 80
+           }
+          ],
           "in": [
            "B",
            "T",
@@ -14280,10 +19184,18 @@ window.ARCHITECTURE = {
           ],
           "buffers": [],
           "total": 3145728,
-          "repeat": 1
+          "repeat": 1,
+          "role": "llm_training.model.qwen3.layers.FeedForward.fc1"
          },
          {
           "module": "trf_blocks.0.ff.fc2",
+          "id": 91,
+          "inputs": [
+           {
+            "name": "input",
+            "from": 80
+           }
+          ],
           "in": [
            "B",
            "T",
@@ -14308,13 +19220,20 @@ window.ARCHITECTURE = {
           ],
           "buffers": [],
           "total": 3145728,
-          "repeat": 1
+          "repeat": 1,
+          "role": "llm_training.model.qwen3.layers.FeedForward.fc2"
          },
          {
           "op": "torch.nn.functional.silu",
+          "id": 92,
           "line": 20,
           "code": "x = nn.functional.silu(x_fc1) * x_fc2",
           "uses": [],
+          "inputs": [
+           {
+            "from": 90
+           }
+          ],
           "in": [
            [
             "B",
@@ -14329,13 +19248,23 @@ window.ARCHITECTURE = {
           ],
           "children": [],
           "total": 0,
-          "repeat": 1
+          "repeat": 1,
+          "label": "SwiGLU gate: SiLU(fc1)"
          },
          {
           "op": "torch.Tensor.mul",
+          "id": 93,
           "line": 20,
           "code": "x = nn.functional.silu(x_fc1) * x_fc2",
           "uses": [],
+          "inputs": [
+           {
+            "from": 92
+           },
+           {
+            "from": 91
+           }
+          ],
           "in": [
            [
             "B",
@@ -14355,10 +19284,19 @@ window.ARCHITECTURE = {
           ],
           "children": [],
           "total": 0,
-          "repeat": 1
+          "repeat": 1,
+          "label": "SwiGLU: gate × fc2"
          },
          {
           "module": "trf_blocks.0.ff.fc3",
+          "id": 94,
+          "inputs": [
+           {
+            "name": "input",
+            "from": 93
+           }
+          ],
+          "returned_by": 89,
           "in": [
            "B",
            "T",
@@ -14383,20 +19321,32 @@ window.ARCHITECTURE = {
           ],
           "buffers": [],
           "total": 3145728,
-          "repeat": 1
+          "repeat": 1,
+          "role": "llm_training.model.qwen3.layers.FeedForward.fc3"
          }
         ],
         "class": "llm_training.model.qwen3.layers.FeedForward",
         "params": [],
         "buffers": [],
         "total": 9437184,
-        "repeat": 1
+        "repeat": 1,
+        "role": "llm_training.model.qwen3.model.TransformerBlock.ff"
        },
        {
         "op": "torch.Tensor.add",
+        "id": 95,
         "line": 138,
         "code": "x = x + shortcut  # Add the original input back",
         "uses": [],
+        "inputs": [
+         {
+          "from": 89
+         },
+         {
+          "from": 79
+         }
+        ],
+        "returned_by": 5,
         "in": [
          [
           "B",
@@ -14416,7 +19366,8 @@ window.ARCHITECTURE = {
         ],
         "children": [],
         "total": 0,
-        "repeat": 1
+        "repeat": 1,
+        "label": "Residual connection"
        }
       ],
       "class": "llm_training.model.qwen3.model.TransformerBlock",
@@ -14424,10 +19375,18 @@ window.ARCHITECTURE = {
       "buffers": [],
       "total": 15730944,
       "repeat": 28,
-      "last": "trf_blocks.27"
+      "last": "trf_blocks.27",
+      "role": "llm_training.model.qwen3.model.Qwen3Model.trf_blocks"
      },
      {
       "module": "final_norm",
+      "id": 2553,
+      "inputs": [
+       {
+        "name": "x",
+        "from": 5
+       }
+      ],
       "in": [
        "B",
        "T",
@@ -14441,9 +19400,16 @@ window.ARCHITECTURE = {
       "children": [
        {
         "op": "torch.Tensor.to",
+        "id": 2554,
         "line": 36,
         "code": "x = x.to(torch.float32)",
         "uses": [],
+        "inputs": [
+         {
+          "from": 5
+         }
+        ],
+        "unchanged": true,
         "in": [
          [
           "B",
@@ -14458,13 +19424,20 @@ window.ARCHITECTURE = {
         ],
         "children": [],
         "total": 0,
-        "repeat": 1
+        "repeat": 1,
+        "label": "Compute in float32"
        },
        {
         "op": "torch.Tensor.pow",
+        "id": 2555,
         "line": 38,
         "code": "variance = x.pow(2).mean(dim=-1, keepdim=True)",
         "uses": [],
+        "inputs": [
+         {
+          "from": 5
+         }
+        ],
         "in": [
          [
           "B",
@@ -14479,13 +19452,20 @@ window.ARCHITECTURE = {
         ],
         "children": [],
         "total": 0,
-        "repeat": 1
+        "repeat": 1,
+        "label": "Mean square over channels"
        },
        {
         "op": "torch.Tensor.mean",
+        "id": 2556,
         "line": 38,
         "code": "variance = x.pow(2).mean(dim=-1, keepdim=True)",
         "uses": [],
+        "inputs": [
+         {
+          "from": 2555
+         }
+        ],
         "in": [
          [
           "B",
@@ -14500,13 +19480,20 @@ window.ARCHITECTURE = {
         ],
         "children": [],
         "total": 0,
-        "repeat": 1
+        "repeat": 1,
+        "label": "Mean square over channels"
        },
        {
         "op": "torch.Tensor.add",
+        "id": 2557,
         "line": 39,
         "code": "norm_x = x * torch.rsqrt(variance + self.eps)",
         "uses": [],
+        "inputs": [
+         {
+          "from": 2556
+         }
+        ],
         "in": [
          [
           "B",
@@ -14521,13 +19508,20 @@ window.ARCHITECTURE = {
         ],
         "children": [],
         "total": 0,
-        "repeat": 1
+        "repeat": 1,
+        "label": "Divide by the root mean square"
        },
        {
         "op": "torch.rsqrt",
+        "id": 2558,
         "line": 39,
         "code": "norm_x = x * torch.rsqrt(variance + self.eps)",
         "uses": [],
+        "inputs": [
+         {
+          "from": 2557
+         }
+        ],
         "in": [
          [
           "B",
@@ -14542,13 +19536,23 @@ window.ARCHITECTURE = {
         ],
         "children": [],
         "total": 0,
-        "repeat": 1
+        "repeat": 1,
+        "label": "Divide by the root mean square"
        },
        {
         "op": "torch.Tensor.mul",
+        "id": 2559,
         "line": 39,
         "code": "norm_x = x * torch.rsqrt(variance + self.eps)",
         "uses": [],
+        "inputs": [
+         {
+          "from": 5
+         },
+         {
+          "from": 2558
+         }
+        ],
         "in": [
          [
           "B",
@@ -14568,15 +19572,26 @@ window.ARCHITECTURE = {
         ],
         "children": [],
         "total": 0,
-        "repeat": 1
+        "repeat": 1,
+        "label": "Divide by the root mean square"
        },
        {
         "op": "torch.Tensor.mul",
+        "id": 2560,
         "line": 40,
         "code": "norm_x = norm_x * self.scale",
         "uses": [
          "scale"
         ],
+        "inputs": [
+         {
+          "from": 2559
+         },
+         {
+          "tensor": "final_norm.scale"
+         }
+        ],
+        "returned_by": 2553,
         "in": [
          [
           "B",
@@ -14594,13 +19609,21 @@ window.ARCHITECTURE = {
         ],
         "children": [],
         "total": 0,
-        "repeat": 1
+        "repeat": 1,
+        "label": "Learned scale"
        },
        {
         "op": "torch.Tensor.to",
+        "id": 2561,
         "line": 45,
         "code": "return norm_x.to(input_dtype)",
         "uses": [],
+        "inputs": [
+         {
+          "from": 2560
+         }
+        ],
+        "unchanged": true,
         "in": [
          [
           "B",
@@ -14615,7 +19638,8 @@ window.ARCHITECTURE = {
         ],
         "children": [],
         "total": 0,
-        "repeat": 1
+        "repeat": 1,
+        "label": "Cast back to the input dtype"
        }
       ],
       "class": "llm_training.model.qwen3.layers.RMSNorm",
@@ -14630,10 +19654,19 @@ window.ARCHITECTURE = {
       ],
       "buffers": [],
       "total": 1024,
-      "repeat": 1
+      "repeat": 1,
+      "role": "llm_training.model.qwen3.model.Qwen3Model.final_norm"
      },
      {
       "module": "out_head",
+      "id": 2562,
+      "inputs": [
+       {
+        "name": "input",
+        "from": 2553
+       }
+      ],
+      "returned_by": 0,
       "in": [
        "B",
        "T",
@@ -14658,7 +19691,8 @@ window.ARCHITECTURE = {
       ],
       "buffers": [],
       "total": 155582464,
-      "repeat": 1
+      "repeat": 1,
+      "role": "llm_training.model.qwen3.model.Qwen3Model.out_head"
      }
     ],
     "class": "llm_training.model.qwen3.model.Qwen3Model",
@@ -14707,6 +19741,13 @@ window.ARCHITECTURE = {
    "total": 3242240,
    "tree": {
     "module": "",
+    "id": 0,
+    "inputs": [
+     {
+      "name": "in_idx",
+      "input": true
+     }
+    ],
     "in": [
      "B",
      "T"
@@ -14719,6 +19760,13 @@ window.ARCHITECTURE = {
     "children": [
      {
       "module": "tok_emb",
+      "id": 1,
+      "inputs": [
+       {
+        "name": "input",
+        "input": true
+       }
+      ],
       "in": [
        "B",
        "T"
@@ -14742,23 +19790,34 @@ window.ARCHITECTURE = {
       ],
       "buffers": [],
       "total": 1608224,
-      "repeat": 1
+      "repeat": 1,
+      "role": "llm_training.model.gpt2.model.GPTModel.tok_emb"
      },
      {
       "op": "torch.arange",
+      "id": 2,
       "line": 71,
       "code": "pos_embeds = self.pos_emb(torch.arange(seq_len, device=in_idx.device))",
       "uses": [],
+      "inputs": [],
       "in": [],
       "out": [
        "T"
       ],
       "children": [],
       "total": 0,
-      "repeat": 1
+      "repeat": 1,
+      "label": "Position indices 0 … T−1"
      },
      {
       "module": "pos_emb",
+      "id": 3,
+      "inputs": [
+       {
+        "name": "input",
+        "from": 2
+       }
+      ],
       "in": [
        "T"
       ],
@@ -14780,13 +19839,23 @@ window.ARCHITECTURE = {
       ],
       "buffers": [],
       "total": 512,
-      "repeat": 1
+      "repeat": 1,
+      "role": "llm_training.model.gpt2.model.GPTModel.pos_emb"
      },
      {
       "op": "torch.Tensor.add",
+      "id": 4,
       "line": 72,
       "code": "x = tok_embeds + pos_embeds  # Shape [batch_size, num_tokens, emb_size]",
       "uses": [],
+      "inputs": [
+       {
+        "from": 1
+       },
+       {
+        "from": 3
+       }
+      ],
       "in": [
        [
         "B",
@@ -14805,10 +19874,18 @@ window.ARCHITECTURE = {
       ],
       "children": [],
       "total": 0,
-      "repeat": 1
+      "repeat": 1,
+      "label": "Add position to token embeddings"
      },
      {
       "module": "drop_emb",
+      "id": 5,
+      "inputs": [
+       {
+        "name": "input",
+        "from": 4
+       }
+      ],
       "in": [
        "B",
        "T",
@@ -14824,10 +19901,18 @@ window.ARCHITECTURE = {
       "params": [],
       "buffers": [],
       "total": 0,
-      "repeat": 1
+      "repeat": 1,
+      "role": "llm_training.model.gpt2.model.GPTModel.drop_emb"
      },
      {
       "module": "trf_blocks",
+      "id": 6,
+      "inputs": [
+       {
+        "name": "input",
+        "from": 5
+       }
+      ],
       "in": [
        "B",
        "T",
@@ -14841,6 +19926,14 @@ window.ARCHITECTURE = {
       "children": [
        {
         "module": "trf_blocks.0",
+        "id": 7,
+        "inputs": [
+         {
+          "name": "x",
+          "from": 5,
+          "first_copy": true
+         }
+        ],
         "in": [
          "B",
          "T",
@@ -14854,6 +19947,14 @@ window.ARCHITECTURE = {
         "children": [
          {
           "module": "trf_blocks.0.norm1",
+          "id": 8,
+          "inputs": [
+           {
+            "name": "x",
+            "from": 5,
+            "first_copy": true
+           }
+          ],
           "in": [
            "B",
            "T",
@@ -14867,9 +19968,16 @@ window.ARCHITECTURE = {
           "children": [
            {
             "op": "torch.Tensor.mean",
+            "id": 9,
             "line": 18,
             "code": "mean = x.mean(dim=-1, keepdim=True)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 5,
+              "first_copy": true
+             }
+            ],
             "in": [
              [
               "B",
@@ -14884,13 +19992,21 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Mean over channels"
            },
            {
             "op": "torch.Tensor.var",
+            "id": 10,
             "line": 19,
             "code": "var = x.var(dim=-1, keepdim=True, unbiased=False)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 5,
+              "first_copy": true
+             }
+            ],
             "in": [
              [
               "B",
@@ -14905,13 +20021,24 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Variance over channels"
            },
            {
             "op": "torch.Tensor.sub",
+            "id": 11,
             "line": 20,
             "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 5,
+              "first_copy": true
+             },
+             {
+              "from": 9
+             }
+            ],
             "in": [
              [
               "B",
@@ -14931,13 +20058,20 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Normalize"
            },
            {
             "op": "torch.Tensor.add",
+            "id": 12,
             "line": 20,
             "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 10
+             }
+            ],
             "in": [
              [
               "B",
@@ -14952,13 +20086,20 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Normalize"
            },
            {
             "op": "torch.sqrt",
+            "id": 13,
             "line": 20,
             "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 12
+             }
+            ],
             "in": [
              [
               "B",
@@ -14973,13 +20114,23 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Normalize"
            },
            {
             "op": "torch.Tensor.div",
+            "id": 14,
             "line": 20,
             "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 11
+             },
+             {
+              "from": 13
+             }
+            ],
             "in": [
              [
               "B",
@@ -14999,15 +20150,25 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Normalize"
            },
            {
             "op": "torch.Tensor.mul",
+            "id": 15,
             "line": 21,
             "code": "return self.scale * norm_x + self.shift",
             "uses": [
              "scale"
             ],
+            "inputs": [
+             {
+              "tensor": "trf_blocks.0.norm1.scale"
+             },
+             {
+              "from": 14
+             }
+            ],
             "in": [
              [
               32
@@ -15025,15 +20186,26 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Learned scale and shift"
            },
            {
             "op": "torch.Tensor.add",
+            "id": 16,
             "line": 21,
             "code": "return self.scale * norm_x + self.shift",
             "uses": [
              "shift"
             ],
+            "inputs": [
+             {
+              "from": 15
+             },
+             {
+              "tensor": "trf_blocks.0.norm1.shift"
+             }
+            ],
+            "returned_by": 8,
             "in": [
              [
               "B",
@@ -15051,7 +20223,8 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Learned scale and shift"
            }
           ],
           "class": "llm_training.model.gpt2.layers.LayerNorm",
@@ -15073,10 +20246,18 @@ window.ARCHITECTURE = {
           ],
           "buffers": [],
           "total": 64,
-          "repeat": 1
+          "repeat": 1,
+          "role": "llm_training.model.gpt2.model.TransformerBlock.norm1"
          },
          {
           "module": "trf_blocks.0.att",
+          "id": 17,
+          "inputs": [
+           {
+            "name": "x",
+            "from": 8
+           }
+          ],
           "in": [
            "B",
            "T",
@@ -15090,6 +20271,13 @@ window.ARCHITECTURE = {
           "children": [
            {
             "module": "trf_blocks.0.att.W_key",
+            "id": 18,
+            "inputs": [
+             {
+              "name": "input",
+              "from": 8
+             }
+            ],
             "in": [
              "B",
              "T",
@@ -15114,10 +20302,18 @@ window.ARCHITECTURE = {
             ],
             "buffers": [],
             "total": 1024,
-            "repeat": 1
+            "repeat": 1,
+            "role": "llm_training.model.gpt2.attention.MultiHeadAttention.W_key"
            },
            {
             "module": "trf_blocks.0.att.W_query",
+            "id": 19,
+            "inputs": [
+             {
+              "name": "input",
+              "from": 8
+             }
+            ],
             "in": [
              "B",
              "T",
@@ -15142,10 +20338,18 @@ window.ARCHITECTURE = {
             ],
             "buffers": [],
             "total": 1024,
-            "repeat": 1
+            "repeat": 1,
+            "role": "llm_training.model.gpt2.attention.MultiHeadAttention.W_query"
            },
            {
             "module": "trf_blocks.0.att.W_value",
+            "id": 20,
+            "inputs": [
+             {
+              "name": "input",
+              "from": 8
+             }
+            ],
             "in": [
              "B",
              "T",
@@ -15170,13 +20374,20 @@ window.ARCHITECTURE = {
             ],
             "buffers": [],
             "total": 1024,
-            "repeat": 1
+            "repeat": 1,
+            "role": "llm_training.model.gpt2.attention.MultiHeadAttention.W_value"
            },
            {
             "op": "torch.Tensor.view",
+            "id": 21,
             "line": 40,
             "code": "keys = keys.view(b, num_tokens, self.num_heads, self.head_dim)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 18
+             }
+            ],
             "in": [
              [
               "B",
@@ -15192,13 +20403,20 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Split keys into heads"
            },
            {
             "op": "torch.Tensor.view",
+            "id": 22,
             "line": 41,
             "code": "values = values.view(b, num_tokens, self.num_heads, self.head_dim)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 20
+             }
+            ],
             "in": [
              [
               "B",
@@ -15214,13 +20432,20 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Split values into heads"
            },
            {
             "op": "torch.Tensor.view",
+            "id": 23,
             "line": 42,
             "code": "queries = queries.view(b, num_tokens, self.num_heads, self.head_dim)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 19
+             }
+            ],
             "in": [
              [
               "B",
@@ -15236,13 +20461,20 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Split queries into heads"
            },
            {
             "op": "torch.Tensor.transpose",
+            "id": 24,
             "line": 45,
             "code": "keys = keys.transpose(1, 2)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 21
+             }
+            ],
             "in": [
              [
               "B",
@@ -15259,13 +20491,20 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Split keys into heads"
            },
            {
             "op": "torch.Tensor.transpose",
+            "id": 25,
             "line": 46,
             "code": "queries = queries.transpose(1, 2)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 23
+             }
+            ],
             "in": [
              [
               "B",
@@ -15282,13 +20521,20 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Split queries into heads"
            },
            {
             "op": "torch.Tensor.transpose",
+            "id": 26,
             "line": 47,
             "code": "values = values.transpose(1, 2)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 22
+             }
+            ],
             "in": [
              [
               "B",
@@ -15305,13 +20551,20 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Split values into heads"
            },
            {
             "op": "torch.Tensor.transpose",
+            "id": 27,
             "line": 61,
             "code": "attn_scores = queries @ keys.transpose(2, 3)  # Dot product for each head",
             "uses": [],
+            "inputs": [
+             {
+              "from": 24
+             }
+            ],
             "in": [
              [
               "B",
@@ -15328,13 +20581,23 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Attention scores Q·Kᵀ"
            },
            {
             "op": "torch.Tensor.matmul",
+            "id": 28,
             "line": 61,
             "code": "attn_scores = queries @ keys.transpose(2, 3)  # Dot product for each head",
             "uses": [],
+            "inputs": [
+             {
+              "from": 25
+             },
+             {
+              "from": 27
+             }
+            ],
             "in": [
              [
               "B",
@@ -15357,14 +20620,21 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Attention scores Q·Kᵀ"
            },
            {
             "op": "torch.Tensor.bool",
+            "id": 29,
             "line": 64,
             "code": "mask_bool = self.mask.bool()[:num_tokens, :num_tokens]",
             "uses": [
              "mask"
+            ],
+            "inputs": [
+             {
+              "tensor": "trf_blocks.0.att.mask"
+             }
             ],
             "in": [
              [
@@ -15378,13 +20648,20 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Causal mask"
            },
            {
             "op": "torch.Tensor.__getitem__",
+            "id": 30,
             "line": 64,
             "code": "mask_bool = self.mask.bool()[:num_tokens, :num_tokens]",
             "uses": [],
+            "inputs": [
+             {
+              "from": 29
+             }
+            ],
             "in": [
              [
               16,
@@ -15397,13 +20674,23 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Causal mask"
            },
            {
             "op": "torch.Tensor.masked_fill_",
+            "id": 31,
             "line": 67,
             "code": "attn_scores.masked_fill_(mask_bool, -torch.inf)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 28
+             },
+             {
+              "from": 30
+             }
+            ],
             "in": [
              [
               "B",
@@ -15424,13 +20711,20 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Causal mask"
            },
            {
             "op": "torch.Tensor.div",
+            "id": 32,
             "line": 69,
             "code": "attn_weights = torch.softmax(attn_scores / keys.shape[-1] ** 0.5, dim=-1)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 31
+             }
+            ],
             "in": [
              [
               "B",
@@ -15447,13 +20741,20 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Scale by √head_dim"
            },
            {
             "op": "torch.softmax",
+            "id": 33,
             "line": 69,
             "code": "attn_weights = torch.softmax(attn_scores / keys.shape[-1] ** 0.5, dim=-1)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 32
+             }
+            ],
             "in": [
              [
               "B",
@@ -15470,10 +20771,18 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Softmax over keys"
            },
            {
             "module": "trf_blocks.0.att.dropout",
+            "id": 34,
+            "inputs": [
+             {
+              "name": "input",
+              "from": 33
+             }
+            ],
             "in": [
              "B",
              4,
@@ -15491,13 +20800,23 @@ window.ARCHITECTURE = {
             "params": [],
             "buffers": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "role": "llm_training.model.gpt2.attention.MultiHeadAttention.dropout"
            },
            {
             "op": "torch.Tensor.matmul",
+            "id": 35,
             "line": 73,
             "code": "context_vec = (attn_weights @ values).transpose(1, 2)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 34
+             },
+             {
+              "from": 26
+             }
+            ],
             "in": [
              [
               "B",
@@ -15520,13 +20839,20 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Weighted sum of values"
            },
            {
             "op": "torch.Tensor.transpose",
+            "id": 36,
             "line": 73,
             "code": "context_vec = (attn_weights @ values).transpose(1, 2)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 35
+             }
+            ],
             "in": [
              [
               "B",
@@ -15543,13 +20869,20 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Merge heads"
            },
            {
             "op": "torch.Tensor.reshape",
+            "id": 37,
             "line": 76,
             "code": "context_vec = context_vec.reshape(b, num_tokens, self.d_out)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 36
+             }
+            ],
             "in": [
              [
               "B",
@@ -15565,10 +20898,19 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Merge heads"
            },
            {
             "module": "trf_blocks.0.att.out_proj",
+            "id": 38,
+            "inputs": [
+             {
+              "name": "input",
+              "from": 37
+             }
+            ],
+            "returned_by": 17,
             "in": [
              "B",
              "T",
@@ -15600,7 +20942,8 @@ window.ARCHITECTURE = {
             ],
             "buffers": [],
             "total": 1056,
-            "repeat": 1
+            "repeat": 1,
+            "role": "llm_training.model.gpt2.attention.MultiHeadAttention.out_proj"
            }
           ],
           "class": "llm_training.model.gpt2.attention.MultiHeadAttention",
@@ -15616,10 +20959,18 @@ window.ARCHITECTURE = {
            }
           ],
           "total": 4128,
-          "repeat": 1
+          "repeat": 1,
+          "role": "llm_training.model.gpt2.model.TransformerBlock.att"
          },
          {
           "module": "trf_blocks.0.drop_resid",
+          "id": 39,
+          "inputs": [
+           {
+            "name": "input",
+            "from": 17
+           }
+          ],
           "in": [
            "B",
            "T",
@@ -15635,13 +20986,24 @@ window.ARCHITECTURE = {
           "params": [],
           "buffers": [],
           "total": 0,
-          "repeat": 1
+          "repeat": 1,
+          "role": "llm_training.model.gpt2.model.TransformerBlock.drop_resid"
          },
          {
           "op": "torch.Tensor.add",
+          "id": 40,
           "line": 37,
           "code": "x = x + shortcut  # Add the original input back",
           "uses": [],
+          "inputs": [
+           {
+            "from": 39
+           },
+           {
+            "from": 5,
+            "first_copy": true
+           }
+          ],
           "in": [
            [
             "B",
@@ -15661,10 +21023,18 @@ window.ARCHITECTURE = {
           ],
           "children": [],
           "total": 0,
-          "repeat": 1
+          "repeat": 1,
+          "label": "Residual connection"
          },
          {
           "module": "trf_blocks.0.norm2",
+          "id": 41,
+          "inputs": [
+           {
+            "name": "x",
+            "from": 40
+           }
+          ],
           "in": [
            "B",
            "T",
@@ -15678,9 +21048,15 @@ window.ARCHITECTURE = {
           "children": [
            {
             "op": "torch.Tensor.mean",
+            "id": 42,
             "line": 18,
             "code": "mean = x.mean(dim=-1, keepdim=True)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 40
+             }
+            ],
             "in": [
              [
               "B",
@@ -15695,13 +21071,20 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Mean over channels"
            },
            {
             "op": "torch.Tensor.var",
+            "id": 43,
             "line": 19,
             "code": "var = x.var(dim=-1, keepdim=True, unbiased=False)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 40
+             }
+            ],
             "in": [
              [
               "B",
@@ -15716,13 +21099,23 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Variance over channels"
            },
            {
             "op": "torch.Tensor.sub",
+            "id": 44,
             "line": 20,
             "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 40
+             },
+             {
+              "from": 42
+             }
+            ],
             "in": [
              [
               "B",
@@ -15742,13 +21135,20 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Normalize"
            },
            {
             "op": "torch.Tensor.add",
+            "id": 45,
             "line": 20,
             "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 43
+             }
+            ],
             "in": [
              [
               "B",
@@ -15763,13 +21163,20 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Normalize"
            },
            {
             "op": "torch.sqrt",
+            "id": 46,
             "line": 20,
             "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 45
+             }
+            ],
             "in": [
              [
               "B",
@@ -15784,13 +21191,23 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Normalize"
            },
            {
             "op": "torch.Tensor.div",
+            "id": 47,
             "line": 20,
             "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
             "uses": [],
+            "inputs": [
+             {
+              "from": 44
+             },
+             {
+              "from": 46
+             }
+            ],
             "in": [
              [
               "B",
@@ -15810,15 +21227,25 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Normalize"
            },
            {
             "op": "torch.Tensor.mul",
+            "id": 48,
             "line": 21,
             "code": "return self.scale * norm_x + self.shift",
             "uses": [
              "scale"
             ],
+            "inputs": [
+             {
+              "tensor": "trf_blocks.0.norm2.scale"
+             },
+             {
+              "from": 47
+             }
+            ],
             "in": [
              [
               32
@@ -15836,15 +21263,26 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Learned scale and shift"
            },
            {
             "op": "torch.Tensor.add",
+            "id": 49,
             "line": 21,
             "code": "return self.scale * norm_x + self.shift",
             "uses": [
              "shift"
             ],
+            "inputs": [
+             {
+              "from": 48
+             },
+             {
+              "tensor": "trf_blocks.0.norm2.shift"
+             }
+            ],
+            "returned_by": 41,
             "in": [
              [
               "B",
@@ -15862,7 +21300,8 @@ window.ARCHITECTURE = {
             ],
             "children": [],
             "total": 0,
-            "repeat": 1
+            "repeat": 1,
+            "label": "Learned scale and shift"
            }
           ],
           "class": "llm_training.model.gpt2.layers.LayerNorm",
@@ -15884,10 +21323,18 @@ window.ARCHITECTURE = {
           ],
           "buffers": [],
           "total": 64,
-          "repeat": 1
+          "repeat": 1,
+          "role": "llm_training.model.gpt2.model.TransformerBlock.norm2"
          },
          {
           "module": "trf_blocks.0.ff",
+          "id": 50,
+          "inputs": [
+           {
+            "name": "x",
+            "from": 41
+           }
+          ],
           "in": [
            "B",
            "T",
@@ -15901,6 +21348,14 @@ window.ARCHITECTURE = {
           "children": [
            {
             "module": "trf_blocks.0.ff.layers",
+            "id": 51,
+            "inputs": [
+             {
+              "name": "input",
+              "from": 41
+             }
+            ],
+            "returned_by": 50,
             "in": [
              "B",
              "T",
@@ -15914,6 +21369,13 @@ window.ARCHITECTURE = {
             "children": [
              {
               "module": "trf_blocks.0.ff.layers.0",
+              "id": 52,
+              "inputs": [
+               {
+                "name": "input",
+                "from": 41
+               }
+              ],
               "in": [
                "B",
                "T",
@@ -15945,10 +21407,18 @@ window.ARCHITECTURE = {
               ],
               "buffers": [],
               "total": 4224,
-              "repeat": 1
+              "repeat": 1,
+              "role": "llm_training.model.gpt2.layers.FeedForward.layers.0"
              },
              {
               "module": "trf_blocks.0.ff.layers.1",
+              "id": 53,
+              "inputs": [
+               {
+                "name": "x",
+                "from": 52
+               }
+              ],
               "in": [
                "B",
                "T",
@@ -15962,9 +21432,15 @@ window.ARCHITECTURE = {
               "children": [
                {
                 "op": "torch.Tensor.mul",
+                "id": 54,
                 "line": 34,
                 "code": "return 0.5 * x * (1 + torch.tanh(self._sqrt_two_over_pi * (x + 0.044715 * torch.pow(x, 3))))",
                 "uses": [],
+                "inputs": [
+                 {
+                  "from": 52
+                 }
+                ],
                 "in": [
                  [
                   "B",
@@ -15979,13 +21455,20 @@ window.ARCHITECTURE = {
                 ],
                 "children": [],
                 "total": 0,
-                "repeat": 1
+                "repeat": 1,
+                "label": "GELU, tanh approximation"
                },
                {
                 "op": "torch.pow",
+                "id": 55,
                 "line": 34,
                 "code": "return 0.5 * x * (1 + torch.tanh(self._sqrt_two_over_pi * (x + 0.044715 * torch.pow(x, 3))))",
                 "uses": [],
+                "inputs": [
+                 {
+                  "from": 52
+                 }
+                ],
                 "in": [
                  [
                   "B",
@@ -16000,13 +21483,20 @@ window.ARCHITECTURE = {
                 ],
                 "children": [],
                 "total": 0,
-                "repeat": 1
+                "repeat": 1,
+                "label": "GELU, tanh approximation"
                },
                {
                 "op": "torch.Tensor.mul",
+                "id": 56,
                 "line": 34,
                 "code": "return 0.5 * x * (1 + torch.tanh(self._sqrt_two_over_pi * (x + 0.044715 * torch.pow(x, 3))))",
                 "uses": [],
+                "inputs": [
+                 {
+                  "from": 55
+                 }
+                ],
                 "in": [
                  [
                   "B",
@@ -16021,13 +21511,23 @@ window.ARCHITECTURE = {
                 ],
                 "children": [],
                 "total": 0,
-                "repeat": 1
+                "repeat": 1,
+                "label": "GELU, tanh approximation"
                },
                {
                 "op": "torch.Tensor.add",
+                "id": 57,
                 "line": 34,
                 "code": "return 0.5 * x * (1 + torch.tanh(self._sqrt_two_over_pi * (x + 0.044715 * torch.pow(x, 3))))",
                 "uses": [],
+                "inputs": [
+                 {
+                  "from": 52
+                 },
+                 {
+                  "from": 56
+                 }
+                ],
                 "in": [
                  [
                   "B",
@@ -16047,14 +21547,24 @@ window.ARCHITECTURE = {
                 ],
                 "children": [],
                 "total": 0,
-                "repeat": 1
+                "repeat": 1,
+                "label": "GELU, tanh approximation"
                },
                {
                 "op": "torch.Tensor.mul",
+                "id": 58,
                 "line": 34,
                 "code": "return 0.5 * x * (1 + torch.tanh(self._sqrt_two_over_pi * (x + 0.044715 * torch.pow(x, 3))))",
                 "uses": [
                  "_sqrt_two_over_pi"
+                ],
+                "inputs": [
+                 {
+                  "tensor": "trf_blocks.0.ff.layers.1._sqrt_two_over_pi"
+                 },
+                 {
+                  "from": 57
+                 }
                 ],
                 "in": [
                  [],
@@ -16071,13 +21581,20 @@ window.ARCHITECTURE = {
                 ],
                 "children": [],
                 "total": 0,
-                "repeat": 1
+                "repeat": 1,
+                "label": "GELU, tanh approximation"
                },
                {
                 "op": "torch.tanh",
+                "id": 59,
                 "line": 34,
                 "code": "return 0.5 * x * (1 + torch.tanh(self._sqrt_two_over_pi * (x + 0.044715 * torch.pow(x, 3))))",
                 "uses": [],
+                "inputs": [
+                 {
+                  "from": 58
+                 }
+                ],
                 "in": [
                  [
                   "B",
@@ -16092,13 +21609,20 @@ window.ARCHITECTURE = {
                 ],
                 "children": [],
                 "total": 0,
-                "repeat": 1
+                "repeat": 1,
+                "label": "GELU, tanh approximation"
                },
                {
                 "op": "torch.Tensor.add",
+                "id": 60,
                 "line": 34,
                 "code": "return 0.5 * x * (1 + torch.tanh(self._sqrt_two_over_pi * (x + 0.044715 * torch.pow(x, 3))))",
                 "uses": [],
+                "inputs": [
+                 {
+                  "from": 59
+                 }
+                ],
                 "in": [
                  [
                   "B",
@@ -16113,13 +21637,24 @@ window.ARCHITECTURE = {
                 ],
                 "children": [],
                 "total": 0,
-                "repeat": 1
+                "repeat": 1,
+                "label": "GELU, tanh approximation"
                },
                {
                 "op": "torch.Tensor.mul",
+                "id": 61,
                 "line": 34,
                 "code": "return 0.5 * x * (1 + torch.tanh(self._sqrt_two_over_pi * (x + 0.044715 * torch.pow(x, 3))))",
                 "uses": [],
+                "inputs": [
+                 {
+                  "from": 54
+                 },
+                 {
+                  "from": 60
+                 }
+                ],
+                "returned_by": 53,
                 "in": [
                  [
                   "B",
@@ -16139,7 +21674,8 @@ window.ARCHITECTURE = {
                 ],
                 "children": [],
                 "total": 0,
-                "repeat": 1
+                "repeat": 1,
+                "label": "GELU, tanh approximation"
                }
               ],
               "class": "llm_training.model.gpt2.layers.GELU",
@@ -16152,10 +21688,19 @@ window.ARCHITECTURE = {
                }
               ],
               "total": 0,
-              "repeat": 1
+              "repeat": 1,
+              "role": "llm_training.model.gpt2.layers.FeedForward.layers.1"
              },
              {
               "module": "trf_blocks.0.ff.layers.2",
+              "id": 62,
+              "inputs": [
+               {
+                "name": "input",
+                "from": 53
+               }
+              ],
+              "returned_by": 51,
               "in": [
                "B",
                "T",
@@ -16187,24 +21732,34 @@ window.ARCHITECTURE = {
               ],
               "buffers": [],
               "total": 4128,
-              "repeat": 1
+              "repeat": 1,
+              "role": "llm_training.model.gpt2.layers.FeedForward.layers.2"
              }
             ],
             "class": "torch.nn.Sequential",
             "params": [],
             "buffers": [],
             "total": 8352,
-            "repeat": 1
+            "repeat": 1,
+            "role": "llm_training.model.gpt2.layers.FeedForward.layers"
            }
           ],
           "class": "llm_training.model.gpt2.layers.FeedForward",
           "params": [],
           "buffers": [],
           "total": 8352,
-          "repeat": 1
+          "repeat": 1,
+          "role": "llm_training.model.gpt2.model.TransformerBlock.ff"
          },
          {
           "module": "trf_blocks.0.drop_resid",
+          "id": 63,
+          "inputs": [
+           {
+            "name": "input",
+            "from": 50
+           }
+          ],
           "in": [
            "B",
            "T",
@@ -16220,13 +21775,24 @@ window.ARCHITECTURE = {
           "params": [],
           "buffers": [],
           "total": 0,
-          "repeat": 1
+          "repeat": 1,
+          "role": "llm_training.model.gpt2.model.TransformerBlock.drop_resid"
          },
          {
           "op": "torch.Tensor.add",
+          "id": 64,
           "line": 44,
           "code": "x = x + shortcut  # Add the original input back",
           "uses": [],
+          "inputs": [
+           {
+            "from": 63
+           },
+           {
+            "from": 40
+           }
+          ],
+          "returned_by": 7,
           "in": [
            [
             "B",
@@ -16246,7 +21812,8 @@ window.ARCHITECTURE = {
           ],
           "children": [],
           "total": 0,
-          "repeat": 1
+          "repeat": 1,
+          "label": "Residual connection"
          }
         ],
         "class": "llm_training.model.gpt2.model.TransformerBlock",
@@ -16254,17 +21821,27 @@ window.ARCHITECTURE = {
         "buffers": [],
         "total": 12608,
         "repeat": 2,
-        "last": "trf_blocks.1"
+        "last": "trf_blocks.1",
+        "returned_by": 6,
+        "role": "llm_training.model.gpt2.model.GPTModel.trf_blocks"
        }
       ],
       "class": "torch.nn.Sequential",
       "params": [],
       "buffers": [],
       "total": 25216,
-      "repeat": 1
+      "repeat": 1,
+      "role": "llm_training.model.gpt2.model.GPTModel.trf_blocks"
      },
      {
       "module": "final_norm",
+      "id": 123,
+      "inputs": [
+       {
+        "name": "x",
+        "from": 6
+       }
+      ],
       "in": [
        "B",
        "T",
@@ -16278,9 +21855,15 @@ window.ARCHITECTURE = {
       "children": [
        {
         "op": "torch.Tensor.mean",
+        "id": 124,
         "line": 18,
         "code": "mean = x.mean(dim=-1, keepdim=True)",
         "uses": [],
+        "inputs": [
+         {
+          "from": 6
+         }
+        ],
         "in": [
          [
           "B",
@@ -16295,13 +21878,20 @@ window.ARCHITECTURE = {
         ],
         "children": [],
         "total": 0,
-        "repeat": 1
+        "repeat": 1,
+        "label": "Mean over channels"
        },
        {
         "op": "torch.Tensor.var",
+        "id": 125,
         "line": 19,
         "code": "var = x.var(dim=-1, keepdim=True, unbiased=False)",
         "uses": [],
+        "inputs": [
+         {
+          "from": 6
+         }
+        ],
         "in": [
          [
           "B",
@@ -16316,13 +21906,23 @@ window.ARCHITECTURE = {
         ],
         "children": [],
         "total": 0,
-        "repeat": 1
+        "repeat": 1,
+        "label": "Variance over channels"
        },
        {
         "op": "torch.Tensor.sub",
+        "id": 126,
         "line": 20,
         "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
         "uses": [],
+        "inputs": [
+         {
+          "from": 6
+         },
+         {
+          "from": 124
+         }
+        ],
         "in": [
          [
           "B",
@@ -16342,13 +21942,20 @@ window.ARCHITECTURE = {
         ],
         "children": [],
         "total": 0,
-        "repeat": 1
+        "repeat": 1,
+        "label": "Normalize"
        },
        {
         "op": "torch.Tensor.add",
+        "id": 127,
         "line": 20,
         "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
         "uses": [],
+        "inputs": [
+         {
+          "from": 125
+         }
+        ],
         "in": [
          [
           "B",
@@ -16363,13 +21970,20 @@ window.ARCHITECTURE = {
         ],
         "children": [],
         "total": 0,
-        "repeat": 1
+        "repeat": 1,
+        "label": "Normalize"
        },
        {
         "op": "torch.sqrt",
+        "id": 128,
         "line": 20,
         "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
         "uses": [],
+        "inputs": [
+         {
+          "from": 127
+         }
+        ],
         "in": [
          [
           "B",
@@ -16384,13 +21998,23 @@ window.ARCHITECTURE = {
         ],
         "children": [],
         "total": 0,
-        "repeat": 1
+        "repeat": 1,
+        "label": "Normalize"
        },
        {
         "op": "torch.Tensor.div",
+        "id": 129,
         "line": 20,
         "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
         "uses": [],
+        "inputs": [
+         {
+          "from": 126
+         },
+         {
+          "from": 128
+         }
+        ],
         "in": [
          [
           "B",
@@ -16410,15 +22034,25 @@ window.ARCHITECTURE = {
         ],
         "children": [],
         "total": 0,
-        "repeat": 1
+        "repeat": 1,
+        "label": "Normalize"
        },
        {
         "op": "torch.Tensor.mul",
+        "id": 130,
         "line": 21,
         "code": "return self.scale * norm_x + self.shift",
         "uses": [
          "scale"
         ],
+        "inputs": [
+         {
+          "tensor": "final_norm.scale"
+         },
+         {
+          "from": 129
+         }
+        ],
         "in": [
          [
           32
@@ -16436,15 +22070,26 @@ window.ARCHITECTURE = {
         ],
         "children": [],
         "total": 0,
-        "repeat": 1
+        "repeat": 1,
+        "label": "Learned scale and shift"
        },
        {
         "op": "torch.Tensor.add",
+        "id": 131,
         "line": 21,
         "code": "return self.scale * norm_x + self.shift",
         "uses": [
          "shift"
         ],
+        "inputs": [
+         {
+          "from": 130
+         },
+         {
+          "tensor": "final_norm.shift"
+         }
+        ],
+        "returned_by": 123,
         "in": [
          [
           "B",
@@ -16462,7 +22107,8 @@ window.ARCHITECTURE = {
         ],
         "children": [],
         "total": 0,
-        "repeat": 1
+        "repeat": 1,
+        "label": "Learned scale and shift"
        }
       ],
       "class": "llm_training.model.gpt2.layers.LayerNorm",
@@ -16484,10 +22130,19 @@ window.ARCHITECTURE = {
       ],
       "buffers": [],
       "total": 64,
-      "repeat": 1
+      "repeat": 1,
+      "role": "llm_training.model.gpt2.model.GPTModel.final_norm"
      },
      {
       "module": "out_head",
+      "id": 132,
+      "inputs": [
+       {
+        "name": "input",
+        "from": 123
+       }
+      ],
+      "returned_by": 0,
       "in": [
        "B",
        "T",
@@ -16512,7 +22167,8 @@ window.ARCHITECTURE = {
       ],
       "buffers": [],
       "total": 1608224,
-      "repeat": 1
+      "repeat": 1,
+      "role": "llm_training.model.gpt2.model.GPTModel.out_head"
      }
     ],
     "class": "llm_training.model.gpt2.model.GPTModel",
@@ -16698,7 +22354,7 @@ window.ARCHITECTURE = {
    },
    "note": {
     "title": "Qwen3 model",
-    "text": "The same outline as GPT: embed, run `n_layers` blocks, normalize, project to the vocabulary. But there's no position embedding. Position enters inside attention instead, by rotating queries and keys (RoPE), and the rotation tables `cos` and `sin` are the buffers on this model, computed once for all `context_length` positions.\n\nThe causal mask is built once here and passed to every block, along with the RoPE tables. That's why each block takes `(x, mask, cos, sin)` rather than just `x`.",
+    "text": "The same outline as GPT: embed, run `n_layers` blocks, normalize, project to the vocabulary. But there's no position embedding. Position enters inside attention instead, by rotating queries and keys (RoPE), and the rotation tables `cos` and `sin` are the buffers on this model, computed once for all `context_length` positions.\n\nThe causal mask is built once here and passed to every block, along with the RoPE tables. That's why each block takes `(x, mask, cos, sin)` rather than just `x`.\n\nNothing is added to the token embedding, unlike GPT-2's `tok_emb + pos_emb`. `x` starts as `tok_emb`'s output, and `mask`, `cos` and `sin` travel beside it as separate arguments that only attention reads. With `attn_impl: sdpa`, `is_causal=True` masks inside the kernel, so not even attention reads `mask`.",
     "see": [
      "docs/qwen3.md",
      "src/llm_training/model/qwen3/rope.py"
@@ -17053,39 +22709,171 @@ window.ARCHITECTURE = {
   }
  },
  "roles": {
-  "llm_training.model.gpt2.model.GPTModel.tok_emb": "One learned vector per vocabulary entry: 50,257 rows of width `emb_dim`.",
-  "llm_training.model.gpt2.model.GPTModel.pos_emb": "One learned vector per position, up to `context_length`. It's looked up with `arange(T)`, so its input has no batch dimension; broadcasting adds the same position vectors to every sequence.",
-  "llm_training.model.gpt2.model.GPTModel.drop_emb": "Dropout on the summed token and position embeddings.",
-  "llm_training.model.gpt2.model.GPTModel.trf_blocks": "`n_layers` blocks with identical structure and separate weights, in an `nn.Sequential`.",
-  "llm_training.model.gpt2.model.GPTModel.final_norm": "One last normalization of the residual stream before the vocabulary projection.",
-  "llm_training.model.gpt2.model.GPTModel.out_head": "Projects each position to one logit per vocabulary entry. With `tie_embeddings`, it reuses the token embedding matrix (GPT-2 does), saving `vocab × emb_dim` parameters; the book's chapter-5 model keeps a separate matrix.",
-  "llm_training.model.gpt2.model.TransformerBlock.norm1": "Normalizes the attention sublayer's input; the residual path itself stays unnormalized.",
-  "llm_training.model.gpt2.model.TransformerBlock.att": "Mixes information between positions: the only place one token sees another.",
-  "llm_training.model.gpt2.model.TransformerBlock.drop_resid": "Called twice per block, after attention and after the feed-forward network, before each residual add. One module serves both because dropout has no parameters.",
-  "llm_training.model.gpt2.model.TransformerBlock.norm2": "Normalizes the feed-forward sublayer's input.",
-  "llm_training.model.gpt2.model.TransformerBlock.ff": "Processes each position on its own, with no mixing between tokens.",
-  "llm_training.model.gpt2.attention.MultiHeadAttention.W_query": "What each position is looking for.",
-  "llm_training.model.gpt2.attention.MultiHeadAttention.W_key": "What each position offers to be matched against.",
-  "llm_training.model.gpt2.attention.MultiHeadAttention.W_value": "What each position contributes when it's attended to.",
-  "llm_training.model.gpt2.attention.MultiHeadAttention.dropout": "Dropout on the attention weights. Its input is the full `[B, heads, T, T]` matrix, which is why explicit attention's memory grows with the square of the context.",
-  "llm_training.model.gpt2.attention.MultiHeadAttention.out_proj": "Mixes the concatenated head outputs back into the residual stream.",
-  "llm_training.model.gpt2.layers.FeedForward.layers": "Expand ×4, GELU, project back.",
-  "llm_training.model.qwen3.model.Qwen3Model.tok_emb": "151,936 rows of width 1,024: about a quarter of the released model's parameters.",
-  "llm_training.model.qwen3.model.Qwen3Model.trf_blocks": "28 blocks with identical structure and separate weights. They're in an `nn.ModuleList` that the forward loop iterates, so the list itself is never called and has no row.",
-  "llm_training.model.qwen3.model.Qwen3Model.final_norm": "One last RMSNorm before the vocabulary projection.",
-  "llm_training.model.qwen3.model.Qwen3Model.out_head": "Projects to 151,936 logits. The released model ties it to `tok_emb`; this repo's fine-tuning recipes train a separate copy, as the book does.",
-  "llm_training.model.qwen3.model.TransformerBlock.norm1": "RMSNorm on the attention input.",
-  "llm_training.model.qwen3.model.TransformerBlock.att": "Grouped-query attention: where tokens exchange information, and where position (RoPE) enters the model.",
-  "llm_training.model.qwen3.model.TransformerBlock.norm2": "RMSNorm on the feed-forward input.",
-  "llm_training.model.qwen3.model.TransformerBlock.ff": "SwiGLU, per position.",
-  "llm_training.model.qwen3.attention.GroupedQueryAttention.W_query": "16 heads × 128 = 2,048 outputs: wider than the 1,024-wide residual stream.",
-  "llm_training.model.qwen3.attention.GroupedQueryAttention.W_key": "Only 8 heads × 128 = 1,024 outputs: each key head serves two query heads. (That this equals `emb_dim` is a coincidence.)",
-  "llm_training.model.qwen3.attention.GroupedQueryAttention.W_value": "8 value heads, shared the same way as the keys.",
-  "llm_training.model.qwen3.attention.GroupedQueryAttention.q_norm": "RMSNorm over each query head's 128 channels. Its input is already split into heads: `[B, 16, T, 128]`.",
-  "llm_training.model.qwen3.attention.GroupedQueryAttention.k_norm": "RMSNorm over each key head: `[B, 8, T, 128]`, half the heads of the queries.",
-  "llm_training.model.qwen3.attention.GroupedQueryAttention.out_proj": "2,048 concatenated head channels back down to the 1,024-wide residual stream.",
-  "llm_training.model.qwen3.layers.FeedForward.fc1": "The gate branch: its output goes through SiLU.",
-  "llm_training.model.qwen3.layers.FeedForward.fc2": "The value branch, multiplied by the gate.",
-  "llm_training.model.qwen3.layers.FeedForward.fc3": "Projects the gated 3,072 channels back to 1,024."
+  "llm_training.model.gpt2.model.GPTModel.tok_emb": {
+   "label": "Token embedding",
+   "text": "One learned vector per vocabulary entry: 50,257 rows of width `emb_dim`."
+  },
+  "llm_training.model.gpt2.model.GPTModel.pos_emb": {
+   "label": "Position embedding, learned",
+   "text": "One learned vector per position, up to `context_length`. It's looked up with `arange(T)`, so its input has no batch dimension; broadcasting adds the same position vectors to every sequence."
+  },
+  "llm_training.model.gpt2.model.GPTModel.drop_emb": {
+   "label": "Embedding dropout",
+   "text": "Dropout on the summed token and position embeddings."
+  },
+  "llm_training.model.gpt2.model.GPTModel.trf_blocks": {
+   "label": "Transformer blocks",
+   "text": "`n_layers` blocks with identical structure and separate weights, in an `nn.Sequential`."
+  },
+  "llm_training.model.gpt2.model.GPTModel.final_norm": {
+   "label": "Final norm",
+   "text": "One last normalization of the residual stream before the vocabulary projection."
+  },
+  "llm_training.model.gpt2.model.GPTModel.out_head": {
+   "label": "LM head: logits over the vocabulary",
+   "text": "Projects each position to one logit per vocabulary entry. With `tie_embeddings`, it reuses the token embedding matrix (GPT-2 does), saving `vocab × emb_dim` parameters; the book's chapter-5 model keeps a separate matrix."
+  },
+  "llm_training.model.gpt2.model.TransformerBlock.norm1": {
+   "label": "Pre-attention norm",
+   "text": "Normalizes the attention sublayer's input; the residual path itself stays unnormalized."
+  },
+  "llm_training.model.gpt2.model.TransformerBlock.att": {
+   "label": "Causal self-attention",
+   "text": "Mixes information between positions: the only place one token sees another."
+  },
+  "llm_training.model.gpt2.model.TransformerBlock.drop_resid": {
+   "label": "Residual dropout",
+   "text": "Called twice per block, after attention and after the feed-forward network, before each residual add. One module serves both because dropout has no parameters."
+  },
+  "llm_training.model.gpt2.model.TransformerBlock.norm2": {
+   "label": "Pre-feed-forward norm",
+   "text": "Normalizes the feed-forward sublayer's input."
+  },
+  "llm_training.model.gpt2.model.TransformerBlock.ff": {
+   "label": "Feed-forward network (MLP)",
+   "text": "Processes each position on its own, with no mixing between tokens."
+  },
+  "llm_training.model.gpt2.attention.MultiHeadAttention.W_query": {
+   "label": "Query projection",
+   "text": "What each position is looking for."
+  },
+  "llm_training.model.gpt2.attention.MultiHeadAttention.W_key": {
+   "label": "Key projection",
+   "text": "What each position offers to be matched against."
+  },
+  "llm_training.model.gpt2.attention.MultiHeadAttention.W_value": {
+   "label": "Value projection",
+   "text": "What each position contributes when it's attended to."
+  },
+  "llm_training.model.gpt2.attention.MultiHeadAttention.dropout": {
+   "label": "Attention dropout",
+   "text": "Dropout on the attention weights. Its input is the full `[B, heads, T, T]` matrix, which is why explicit attention's memory grows with the square of the context."
+  },
+  "llm_training.model.gpt2.attention.MultiHeadAttention.out_proj": {
+   "label": "Output projection",
+   "text": "Mixes the concatenated head outputs back into the residual stream."
+  },
+  "llm_training.model.gpt2.layers.FeedForward.layers": {
+   "label": "Expand, GELU, project back",
+   "text": "Expand ×4, GELU, project back."
+  },
+  "llm_training.model.gpt2.layers.FeedForward.layers.0": {
+   "label": "Expand to 4 × emb_dim",
+   "text": "The first linear layer widens each token's vector four times, from `emb_dim` to 4 × `emb_dim`: 3,072 channels in GPT-2 small."
+  },
+  "llm_training.model.gpt2.layers.FeedForward.layers.1": {
+   "label": "GELU activation",
+   "text": "The nonlinearity between the two linear layers. Without it the pair would collapse into a single linear map."
+  },
+  "llm_training.model.gpt2.layers.FeedForward.layers.2": {
+   "label": "Project back to emb_dim",
+   "text": "The second linear layer maps the 4 × `emb_dim` channels back to `emb_dim`, the width of the residual stream."
+  },
+  "llm_training.model.qwen3.model.Qwen3Model.tok_emb": {
+   "label": "Token embedding",
+   "text": "151,936 rows of width 1,024: about a quarter of the released model's parameters."
+  },
+  "llm_training.model.qwen3.model.Qwen3Model.trf_blocks": {
+   "label": "Transformer blocks",
+   "text": "28 blocks with identical structure and separate weights. They're in an `nn.ModuleList` that the forward loop iterates, so the list itself is never called and has no row."
+  },
+  "llm_training.model.qwen3.model.Qwen3Model.final_norm": {
+   "label": "Final norm",
+   "text": "One last RMSNorm before the vocabulary projection."
+  },
+  "llm_training.model.qwen3.model.Qwen3Model.out_head": {
+   "label": "LM head: logits over the vocabulary",
+   "text": "Projects to 151,936 logits. The released model ties it to `tok_emb`; this repo's fine-tuning recipes train a separate copy, as the book does."
+  },
+  "llm_training.model.qwen3.model.TransformerBlock.norm1": {
+   "label": "Pre-attention norm",
+   "text": "RMSNorm on the attention input."
+  },
+  "llm_training.model.qwen3.model.TransformerBlock.att": {
+   "label": "Grouped-query self-attention",
+   "text": "Grouped-query attention: where tokens exchange information, and where position (RoPE) enters the model."
+  },
+  "llm_training.model.qwen3.model.TransformerBlock.norm2": {
+   "label": "Pre-feed-forward norm",
+   "text": "RMSNorm on the feed-forward input."
+  },
+  "llm_training.model.qwen3.model.TransformerBlock.ff": {
+   "label": "SwiGLU feed-forward network",
+   "text": "SwiGLU, per position."
+  },
+  "llm_training.model.qwen3.attention.GroupedQueryAttention.W_query": {
+   "label": "Query projection",
+   "text": "16 heads × 128 = 2,048 outputs: wider than the 1,024-wide residual stream."
+  },
+  "llm_training.model.qwen3.attention.GroupedQueryAttention.W_key": {
+   "label": "Key projection",
+   "text": "Only 8 heads × 128 = 1,024 outputs: each key head serves two query heads. (That this equals `emb_dim` is a coincidence.)"
+  },
+  "llm_training.model.qwen3.attention.GroupedQueryAttention.W_value": {
+   "label": "Value projection",
+   "text": "8 value heads, shared the same way as the keys."
+  },
+  "llm_training.model.qwen3.attention.GroupedQueryAttention.q_norm": {
+   "label": "QK-norm, queries",
+   "text": "RMSNorm over each query head's 128 channels. Its input is already split into heads: `[B, 16, T, 128]`."
+  },
+  "llm_training.model.qwen3.attention.GroupedQueryAttention.k_norm": {
+   "label": "QK-norm, keys",
+   "text": "RMSNorm over each key head: `[B, 8, T, 128]`, half the heads of the queries."
+  },
+  "llm_training.model.qwen3.attention.GroupedQueryAttention.out_proj": {
+   "label": "Output projection",
+   "text": "2,048 concatenated head channels back down to the 1,024-wide residual stream."
+  },
+  "llm_training.model.qwen3.layers.FeedForward.fc1": {
+   "label": "Gate projection",
+   "text": "The gate branch: its output goes through SiLU."
+  },
+  "llm_training.model.qwen3.layers.FeedForward.fc2": {
+   "label": "Up projection",
+   "text": "The value branch, multiplied by the gate."
+  },
+  "llm_training.model.qwen3.layers.FeedForward.fc3": {
+   "label": "Down projection",
+   "text": "Projects the gated 3,072 channels back to 1,024."
+  }
+ },
+ "buffers": {
+  "llm_training.model.qwen3.model.Qwen3Model.cos": {
+   "label": "RoPE rotation table (cosines)",
+   "text": "RoPE's cosines. Row m holds cos(m · θ⁻²ⁱᐟ¹²⁸) for each of the 64 channel pairs i, written twice (columns i and i + 64) to match the split-halves layout. `compute_rope_params` builds it once, for every position up to `context_length`, when the model is built.\n\nEach `apply_rope` call takes the first T rows and multiplies the queries or keys by them: the `x · cos` half of the rotation."
+  },
+  "llm_training.model.qwen3.model.Qwen3Model.sin": {
+   "label": "RoPE rotation table (sines)",
+   "text": "RoPE's sines, laid out like `cos`. Each `apply_rope` call takes the first T rows and multiplies them by the swapped copy `(−x₂, x₁)`: the `rotated · sin` half of the rotation."
+  },
+  "llm_training.model.gpt2.attention.MultiHeadAttention.mask": {
+   "label": "Causal mask",
+   "text": "A `context_length × context_length` matrix of ones above the diagonal: the later positions each token must not see. The explicit attention path takes the top-left T × T, converts it to boolean and fills those scores with −∞. With `attn_impl: sdpa` the kernel's `is_causal=True` applies the mask itself and this buffer isn't read."
+  },
+  "llm_training.model.gpt2.layers.GELU._sqrt_two_over_pi": {
+   "label": "Constant √(2/π)",
+   "text": "The constant √(2/π) ≈ 0.798 in GELU's tanh approximation, stored once so it isn't rebuilt on every call."
+  }
  }
 };
