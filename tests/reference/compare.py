@@ -6,8 +6,8 @@ from pathlib import Path
 
 import torch
 
+from llm_training.lm.loss import next_token_cross_entropy
 from llm_training.model.gpt2.model import GPTModel
-from llm_training.training.loss import next_token_cross_entropy
 from tests.reference import baseline
 
 ATOL, RTOL = 1e-6, 1e-5  # Declared before measuring.

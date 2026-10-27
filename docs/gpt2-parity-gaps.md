@@ -9,7 +9,8 @@ work, its order, and the decisions it waits on are tracked only in
 [the backlog](backlog.md). The [status table](#status) is authoritative for what has been
 built. File paths follow
 the current layout (GPT-2 modules moved into `model/gpt2/` and `docs/model-architecture.md`
-became `docs/gpt2.md` on 2026-10-26); line numbers are as of 2026-10-24.
+became `docs/gpt2.md` on 2026-10-26, and the next-token trainer modules moved into `lm/`
+later that day); line numbers are as of 2026-10-24.
 
 **State on 2026-10-25:** **L1 (architecture) is met**, verified against the public GPT-2
 weights. **L2 (recipe) has its mechanisms implemented and tested** (init, decay groups, betas,
@@ -94,7 +95,7 @@ Verified 2026-10-25 with the full suite (69 passed, plus the opt-in oracle, 2 pa
 - The resume guard is exact only for unchanged executable code; with `--allow-code-drift`
   nothing is guaranteed, and the child run records the override.
 - `train()` is still one large function (F4). The new logic lives in `training/optim.py`,
-  `training/schedule.py`, and `model/gpt2/init.py`, but the accumulation loop is inside `train()`.
+  `lm/schedule.py`, and `model/gpt2/init.py`, but the accumulation loop is inside `train()`.
 - The preset's data path, warmup, evaluation cadence, and token budget are placeholders.
 
 ## Priority key
@@ -125,7 +126,7 @@ Verified 2026-10-25 with the full suite (69 passed, plus the opt-in oracle, 2 pa
 
 | ID | Pri | Gap | Evidence | Reference | Fix | Gate |
 | --- | --- | --- | --- | --- | --- | --- |
-| B1 | P0 | **Weight decay applies to every parameter**, including LayerNorm scale/shift and biases. | `training/trainer.py:192` passes `model.parameters()` | nGPT-m: decay only tensors with `dim() >= 2`; biases and LayerNorm get 0. | Two param groups. | Unit test that no 1-D tensor is in the decay group. |
+| B1 | P0 | **Weight decay applies to every parameter**, including LayerNorm scale/shift and biases. | `lm/trainer.py:192` passes `model.parameters()` | nGPT-m: decay only tensors with `dim() >= 2`; biases and LayerNorm get 0. | Two param groups. | Unit test that no 1-D tensor is in the decay group. |
 | B2 | P0 | **Default AdamW betas** (0.9, 0.999). | `trainer.py:192-194` | nGPT-t: `beta1 = 0.9`, `beta2 = 0.95`. | Config fields `beta1`, `beta2`. | Optimizer `param_groups` inspection. |
 | B3 | P0 | **Constant learning rate.** `learning_rate` in the metrics record is just the config value. | `trainer.py:363`; `scheduler_state_dict` is always `None` | nGPT-t: linear warmup 2000 steps, cosine decay to `min_lr`; peak 6e-4, `weight_decay` 0.1 (verified defaults). | Schedule function stepped per optimizer update; checkpoint its state; log the actual LR. | Table-driven test of LR at warmup start, end, midpoint, and tail; resume equality. |
 | B4 | P0 | **No gradient clipping.** Only a non-finite check exists. | `trainer.py:343-352` | nGPT-t: `clip_grad_norm_(..., 1.0)` after unscaling. | Clip, and log the pre-clip norm. | Test with a synthetic large gradient. |
@@ -164,7 +165,7 @@ Verified 2026-10-25 with the full suite (69 passed, plus the opt-in oracle, 2 pa
 | ID | Pri | Gap | Evidence | Fix | Gate |
 | --- | --- | --- | --- | --- | --- |
 | E1 | P1 | **No pretrained-weight oracle.** Nothing checks that this model *is* GPT-2. | n/a | Test-only loader mapping the public 124M checkpoint (Conv1D weights are transposed relative to `nn.Linear`) into this model. | L1 logits gate. |
-| E2 | P1 | **Periodic monitoring is a batch mean** in the book-parity mode, not token-weighted. The token-weighted path exists in `evaluation.py` and is used for the final report. | `training/monitoring.py:12-27`; `evaluation.py` | Use `evaluate()` for monitoring in the GPT-2 recipe, with a fixed evaluation subset. | Both agree on equal-length batches. |
+| E2 | P1 | **Periodic monitoring is a batch mean** in the book-parity mode, not token-weighted. The token-weighted path exists in `evaluation.py` and is used for the final report. | `lm/monitoring.py:12-27`; `evaluation.py` | Use `evaluate()` for monitoring in the GPT-2 recipe, with a fixed evaluation subset. | Both agree on equal-length batches. |
 | E3 | P2 | **No standard benchmark evals.** Validation loss on the training distribution is the only metric. | n/a | Add held-out corpus loss plus at least one zero-shot task; fix and document tokenization/detokenization conventions. Pick tasks after C1. | Pretrained GPT-2 scores reproduced within tolerance before scoring own models. |
 | E4 | P2 | **No reference-loss calibration.** Without evaluating pretrained GPT-2 on the *same* split, a loss number has no anchor (nGPT-r itself reports ~3.11 vs ~3.12 for the same baseline). | n/a | Evaluate the oracle weights on the project validation split and store the number. | Report in `docs/experiments/`. |
 | E5 | P3 | **No `evaluate` / `generate` / `export` commands.** Planned, absent. | `cli.py` | Implement (plan §8). | Fresh-process export reload. |

@@ -15,10 +15,10 @@ The original repository was left unchanged.
 | `model/gpt2/attention.py` | `pkg/llms_from_scratch/ch03.py` | `MultiHeadAttention` |
 | `model/gpt2/layers.py` | `pkg/llms_from_scratch/ch04.py` | `LayerNorm`, `GELU`, `FeedForward` |
 | `model/gpt2/model.py` | `pkg/llms_from_scratch/ch04.py` | `TransformerBlock`, `GPTModel` |
-| `generation.py` | `pkg/llms_from_scratch/ch04.py` | `generate_text_simple` → `generate_greedy` |
+| `lm/generation.py` | `pkg/llms_from_scratch/ch04.py` | `generate_text_simple` → `generate_greedy` |
 | `data/dataset.py` | `pkg/llms_from_scratch/ch02.py` | `GPTDatasetV1` → `SlidingWindowTokenDataset` |
-| `training/loss.py` | `pkg/llms_from_scratch/ch05.py` | `calc_loss_batch` → `next_token_cross_entropy` |
-| `training/monitoring.py` | `ch05/01_main-chapter-code/gpt_train.py` | `calc_loss_loader` → `mean_batch_loss`, `evaluate_model` → `evaluate_train_validation_loss` |
+| `lm/loss.py` | `pkg/llms_from_scratch/ch05.py` | `calc_loss_batch` → `next_token_cross_entropy` |
+| `lm/monitoring.py` | `ch05/01_main-chapter-code/gpt_train.py` | `calc_loss_loader` → `mean_batch_loss`, `evaluate_model` → `evaluate_train_validation_loss` |
 
 All destinations are under `src/llm_training/`. Changes to these definitions are
 limited to symbol selection and renaming, module/import organization, attribution notices,

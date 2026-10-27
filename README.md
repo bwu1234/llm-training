@@ -148,7 +148,7 @@ data, tokenizer assets, Python/Torch/dependency versions, device, thread count, 
 numerical settings are rejected. A change to executable training code (model, data, trainer;
 not comments, docstrings, formatting, the CLI, or `predict`) is rejected too, unless you pass
 `--allow-code-drift`; the child run's `provenance.json` records that the override was used.
-Only the code a run executes counts: `lm_training_code` in `training/trainer.py` lists it, so
+Only the code a run executes counts: `lm_training_code` in `lm/trainer.py` lists it, so
 edits to the Qwen3 modules never block a GPT-2 resume. Exact recovery is tested
 on CPU FP32 in the recorded environment. On MPS, resume was checked on the TinyStories preset and
 matches an uninterrupted run to float32 rounding (about 1e-7), not bitwise, because MPS kernels are

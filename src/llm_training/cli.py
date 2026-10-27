@@ -7,7 +7,7 @@ import sys
 import urllib.request
 from pathlib import Path
 
-from .config import load_config
+from .lm.config import load_config
 
 
 def main():
@@ -200,7 +200,7 @@ def main():
         if args.command == "prepare":
             _prepare(cfg)
         else:
-            from .training.trainer import train
+            from .lm.trainer import train
 
             train(
                 cfg,

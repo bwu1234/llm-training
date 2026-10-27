@@ -89,11 +89,6 @@ Open:
 
 ### Repository structure
 
-- **Optional: an `lm/` package.** `training/` holds both the shared pieces GRPO uses and
-  the next-token trainer. That trainer's config, evaluation and generation sit at the
-  package root. Moving them into one package would make the split explicit. It changes the
-  resume code hash again (old checkpoints already need `--allow-code-drift`), so do it
-  together with another hash-changing change, such as F4.
 - **No `main` branch and no remote.** All work is on `tinystories-run`.
 
 ### Deferred by choice

@@ -133,7 +133,9 @@ llm-training/
 ```
 
 This was the starting proposal. As built, model code lives per family (`model/gpt2/`,
-`model/qwen3/`, each with its tokenizer), and the GRPO fine-tune is in `reasoning/`; see the
+`model/qwen3/`, each with its tokenizer). The next-token trainer, with its config, schedule,
+loss, evaluation and generation, is in `lm/`, the GRPO fine-tune is in `reasoning/`, and
+`training/` holds the checkpoint, gradient and provenance code both share; see the
 [README](README.md).
 
 Public interfaces should remain small: `GPTModel(config)`, a dataset yielding `(inputs, targets)`, a trainer accepting explicit dependencies, and separate evaluation/generation functions. CLI commands orchestrate these APIs; notebooks may call them later.

@@ -6,7 +6,7 @@ import pytest
 import torch
 import yaml
 
-from llm_training.config import config_from_dict, window_length
+from llm_training.lm.config import config_from_dict, window_length
 from llm_training.model.gpt2.model import GPTModel
 from llm_training.model.gpt2.pretrained import load_gpt2_into
 from llm_training.model.registry import MODEL_FILE_FORMAT, build_model, read_model_file

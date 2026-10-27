@@ -236,7 +236,7 @@ def config_from_dict(raw: dict, base_dir: Path) -> Config:
     if cfg.data.format not in ("text", "tokens", "instructions"):
         raise ValueError("data.format must be text, tokens, or instructions")
     if cfg.data.format == "tokens":
-        from .data.corpus import CORPORA
+        from ..data.corpus import CORPORA
 
         if cfg.data.corpus not in CORPORA:
             raise ValueError(f"data.corpus must be one of {sorted(CORPORA)} for token data")
@@ -247,7 +247,7 @@ def config_from_dict(raw: dict, base_dir: Path) -> Config:
     elif cfg.data.corpus is not None:
         raise ValueError("data.corpus applies only to data.format: tokens")
     if cfg.data.format == "instructions":
-        from .data.instructions import DATASETS
+        from ..data.instructions import DATASETS
 
         if cfg.data.dataset not in DATASETS:
             raise ValueError(f"data.dataset must be one of {sorted(DATASETS)} for instructions")
@@ -296,7 +296,7 @@ INHERITED_BUILD_KEYS = {
 
 def _resolve_init_from(model, arch, base_dir):
     """Fill shape fields from the weights' source and reject recipes that contradict it."""
-    from .model.registry import (
+    from ..model.registry import (
         ARCHITECTURE_KEYS,
         PRETRAINED,
         pretrained_architecture,
@@ -344,7 +344,7 @@ def _validate_model(m, base_dir):
         raise ValueError("model.tie_embeddings must be boolean")
     if m.attn_impl not in ("explicit", "sdpa"):
         raise ValueError("model.attn_impl must be explicit or sdpa")
-    from .model.registry import PRETRAINED
+    from ..model.registry import PRETRAINED
 
     if m.init_from in PRETRAINED:
         if not isinstance(m.weights_dir, str) or not m.weights_dir:

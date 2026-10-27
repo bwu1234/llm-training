@@ -20,7 +20,7 @@ import torch
 import yaml
 from torch.utils.data import DataLoader
 
-from llm_training.config import load_config
+from llm_training.lm.config import load_config
 from llm_training.model.gpt2.tokenizer import load_tokenizer
 from llm_training.training.checkpoint import atomic_save, capture_rng, load_checkpoint
 from llm_training.training.provenance import collect_runtime_metadata, write_json

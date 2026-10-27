@@ -148,7 +148,7 @@ def generate_from_checkpoint(
     num_threads=1,
 ):
     """Sample a continuation; stops early at `<|endoftext|>`. Temperature 0 is greedy."""
-    from .generation import generate_sampled
+    from .lm.generation import generate_sampled
 
     for name, value in (("max_new_tokens", max_new_tokens), ("top_k", top_k)):
         if (value is not None or name != "top_k") and (type(value) is not int or value <= 0):

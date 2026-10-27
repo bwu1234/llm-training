@@ -9,10 +9,10 @@ import pytest
 import torch
 import yaml
 
-from llm_training.config import load_config
+from llm_training.lm.config import load_config
+from llm_training.lm.schedule import learning_rate_at
+from llm_training.lm.trainer import train
 from llm_training.training.checkpoint import atomic_save, load_checkpoint
-from llm_training.training.schedule import learning_rate_at
-from llm_training.training.trainer import train
 from scripts.compare_training_runs import compare_states
 from tests.integration.test_resume import command, configuration
 

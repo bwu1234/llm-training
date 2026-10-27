@@ -11,9 +11,9 @@ from pathlib import Path
 import pytest
 
 import llm_training
-from llm_training.config import load_config
+from llm_training.lm import trainer as lm_trainer
+from llm_training.lm.config import load_config
 from llm_training.reasoning import trainer as grpo_trainer
-from llm_training.training import trainer as lm_trainer
 from llm_training.training.provenance import _NOT_TRAINING_CODE
 
 PACKAGE = Path(llm_training.__file__).parent

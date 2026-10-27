@@ -19,12 +19,15 @@ import torch
 import yaml
 from torch.utils.data import DataLoader
 
-from llm_training.config import Config, config_from_dict, window_length
 from llm_training.data.corpus import SPLITS, load_token_corpus
 from llm_training.data.dataset import SlidingWindowTokenDataset
 from llm_training.data.token_dataset import TokenWindowDataset
-from llm_training.evaluation import evaluate
-from llm_training.generation import generate_greedy, generate_sampled
+from llm_training.lm.config import Config, config_from_dict, window_length
+from llm_training.lm.evaluation import evaluate
+from llm_training.lm.generation import generate_greedy, generate_sampled
+from llm_training.lm.loss import next_token_cross_entropy
+from llm_training.lm.monitoring import evaluate_train_validation_loss
+from llm_training.lm.schedule import is_constant, learning_rate_at
 from llm_training.model.registry import (
     ARCHITECTURE_KEYS,
     MODEL_FILE_FORMAT,
@@ -44,8 +47,6 @@ from llm_training.training.checkpoint import (
     load_checkpoint,
     restore_rng,
 )
-from llm_training.training.loss import next_token_cross_entropy
-from llm_training.training.monitoring import evaluate_train_validation_loss
 from llm_training.training.optim import build_optimizer, clip_and_measure
 from llm_training.training.provenance import (
     collect_runtime_metadata,
@@ -53,7 +54,6 @@ from llm_training.training.provenance import (
     implementation_fingerprint,
     write_json,
 )
-from llm_training.training.schedule import is_constant, learning_rate_at
 
 
 def _sample(model, tokenizer, cfg, device, step=0):
@@ -184,10 +184,8 @@ def lm_training_code(cfg):
     run, and the reasoning modules count only when the math-distill prompt uses them.
     """
     code = [
-        "config.py",
-        "evaluation.py",
-        "generation.py",
         "data",
+        "lm",
         "model/assets.py",
         "model/registry.py",
         f"model/{cfg.model.arch}",

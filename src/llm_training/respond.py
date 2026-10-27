@@ -12,7 +12,6 @@ from pathlib import Path
 
 import torch
 
-from .config import load_config, window_length
 from .data.instructions import (
     DATASETS,
     format_input,
@@ -21,7 +20,8 @@ from .data.instructions import (
     reference_response,
     split_instructions,
 )
-from .generation import generate_sampled
+from .lm.config import load_config, window_length
+from .lm.generation import generate_sampled
 from .prediction import load_inference_model
 
 

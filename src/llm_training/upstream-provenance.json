@@ -38,7 +38,7 @@
       "symbols": [
         "generate_text_simple"
       ],
-      "destination": "src/llm_training/generation.py",
+      "destination": "src/llm_training/lm/generation.py",
       "sha256": "6722b3ab5939c3218803be0de9153170c62ba5f02ab23fd6dcdce5ea6bf712f7",
       "source_diff": "",
       "symbol_mapping": {
@@ -62,7 +62,7 @@
       "symbols": [
         "calc_loss_batch"
       ],
-      "destination": "src/llm_training/training/loss.py",
+      "destination": "src/llm_training/lm/loss.py",
       "sha256": "60fccc9eacb42f7b3f9d6da629dcb2352b357ef997c9673e22301fa523b2e026",
       "source_diff": "",
       "symbol_mapping": {
@@ -74,7 +74,7 @@
       "symbols": [
         "generate"
       ],
-      "destination": "src/llm_training/generation.py",
+      "destination": "src/llm_training/lm/generation.py",
       "sha256": "60fccc9eacb42f7b3f9d6da629dcb2352b357ef997c9673e22301fa523b2e026",
       "source_diff": "Added a `generator` argument; the multinomial draw runs on the CPU with that generator and the token is moved back to the input device. Formatting and one comment moved above its line.",
       "symbol_mapping": {
@@ -87,7 +87,7 @@
         "calc_loss_loader",
         "evaluate_model"
       ],
-      "destination": "src/llm_training/training/monitoring.py",
+      "destination": "src/llm_training/lm/monitoring.py",
       "sha256": "54623631dd9e9d50f7be63df4fd83220431815e3001f6b7b8750b2b03984ec59",
       "source_diff": "",
       "symbol_mapping": {

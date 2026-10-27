@@ -16,9 +16,9 @@ from llm_training.data.instructions import (
     encode_example,
     split_instructions,
 )
-from llm_training.evaluation import evaluate
+from llm_training.lm.evaluation import evaluate
+from llm_training.lm.loss import next_token_cross_entropy
 from llm_training.model.qwen3.model import Qwen3Model
-from llm_training.training.loss import next_token_cross_entropy
 from tests.reference import instruction_baseline as book
 from tests.unit.test_qwen3 import TINY
 

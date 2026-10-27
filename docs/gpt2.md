@@ -179,11 +179,11 @@ differs by 61.5.
   tokenizer assets and the `tiktoken` encoding.
 - [`gpt2/pretrained.py`](../src/llm_training/model/gpt2/pretrained.py): pinned OpenAI GPT-2
   small and medium weights for `model.init_from`.
-- [`config.py`](../src/llm_training/config.py): model settings and validation.
+- [`config.py`](../src/llm_training/lm/config.py): model settings and validation.
 - [`dataset.py`](../src/llm_training/data/dataset.py) and
-  [`loss.py`](../src/llm_training/training/loss.py): shifted next-token targets
+  [`loss.py`](../src/llm_training/lm/loss.py): shifted next-token targets
   and cross-entropy loss.
-- [`generation.py`](../src/llm_training/generation.py): context cropping and
+- [`generation.py`](../src/llm_training/lm/generation.py): context cropping and
   greedy token generation.
 
 See also the [upstream provenance notes](upstream-provenance.md) and the
