@@ -329,10 +329,19 @@ explorer, add a preset and notes for its module classes to `docs/architecture/ex
 ## Architecture explorer
 
 [`docs/architecture/index.html`](docs/architecture/index.html) puts two presets side by side,
-such as GPT-2 small and Qwen3-0.6B. Each row is a module that runs in the forward pass, in the
-order it runs, with its output shape (`B` batch, `T` tokens) and parameter count. Selecting a
-row shows what it does, its own tensors, its `forward` source with a link to the file, and the
-module at the same path in the other model.
+such as GPT-2 small and Qwen3-0.6B. Each row is something that runs in the forward pass, in the
+order it runs, with its output shape (`B` batch, `T` tokens):
+
+- a module, with its parameter count;
+- a call to one of the package's functions, such as RoPE's `apply_rope`;
+- a tensor operation that the repo's own code performs: residual additions, the head split,
+  the causal mask, softmax, the SwiGLU product, each step of RoPE and of the norms.
+
+Buffers such as RoPE's `cos` and `sin` tables are listed under the module that stores them.
+Selecting a row shows what it does and its source, with the line it runs highlighted. A
+selected module also highlights the module at the same path in the other model. The
+`attn_impl: explicit` presets show attention's scores, mask, scaling and softmax as separate
+steps; with `sdpa` they are one fused call.
 
 It is published at <https://bwu1234.github.io/llm-training/>. To view a local copy, open the file in a browser; it needs
 no server. Locally its source links open the files in your checkout. On the published page
@@ -350,18 +359,27 @@ uv run python -m llm_training.explain
 
 `llm_training.explain` builds each preset listed in `docs/architecture/explainer.json` on
 PyTorch's `meta` device (shapes without storage, so Qwen3 needs no 2.4 GB allocation). It runs
-one forward pass with module hooks and records each call's input and output shapes. A second
+one forward pass and records, with input and output shapes:
+
+- module calls, with module hooks;
+- calls to the package's own functions, with Python's `sys.monitoring`;
+- every tensor operation the package's code performs, with PyTorch's `TorchFunctionMode`.
+  Operations inside a PyTorch module such as `nn.Linear` belong to that module's row.
+
+A `TorchDispatchMode` sees every kernel that runs and fails the generation if one ran outside
+both a recorded operation and a PyTorch module, so a step can't be dropped silently. A second
 pass with a different batch and length names the dimensions that changed. The prose for each
-module class lives in `explainer.json`, so `src/` holds no family-specific text.
-`tests/unit/test_explain.py` fails when:
+module class, function and operation lives in `explainer.json`, so `src/` holds no
+family-specific text. `tests/unit/test_explain.py` fails when:
 
 - `spec.js` is stale, for example after an edit to a model's `forward`;
 - a documented parameter count changes;
-- a module class has no note, or a note names a module that no longer exists.
+- a module class, function or operation has no note, or a note names something that no
+  longer runs;
+- folding the repeated blocks loses or adds a step.
 
-Residual additions, RoPE, the head split and the SwiGLU product are plain code rather than
-modules, so they appear in each module's source rather than as rows. The explainer is outside
-every resume fingerprint, so changing it never affects `train --resume`.
+The explainer is outside every resume fingerprint, so changing it never affects
+`train --resume`.
 
 ## Continued pretraining and SFT from released weights
 
