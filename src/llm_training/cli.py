@@ -34,7 +34,7 @@ def main():
     prediction.add_argument(
         "--tokenizer-cache",
         type=Path,
-        help="Tokenizer assets (default: data/tokenizer for GPT-2, data/qwen3-0.6b-base for Qwen3)",
+        help="Tokenizer assets (default: where `prepare` puts the model family's tokenizer)",
     )
     prediction.add_argument("--max-new-tokens", type=int, default=8)
     prediction.add_argument("--top-k", type=int, default=5, help="Number of candidates to display")
@@ -47,7 +47,7 @@ def main():
     generation.add_argument(
         "--tokenizer-cache",
         type=Path,
-        help="Tokenizer assets (default: data/tokenizer for GPT-2, data/qwen3-0.6b-base for Qwen3)",
+        help="Tokenizer assets (default: where `prepare` puts the model family's tokenizer)",
     )
     generation.add_argument("--max-new-tokens", type=int, default=200)
     generation.add_argument("--temperature", type=float, default=0.8, help="0 decodes greedily")
@@ -215,11 +215,12 @@ def main():
 
 def _prepare(cfg):
     """Fetch everything a recipe reads: tokenizer, starting weights, and data."""
-    from .model.registry import PRETRAINED, prepare_pretrained, prepare_tokenizer
+    from .model.registry import PRETRAINED, family
 
-    prepare_tokenizer(cfg.model.arch, Path(cfg.data.tokenizer_cache))
+    model_family = family(cfg.model.arch)
+    model_family.prepare_tokenizer(Path(cfg.data.tokenizer_cache))
     if cfg.model.init_from in PRETRAINED:
-        prepare_pretrained(cfg.model.init_from, cfg.model.weights_dir)
+        model_family.prepare_release(cfg.model.init_from, cfg.model.weights_dir)
         print(f"Prepared {cfg.model.init_from} weights in {cfg.model.weights_dir}")
     if cfg.data.format == "tokens":
         from .data.corpus import prepare_corpus

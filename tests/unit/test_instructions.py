@@ -100,9 +100,9 @@ def test_gpt2_alpaca_examples_match_chapter_7_with_the_real_tokenizer():
     cache = os.environ.get("LLM_TEST_TOKENIZER_CACHE")
     if not cache:
         pytest.skip("Set LLM_TEST_TOKENIZER_CACHE to a prepared GPT-2 cache")
-    from llm_training.model.registry import load_tokenizer
+    from llm_training.model.registry import family
 
-    tokenizer, _ = load_tokenizer("gpt2", Path(cache))
+    tokenizer, _ = family("gpt2").load_tokenizer(Path(cache))
     texts = book.InstructionDataset(ALPACA, tokenizer).encoded_texts
     lengths = book.InstructionDatasetWithMasking(ALPACA, tokenizer).instruction_lengths
     for entry, text, length in zip(ALPACA, texts, lengths, strict=True):

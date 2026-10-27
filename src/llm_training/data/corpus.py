@@ -158,10 +158,10 @@ def token_dtype(n_vocab):
 
 
 def prepare_corpus(name, out_dir: Path, arch, tokenizer_cache: Path):
-    from ..model.registry import load_tokenizer
+    from ..model.registry import family
 
     manifest_path = out_dir / "manifest.json"
-    tokenizer, tokenizer_manifest = load_tokenizer(arch, tokenizer_cache)
+    tokenizer, tokenizer_manifest = family(arch).load_tokenizer(tokenizer_cache)
     if manifest_path.is_file():
         try:
             load_token_corpus(out_dir, name, tokenizer_manifest)

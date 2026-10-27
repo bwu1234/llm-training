@@ -94,7 +94,7 @@ Verified 2026-10-25 with the full suite (69 passed, plus the opt-in oracle, 2 pa
 - All checks are CPU FP32 on one machine. SDPA, bf16, MPS, and CUDA behavior are unvalidated.
 - The resume guard is exact only for unchanged executable code; with `--allow-code-drift`
   nothing is guaranteed, and the child run records the override.
-- `train()` is still one large function (F4). The new logic lives in `training/optim.py`,
+- `train()` is still one large function (F4). The new logic lives in `lm/optim.py`, `training/optim.py`,
   `lm/schedule.py`, and `model/gpt2/init.py`, but the accumulation loop is inside `train()`.
 - The preset's data path, warmup, evaluation cadence, and token budget are placeholders.
 
@@ -119,7 +119,7 @@ Verified 2026-10-25 with the full suite (69 passed, plus the opt-in oracle, 2 pa
 | A6 | P1 | **GELU rebuilds a tensor on every call**: `torch.sqrt(torch.tensor(2.0/torch.pi))` is created on CPU each forward. On CUDA/MPS this forces a host-to-device copy per layer per step. | `model/gpt2/layers.py:34` | OAI uses the same tanh formula (`np.sqrt(2/np.pi)` as a constant). | Use `math.sqrt(2/math.pi)` or `nn.GELU(approximate="tanh")`. | Numerical equality with the current output. |
 | A7 | P3 | **Causal mask is a persistent buffer** (T×T float32 per layer), so it is saved in every `state_dict` and tied to the context length. | `model/gpt2/attention.py:23` | nGPT-m registers it as a non-parameter buffer for the fallback path only. | `persistent=False`; for SDPA, no mask at all. | Old checkpoints still load (`strict` handling) or the format version is bumped. |
 | A8 | P3 | **Hand-written LayerNorm** instead of `F.layer_norm`. Numerically equivalent but slower, and blocks `torch.compile` fusion on some backends. | `model/gpt2/layers.py:9-20` | OAI `eps=1e-5`, same as here. | Optional `F.layer_norm` path behind parity tests. | Equality at `atol=1e-6`. |
-| A9 | P3 | **Vocabulary fixed to 50,257.** Many reproductions pad to a multiple of 64 for GEMM efficiency. | `config.py:105` | *unverified* (nanoGPT pads to 50,304 via `vocab_size` override; not re-fetched). | Allow `vocab_size >= 50257` with padded rows never targeted. | Loss unchanged. |
+| A9 | P3 | **Vocabulary fixed to 50,257.** Many reproductions pad to a multiple of 64 for GEMM efficiency. | `model/gpt2/family.py` `validate` | *unverified* (nanoGPT pads to 50,304 via `vocab_size` override; not re-fetched). | Allow `vocab_size >= 50257` with padded rows never targeted. | Loss unchanged. |
 | A10 | P3 | **Greedy generation only; no KV cache; no temperature/top-k/top-p sampling.** `predict --top-k` only changes what is displayed. | `generation.py`; `README.md` | GPT-2 samples with temperature and top-k. | Add `generate` with sampling and a KV cache (the plan's planned `generate` command). | Cache path equals the uncached path. |
 
 ## B. Optimization recipe (L2)

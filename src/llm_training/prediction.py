@@ -7,7 +7,7 @@ from pathlib import Path
 
 import torch
 
-from .model.registry import build_model, load_tokenizer, load_weights
+from .model.registry import check_model_file, family, family_name
 
 
 def _token(tokenizer, token_id):
@@ -183,17 +183,33 @@ def generate_from_checkpoint(
     }
 
 
+def read_saved_model(checkpoint):
+    """Return (model config, state dict, optimizer steps, tokenizer manifest) from a project
+    model.pt or a full training checkpoint, told apart by their keys."""
+    saved = torch.load(checkpoint, map_location="cpu", weights_only=True, mmap=True)
+    if isinstance(saved, dict) and "model_config" in saved:
+        saved = check_model_file(saved, checkpoint)
+        return (
+            saved["model_config"],
+            saved["model_state_dict"],
+            saved.get("optimizer_steps"),
+            saved.get("tokenizer"),
+        )
+    if not isinstance(saved, dict) or not isinstance(saved.get("config", {}).get("model"), dict):
+        raise ValueError("Expected a project model.pt or full training checkpoint")
+    if "model_state_dict" not in saved:
+        raise ValueError("Checkpoint is missing model configuration or weights")
+    return (
+        saved["config"]["model"],
+        saved["model_state_dict"],
+        saved.get("progress", {}).get("optimizer_steps"),
+        saved.get("data_identity", {}).get("tokenizer_manifest"),
+    )
+
+
 def checkpoint_arch(checkpoint):
     """The model family of a model.pt or full checkpoint, read without building the model."""
-    saved = torch.load(checkpoint, map_location="cpu", weights_only=True, mmap=True)
-    if not isinstance(saved, dict) or saved.get("format_version") not in (1, 2):
-        raise ValueError("Expected a project model.pt or full training checkpoint")
-    config = saved.get("model_config") or saved.get("config", {}).get("model") or {}
-    return saved.get("arch") or config.get("arch", "gpt2")
-
-
-# Where `prepare` puts each family's tokenizer when a recipe does not say otherwise.
-DEFAULT_TOKENIZER_CACHE = {"gpt2": "data/tokenizer", "qwen3": "data/qwen3-0.6b-base"}
+    return family_name(read_saved_model(checkpoint)[0])
 
 
 def load_inference_model(checkpoint, tokenizer_cache=None, device="cpu", num_threads=1):
@@ -208,29 +224,16 @@ def load_inference_model(checkpoint, tokenizer_cache=None, device="cpu", num_thr
         raise ValueError("MPS was requested but is unavailable")
     torch.set_num_threads(num_threads)
     checkpoint = Path(checkpoint).resolve()
-    saved = torch.load(checkpoint, map_location="cpu", weights_only=True, mmap=True)
-    if not isinstance(saved, dict) or saved.get("format_version") not in (1, 2):
-        raise ValueError("Expected a project model.pt or full training checkpoint")
-    if saved["format_version"] == 1:
-        config = saved.get("model_config")
-        optimizer_steps = saved.get("optimizer_steps")
-        expected = saved.get("tokenizer")
-    else:
-        config = saved.get("config", {}).get("model")
-        optimizer_steps = saved.get("progress", {}).get("optimizer_steps")
-        expected = saved.get("data_identity", {}).get("tokenizer_manifest")
-    if not isinstance(config, dict) or "model_state_dict" not in saved:
-        raise ValueError("Checkpoint is missing model configuration or weights")
-    # Checkpoints written before Qwen3 support carry no family and are GPT-2.
-    arch = saved.get("arch") or config.get("arch", "gpt2")
+    config, state, optimizer_steps, expected = read_saved_model(checkpoint)
+    model_family = family(family_name(config))
     if tokenizer_cache is None:
-        tokenizer_cache = DEFAULT_TOKENIZER_CACHE[arch]
-    tokenizer, manifest = load_tokenizer(arch, Path(tokenizer_cache).resolve())
+        tokenizer_cache = model_family.default_tokenizer_cache
+    tokenizer, manifest = model_family.load_tokenizer(Path(tokenizer_cache).resolve())
     if expected is not None and expected != manifest:
         raise ValueError("Tokenizer identity differs from the checkpoint")
-    model = build_model(config | {"arch": arch})
-    load_weights(model, arch, saved["model_state_dict"])
-    del saved  # Full checkpoints also contain optimizer tensors, unneeded for inference.
+    model = model_family.build(config | {"arch": model_family.name})
+    model_family.load_weights(model, state)
+    del state  # Full checkpoints also hold optimizer tensors, unneeded for inference.
     model.to(device)
     return model, tokenizer, config, optimizer_steps, manifest
 

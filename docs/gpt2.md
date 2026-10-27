@@ -179,7 +179,9 @@ differs by 61.5.
   tokenizer assets and the `tiktoken` encoding.
 - [`gpt2/pretrained.py`](../src/llm_training/model/gpt2/pretrained.py): pinned OpenAI GPT-2
   small and medium weights for `model.init_from`.
-- [`config.py`](../src/llm_training/lm/config.py): model settings and validation.
+- [`gpt2/family.py`](../src/llm_training/model/gpt2/family.py): the recipe's `model` settings
+  (`GPT2ModelConfig`), their validation, and how the trainer builds, loads and tokenizes
+  GPT-2 (see [adding a model family](../README.md#adding-a-model-family)).
 - [`dataset.py`](../src/llm_training/data/dataset.py) and
   [`loss.py`](../src/llm_training/lm/loss.py): shifted next-token targets
   and cross-entropy loss.

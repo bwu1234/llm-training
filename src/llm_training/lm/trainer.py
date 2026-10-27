@@ -27,17 +27,9 @@ from llm_training.lm.evaluation import evaluate
 from llm_training.lm.generation import generate_greedy, generate_sampled
 from llm_training.lm.loss import next_token_cross_entropy
 from llm_training.lm.monitoring import evaluate_train_validation_loss
+from llm_training.lm.optim import build_optimizer
 from llm_training.lm.schedule import is_constant, learning_rate_at
-from llm_training.model.registry import (
-    ARCHITECTURE_KEYS,
-    MODEL_FILE_FORMAT,
-    PRETRAINED,
-    build_model,
-    load_tokenizer,
-    load_weights,
-    pretrained_state,
-    read_model_file,
-)
+from llm_training.model.registry import MODEL_FILE_FORMAT, PRETRAINED, family, read_model_file
 from llm_training.training.checkpoint import (
     FORMAT_VERSION,
     atomic_save,
@@ -47,7 +39,7 @@ from llm_training.training.checkpoint import (
     load_checkpoint,
     restore_rng,
 )
-from llm_training.training.optim import build_optimizer, clip_and_measure
+from llm_training.training.optim import clip_and_measure
 from llm_training.training.provenance import (
     collect_runtime_metadata,
     git_provenance,
@@ -187,6 +179,7 @@ def lm_training_code(cfg):
         "data",
         "lm",
         "model/assets.py",
+        "model/family.py",
         "model/registry.py",
         f"model/{cfg.model.arch}",
         "training",
@@ -199,13 +192,14 @@ def lm_training_code(cfg):
     return tuple(code)
 
 
-def _same_environment(saved, current, allow_code_drift=False):
+def _same_environment(saved, current, allow_code_drift=False, packages=()):
+    """`packages` are the family's `resume_packages`, recorded under their names."""
     keys = (
         "python",
         "torch",
         "numpy",
         "tiktoken",
-        "tokenizers",
+        *packages,
         "platform",
         "machine",
         "device",
@@ -228,16 +222,17 @@ def _same_environment(saved, current, allow_code_drift=False):
     return drifted
 
 
-def _load_initial_weights(model, model_cfg):
+def _load_initial_weights(model, model_cfg, model_family):
     """Load the run's starting weights; return a provenance record of their source."""
     source = model_cfg.init_from
     if source in PRETRAINED:
-        state, record = pretrained_state(source, model_cfg.weights_dir)
+        state, origin = model_family.release_state(source, model_cfg.weights_dir)
+        record = {"pretrained": source, **origin}
     else:
         saved = read_model_file(source)
         if saved["arch"] != model_cfg.arch:
             raise ValueError(f"{source} holds a {saved['arch']} model, not {model_cfg.arch}")
-        for key in ARCHITECTURE_KEYS[model_cfg.arch]:
+        for key in model_family.architecture_keys:
             if saved["model_config"][key] != getattr(model_cfg, key):
                 raise ValueError(f"model.{key} differs from the weights in {source}")
         state = saved["model_state_dict"]
@@ -246,7 +241,7 @@ def _load_initial_weights(model, model_cfg):
                 "model_file": source,
                 "sha256": hashlib.file_digest(file, "sha256").hexdigest(),
             }
-    load_weights(model, model_cfg.arch, state)
+    model_family.load_weights(model, state)
     return record
 
 
@@ -280,20 +275,25 @@ def train(
         "deterministic_algorithms": torch.are_deterministic_algorithms_enabled(),
         "matmul_precision": torch.get_float32_matmul_precision(),
     }
-    if cfg.model.arch == "qwen3":
-        env["tokenizers"] = importlib.metadata.version("tokenizers")
+    model_family = family(cfg.model.arch)
+    for package_name in model_family.resume_packages:
+        env[package_name] = importlib.metadata.version(package_name)
     package = Path(__file__).parent.parent
     env["implementation_sha256"] = implementation_fingerprint(package, lm_training_code(cfg))
     if device == "cuda" and not env["cuda_available"]:
         raise ValueError("CUDA was requested but is unavailable")
     if device == "mps" and not env["mps_available"]:
         raise ValueError("MPS was requested but is unavailable")
-    code_drift = _same_environment(saved["environment"], env, allow_code_drift) if saved else False
+    code_drift = (
+        _same_environment(saved["environment"], env, allow_code_drift, model_family.resume_packages)
+        if saved
+        else False
+    )
     torch.set_num_threads(cfg.runtime.num_threads)
     torch.manual_seed(cfg.training.seed)
     random.seed(cfg.training.seed)
     np.random.seed(cfg.training.seed)
-    tokenizer, tokenizer_manifest = load_tokenizer(cfg.model.arch, cfg.data.tokenizer_cache)
+    tokenizer, tokenizer_manifest = model_family.load_tokenizer(cfg.data.tokenizer_cache)
     datasets, digest, data_fields = _load_datasets(cfg, tokenizer, tokenizer_manifest)
     identity = {"sha256": digest, "tokenizer_manifest": tokenizer_manifest}
     if saved and saved["data_identity"] != identity:
@@ -324,11 +324,11 @@ def train(
         num_workers=0,
         collate_fn=collate,
     )
-    model = build_model(asdict(cfg.model))
+    model = model_family.build(asdict(cfg.model))
     # A resumed run reports the weights its lineage started from, kept in the checkpoint.
     initial_weights = saved.get("initial_weights") if saved else None
     if cfg.model.init_from is not None and not saved:
-        initial_weights = _load_initial_weights(model, cfg.model)
+        initial_weights = _load_initial_weights(model, cfg.model, model_family)
     model.to(device)
     optimizer = build_optimizer(model, cfg.training)
     accum = cfg.training.grad_accum_steps

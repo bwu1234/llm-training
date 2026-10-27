@@ -1,101 +1,64 @@
 """The model families the next-token trainer builds, and the released weights it starts from.
 
-A family is an architecture (`model/<family>/model.py`) plus its tokenizer. Both sit behind
-small shared interfaces: a model maps token ids to logits, and a tokenizer offers the subset
-of tiktoken's `Encoding` the trainer uses (`encode`, `encode_ordinary_batch`, `decode`,
-`decode_single_token_bytes`, `eot_token`, `n_vocab`).
+A family is an architecture (`model/<family>/model.py`) plus its tokenizer, described to the
+rest of the package by one `Family` (`model/family.py`) in `model/<family>/family.py`. Both
+sit behind small shared interfaces: a model maps token ids to logits, and a tokenizer offers
+the subset of tiktoken's `Encoding` the trainer uses (`encode`, `encode_ordinary_batch`,
+`decode`, `decode_single_token_bytes`, `eot_token`, `n_vocab`).
 
 `init_from` names either a pinned release below or a project `model.pt`, which carries its
 family, configuration and tokenizer identity, so one stage's output starts the next.
+
+Adding a family:
+1. Write `model/<name>/` with its model, tokenizer, and `family.py` defining `FAMILY`.
+2. Add `<name>` to `FAMILIES`, and its pinned releases, if any, to `PRETRAINED`.
+3. Add a recipe under `configs/`. `tests/unit/test_families.py` checks the declaration and
+   `tests/unit/test_fingerprint_scope.py` checks that resume fingerprints its code.
 """
 
-import json
+import importlib
 import pickle
-from pathlib import Path
 
 import torch
 
-# Configuration keys that fix parameter shapes; the rest (dropout, attention kernel, tying)
-# may differ between the weights' source and the run that loads them.
-ARCHITECTURE_KEYS = {
-    "gpt2": ("vocab_size", "context_length", "emb_dim", "n_heads", "n_layers", "qkv_bias"),
-    "qwen3": (
-        "vocab_size",
-        "context_length",
-        "emb_dim",
-        "n_heads",
-        "n_layers",
-        "hidden_dim",
-        "head_dim",
-        "qk_norm",
-        "n_kv_groups",
-        "rope_base",
-    ),
-}
+FAMILIES = ("gpt2", "qwen3")
 PRETRAINED = {"gpt2-small-124m": "gpt2", "gpt2-medium-355m": "gpt2", "qwen3-0.6b-base": "qwen3"}
+# Recipes may omit `model.arch`, and files written before Qwen3 support carry none.
+DEFAULT_FAMILY = "gpt2"
 MODEL_FILE_FORMAT = 1
 
 
-def pretrained_architecture(name):
-    if PRETRAINED[name] == "gpt2":
-        from .gpt2.pretrained import PRESETS
+def family(name):
+    """The named family's `Family`, importing only that family's modules.
 
-        config = PRESETS[name]["config"]
-    else:
-        from .qwen3.model import QWEN3_0_6B as config
-    return {key: config[key] for key in ARCHITECTURE_KEYS[PRETRAINED[name]]}
-
-
-def prepare_pretrained(name, path):
-    if PRETRAINED[name] == "gpt2":
-        from .gpt2.pretrained import prepare_gpt2
-
-        prepare_gpt2(name, path)
-    else:
-        from .qwen3.pretrained import prepare_qwen3_base
-
-        prepare_qwen3_base(path)
+    A run imports no other family's code, so the resume fingerprint can leave it out.
+    """
+    if name not in FAMILIES:
+        raise ValueError(f"model.arch must be one of {sorted(FAMILIES)}")
+    return importlib.import_module(f"{__package__}.{name}.family").FAMILY
 
 
-def pretrained_state(name, path):
-    """Return the verified released state dict and a record of where it came from."""
-    if PRETRAINED[name] == "gpt2":
-        from .gpt2.pretrained import BASE_URL, PRESETS, load_gpt2_state
-
-        state = load_gpt2_state(name, path)
-        source = {"url": f"{BASE_URL}/{PRESETS[name]['file']}", "sha256": PRESETS[name]["sha256"]}
-    else:
-        from .qwen3.pretrained import FILES, REPOSITORY, REVISION, WEIGHTS, verify_qwen3_base
-
-        verify_qwen3_base(path)
-        state = torch.load(Path(path) / WEIGHTS, map_location="cpu", weights_only=True, mmap=True)
-        source = {
-            "url": f"https://huggingface.co/{REPOSITORY}/resolve/{REVISION}/{WEIGHTS}",
-            "sha256": FILES[WEIGHTS],
-        }
-    return state, {"pretrained": name, **source}
+def family_name(model_config):
+    """The family a model-config mapping (a recipe's or a saved file's) belongs to."""
+    return model_config.get("arch", DEFAULT_FAMILY)
 
 
 def build_model(config):
-    """Construct the family's model from a model-config mapping (`arch` defaults to gpt2)."""
-    if config.get("arch", "gpt2") == "gpt2":
-        from .gpt2.model import GPTModel
-
-        return GPTModel(config)
-    from .qwen3.model import Qwen3Model
-
-    return Qwen3Model(config)
+    """Construct the family's model from a model-config mapping."""
+    return family(family_name(config)).build(config)
 
 
-def load_weights(model, arch, state):
-    """Strictly load `state`, refusing a tied model when the state's head differs."""
-    if arch == "gpt2":
-        from .gpt2.pretrained import load_gpt2_into
-
-        return load_gpt2_into(model, state)
-    from .qwen3.pretrained import load_qwen3_state
-
-    return load_qwen3_state(model, state)
+def check_model_file(saved, path):
+    """Validate a loaded project `model.pt` and fill in its family; return it."""
+    if (
+        not isinstance(saved, dict)
+        or saved.get("format_version") != MODEL_FILE_FORMAT
+        or not isinstance(saved.get("model_config"), dict)
+        or "model_state_dict" not in saved
+    ):
+        raise ValueError(f"{path} is not a project model.pt")
+    saved["arch"] = saved.get("arch") or family_name(saved["model_config"])
+    return saved
 
 
 def read_model_file(path):
@@ -104,37 +67,4 @@ def read_model_file(path):
         saved = torch.load(path, map_location="cpu", weights_only=True, mmap=True)
     except (RuntimeError, EOFError, pickle.UnpicklingError) as exc:
         raise ValueError(f"{path} is not a project model.pt: {exc}") from exc
-    if (
-        not isinstance(saved, dict)
-        or saved.get("format_version") != MODEL_FILE_FORMAT
-        or not isinstance(saved.get("model_config"), dict)
-        or "model_state_dict" not in saved
-    ):
-        raise ValueError(f"{path} is not a project model.pt")
-    # Files written before Qwen3 support carry no family and are GPT-2.
-    saved["arch"] = saved.get("arch") or saved["model_config"].get("arch", "gpt2")
-    return saved
-
-
-def prepare_tokenizer(arch, path):
-    if arch == "gpt2":
-        from .gpt2.tokenizer import prepare_tokenizer as prepare
-
-        prepare(Path(path))
-    else:
-        from .qwen3.pretrained import prepare_qwen3_tokenizer
-
-        prepare_qwen3_tokenizer(path)
-
-
-def load_tokenizer(arch, path):
-    """Return (tokenizer, identity manifest) for the family's verified local assets."""
-    path = Path(path)
-    if arch == "gpt2":
-        from .gpt2.tokenizer import load_tokenizer as load
-
-        tokenizer = load(path)
-        return tokenizer, json.loads((path / "manifest.json").read_text())
-    from .qwen3.pretrained import TOKENIZER_MANIFEST, load_qwen3_text_tokenizer
-
-    return load_qwen3_text_tokenizer(path), TOKENIZER_MANIFEST
+    return check_model_file(saved, path)

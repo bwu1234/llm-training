@@ -305,6 +305,18 @@ modules alongside the GPT ones. It loads the pinned Qwen3-0.6B base weights and 
 which an oracle test checks against Hugging Face Transformers. See
 [the Qwen3 guide](docs/qwen3.md).
 
+## Adding a model family
+
+The next-token trainer, `prepare`, `predict`, `generate` and `respond` never branch on a family
+name. Each family describes itself once, as a `Family` (`model/family.py`) in
+`model/<name>/family.py`: its recipe settings and their validation, how to build the model and
+load weights into it, its tokenizer, its pinned releases, and any extra package versions resume
+must match. To add one, write `model/<name>/` with that file, then add the name to `FAMILIES`
+in `model/registry.py` and its releases to `PRETRAINED`. `tests/unit/test_families.py` checks
+the declaration, and `tests/unit/test_fingerprint_scope.py` checks that the resume fingerprint
+covers the family's code and nothing from another family. GRPO (`reasoning/`) is built on
+Qwen3 directly and is not covered by this.
+
 ## Continued pretraining and SFT from released weights
 
 `model.init_from` starts the same trainer from OpenAI's GPT-2 small or medium, Qwen3-0.6B

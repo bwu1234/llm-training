@@ -7,12 +7,14 @@ trainers and checked by their own tests.
 
 import ast
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
 import llm_training
 from llm_training.lm import trainer as lm_trainer
 from llm_training.lm.config import load_config
+from llm_training.model.registry import FAMILIES
 from llm_training.reasoning import trainer as grpo_trainer
 from llm_training.training.provenance import _NOT_TRAINING_CODE
 
@@ -80,6 +82,22 @@ def covered(code):
     ids=["grpo", "next-token"],
 )
 def test_fingerprint_covers_module_level_imports(start, code):
+    _assert_covered(start, code)
+
+
+@pytest.mark.parametrize("name", FAMILIES)
+def test_fingerprint_covers_each_family_declaration(name):
+    """The registry imports a family by name, which the closure above cannot follow."""
+    cfg = SimpleNamespace(model=SimpleNamespace(arch=name), data=SimpleNamespace(format="text"))
+    code = lm_trainer.lm_training_code(cfg)
+    start = PACKAGE / "model" / name / "family.py"
+    _assert_covered(start, code)
+    others = [PACKAGE / "model" / other for other in FAMILIES if other != name]
+    reached = [str(p.relative_to(PACKAGE)) for p in closure(start) if p.parent in others]
+    assert not reached, f"{name} imports another family's code: {reached}"
+
+
+def _assert_covered(start, code):
     missing = {
         str(path.relative_to(PACKAGE))
         for path in closure(start) - covered(code)

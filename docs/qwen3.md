@@ -53,6 +53,7 @@ The preset `QWEN3_0_6B` has 596,049,920 parameters: 28 layers, `emb_dim` 1024, a
 | [`layers.py`](../src/llm_training/model/qwen3/layers.py) | `RMSNorm`, SwiGLU `FeedForward` |
 | [`rope.py`](../src/llm_training/model/qwen3/rope.py) | `compute_rope_params`, `apply_rope` |
 | [`pretrained.py`](../src/llm_training/model/qwen3/pretrained.py) | pinned assets: `prepare_qwen3_base`, `load_qwen3_base` |
+| [`family.py`](../src/llm_training/model/qwen3/family.py) | `Qwen3ModelConfig` and its validation; the `Family` the next-token trainer and inference use |
 | [`tokenizer.py`](../src/llm_training/model/qwen3/tokenizer.py) | `Qwen3Tokenizer` (Hugging Face `tokenizers`, EOS `<\|endoftext\|>`); `Qwen3TextTokenizer`, the trainer's tiktoken-style interface |
 
 `KVCache` is kept with the source forward pass. `lm/generation.py` does not use it yet: it

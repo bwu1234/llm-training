@@ -11,10 +11,11 @@ import yaml
 
 from llm_training.lm import trainer
 from llm_training.lm.config import config_from_dict, load_config
+from llm_training.lm.optim import build_optimizer
 from llm_training.lm.schedule import is_constant, learning_rate_at
 from llm_training.model.gpt2.layers import GELU
 from llm_training.model.gpt2.model import GPTModel
-from llm_training.training.optim import build_optimizer, clip_and_measure
+from llm_training.training.optim import clip_and_measure
 from llm_training.training.provenance import implementation_fingerprint
 from tests.reference import baseline
 from tests.reference.compare import TINY_CONFIG
