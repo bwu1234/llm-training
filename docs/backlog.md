@@ -123,6 +123,11 @@ Constraints for all of them:
   validate, so `train --resume` rejects them. Their `model.pt` files still load in `predict`
   and `generate`, and the runs are complete. A fix would map the old name when loading
   saved configs.
+- **`sample.json` mislabels greedy samples.** With `output.temperature: 0` and a `top_k`,
+  `_sample` takes its sampling branch: the output is greedy, but it is recorded as
+  `"method": "sampled"` with an unused seed. The fix is in `lm/trainer.py`, so checkpoints
+  written after the last hashed change would also need `--allow-code-drift`. For text data,
+  routing it to the greedy branch would also stop it ending early at end-of-text.
 - **Exact resume on MPS** matches an uninterrupted run to float32 rounding (about 1e-7),
   not bit for bit.
 - **Old checkpoints need `--allow-code-drift`.** Every checkpoint written before 2026-10-27

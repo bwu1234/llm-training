@@ -102,7 +102,8 @@ and loads nothing from the network. It shows:
   budget), and the gradient norm with the clipping threshold, on one shared axis of updates
   or tokens;
 - when each evaluation, checkpoint and new best happened, and where a resumed run took over;
-- the sample nearest the update under the pointer, so you can watch the text improve;
+- the latest sample at or before the update under the pointer, the final `sample.json`
+  included, so you can watch the text improve;
 - the runs table, `evaluation.json`, and every monitored evaluation as tables.
 
 The [training loop guide](docs/training-loop.md#evaluation-metrics) explains how to read each
@@ -110,8 +111,10 @@ number. The page reads only the run's JSON and YAML records, never a checkpoint.
 the planned schedule with the trainer's own `learning_rate_at` and checks it against the rate
 each update recorded; the TinyStories run matches at all 14,155 updates. Several run
 directories overlay, colored by run, with a warning when their losses don't compare
-(different tokenizers, prompt masking or monitoring recipes) or when a run and its resumed
-child are both given. The child already holds the parent's history.
+(different tokenizers, prompt masking, validation tokens, monitoring recipes or monitored
+subset sizes) or when a run and its resumed child are both given. The child already holds the
+parent's history. Every record is read from the run directory itself: a symlinked record is
+refused, so a page can't embed a file from elsewhere.
 
 The page is a snapshot: rerun the command to refresh a run that is still training. It covers
 next-token runs only; GRPO runs are not supported yet ([backlog](docs/backlog.md)). Like the
@@ -257,11 +260,11 @@ uv run llm-training generate --checkpoint runs/tinystories/<run-id>/checkpoints/
 - **Loading.** Training memory-maps the token files: nothing is re-tokenized on start or resume,
   and memory does not grow with corpus size. Each start re-hashes the token files against the
   manifest (about a second).
-- **Samples.** `output.sample_every` adds a sampled continuation to every Nth update's record in
-  `metrics.jsonl`, using `output.temperature` / `output.top_k`. Sampling draws from a private
-  generator seeded by (seed, update), so samples never change training. A resumed run records
-  the same text on CPU (tested bitwise); on MPS the ~1e-7 weight drift could in principle flip a
-  draw (the 6-update MPS check matched).
+- **Samples.** `output.sample_every: N` adds a sampled continuation to the records of updates
+  1, N + 1, 2N + 1, ... in `metrics.jsonl`, using `output.temperature` / `output.top_k`.
+  Sampling draws from a private generator seeded by (seed, update), so samples never change
+  training. A resumed run records the same text on CPU (tested bitwise); on MPS the ~1e-7
+  weight drift could in principle flip a draw (the 6-update MPS check matched).
 - **`generate`** samples from any `model.pt` or full checkpoint (temperature 0 is greedy) and
   stops at `<|endoftext|>`. Use `--device cpu` (the default) during training so it does not
   compete for the GPU.

@@ -6,7 +6,7 @@
 # Measured on an M2 Max (FP32, synthetic batches): about 6,850 tokens/s, so the ~459M-token
 # training split is about 19 hours for one epoch. `--stop-after N` pauses at a safe boundary
 # for a later resume; to end early for good, set `max_steps` before starting, so the cosine
-# decay fits the shorter run. Every 250th update carries a temperature-0.8 sample in
+# decay fits the shorter run. Updates 1, 251, 501, ... carry a temperature-0.8 sample in
 # metrics.jsonl.
 #
 # Prepare once (downloads ~1.9 GB, pinned revision and SHA-256; see data/corpus.py):

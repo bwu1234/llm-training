@@ -34,6 +34,8 @@ def test_temperature_zero_and_top_one_are_greedy():
     greedy = generate_greedy(model, prompt(), 12, TINY_CONFIG["context_length"])
     assert torch.equal(sampled(model, 0), greedy)
     assert torch.equal(sampled(model, 0, temperature=1.0, top_k=1), greedy)
+    # A top_k at temperature 0 keeps the argmax, so the seed `_sample` passes changes nothing.
+    assert all(torch.equal(sampled(model, seed, top_k=3), greedy) for seed in range(4))
 
 
 def test_seeded_sampling_reproduces_and_leaves_global_rng_untouched():

@@ -728,7 +728,21 @@ function followSample(step) {
   const samples = RUNS[state.focus].samples;
   if (!samples.length) return;
   const k = lastIndexAtOrBefore(samples.map(s => s.step), step);
-  setSample(Math.max(0, k));
+  if (k < 0) noSampleYet(step, samples[0].step);
+  else setSample(k);
+}
+
+function noSampleYet(step, first) {
+  state.sampleIndex = -1; // so Next goes to the first sample
+  const samples = RUNS[state.focus].samples;
+  document.getElementById("sample-title").textContent = `No sample yet at update ${int(step)}`;
+  document.getElementById("sample-text").textContent = `The first sample was taken after update ${int(first)}.`;
+  const slider = document.getElementById("sample-slider");
+  slider.value = 0;
+  slider.setAttribute("aria-valuetext", "before the first sample");
+  document.getElementById("sample-prev").disabled = true;
+  document.getElementById("sample-next").disabled = false;
+  document.getElementById("sample-count").textContent = `0 of ${samples.length}`;
 }
 
 function setSample(k) {
@@ -751,7 +765,7 @@ function drawSamples() {
   const run = RUNS[state.focus];
   if (!run.samples.length) {
     document.getElementById("sample-title").textContent = "Samples";
-    body.append(el("p", { class: "note" }, "This run recorded no samples. Set output.sample_every to add one to every Nth update."));
+    body.append(el("p", { class: "note" }, "This run recorded no samples. Set output.sample_every to N to sample after updates 1, N + 1, 2N + 1, ..."));
     return;
   }
   const nav = el("div", { class: "sample-nav" });

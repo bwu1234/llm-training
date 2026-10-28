@@ -10,6 +10,7 @@ each update recorded. Nothing is loaded from the network, so the page works offl
 import argparse
 import json
 import math
+import sys
 from dataclasses import fields
 from pathlib import Path
 
@@ -23,13 +24,31 @@ PLANNED_POINTS = 800  # enough for a smooth curve at any page width
 MAX_RUNS = 8  # one categorical color per run
 
 
-def _read_json(path):
-    return json.loads(path.read_text()) if path.is_file() else None
+def _artifact(run_dir, name):
+    """`run_dir / name` if it exists, refusing a symlink.
 
-
-def _read_jsonl(path):
-    """Records in a JSONL file, skipping a partial last line that a live run may leave."""
+    The page embeds what it reads, so a planted `evaluation.json -> ~/secret.json` would
+    publish that file to anyone who can read the page.
+    """
+    path = run_dir / name
+    if not path.exists() and not path.is_symlink():
+        return None
+    if path.is_symlink():
+        raise ValueError(f"{path} is a link; the run viewer reads only files inside the run")
     if not path.is_file():
+        raise ValueError(f"{path} is not a file")
+    return path
+
+
+def _read_json(run_dir, name):
+    path = _artifact(run_dir, name)
+    return json.loads(path.read_text()) if path else None
+
+
+def _read_jsonl(run_dir, name):
+    """Records in a JSONL file, skipping a partial last line that a live run may leave."""
+    path = _artifact(run_dir, name)
+    if path is None:
         return []
     records = []
     for line in path.read_text().splitlines():
@@ -97,18 +116,22 @@ def _events(updates, evals, training, status, parent_step):
 def load_run(run_dir):
     """Everything the viewer shows for one run, as plain JSON-ready data."""
     run_dir = Path(run_dir)
-    config_path = run_dir / "config.resolved.yaml"
-    if not config_path.is_file():
+    if not run_dir.is_dir():
+        raise ValueError(f"{run_dir} is not a directory")
+    config_path = _artifact(run_dir, "config.resolved.yaml")
+    if config_path is None:
         raise ValueError(f"{run_dir} is not a next-token run directory (no config.resolved.yaml)")
     config = yaml.safe_load(config_path.read_text())
+    if not isinstance(config, dict) or not isinstance(config.get("training"), dict):
+        raise ValueError(f"{config_path} has no training section")
     if "num_rollouts" in config["training"]:
         raise ValueError(f"{run_dir} is a GRPO run; the run viewer covers next-token runs only")
     training = _training_config(config["training"])
-    manifest = _read_json(run_dir / "data-manifest.json")
-    status = _read_json(run_dir / "status.json")
-    provenance = _read_json(run_dir / "provenance.json") or {}
-    environment = _read_json(run_dir / "environment.json") or {}
-    records = _read_jsonl(run_dir / "metrics.jsonl")
+    manifest = _read_json(run_dir, "data-manifest.json")
+    status = _read_json(run_dir, "status.json")
+    provenance = _read_json(run_dir, "provenance.json") or {}
+    environment = _read_json(run_dir, "environment.json") or {}
+    records = _read_jsonl(run_dir, "metrics.jsonl")
     # Runs older than `training.recipe` recorded the book's monitoring without naming it.
     sampled = any("source_val_loss" in r for r in records)
     recipe = "sampled_train_validation" if sampled else training.recipe
@@ -138,11 +161,18 @@ def load_run(run_dir):
             )
         if "sample" in r:
             samples.append({"step": r["optimizer_step"], "text": r["sample"], "kind": "update"})
-    for s in _read_jsonl(run_dir / "epoch-samples.jsonl"):
+    for s in _read_jsonl(run_dir, "epoch-samples.jsonl"):
         samples.append(
             {"step": s["optimizer_step"], "text": s["text"], "kind": f"end of epoch {s['epoch']}"}
         )
-    samples.sort(key=lambda s: s["step"])
+    final = _read_json(run_dir, "sample.json")
+    if final and status and status.get("status") == "completed":
+        # sample.json has no step; the final reports follow the last update.
+        step = status.get("optimizer_steps") or (updates[-1]["optimizer_step"] if updates else 0)
+        # With the same settings and seed, a sample due at the last update has the same text.
+        if not any(s["step"] == step and s["text"] == final["text"] for s in samples):
+            samples.append({"step": step, "text": final["text"], "kind": "final"})
+    samples.sort(key=lambda s: s["step"])  # stable: the final sample stays last at its step
 
     total = planned_total_steps(training, manifest)
     if total is None and status and status.get("status") == "completed" and updates:
@@ -171,7 +201,7 @@ def load_run(run_dir):
     model = config.get("model", {})
     data = config.get("data", {})
     window = data.get("max_length") or model.get("context_length")
-    evaluation = _read_json(run_dir / "evaluation.json")
+    evaluation = _read_json(run_dir, "evaluation.json")
     return {
         "name": run_dir.name,
         "path": str(run_dir),
@@ -180,6 +210,9 @@ def load_run(run_dir):
         "encoding": ((manifest or {}).get("tokenizer_manifest") or {}).get("encoding"),
         "data_format": data.get("format", "text"),
         "mask_prompt": data.get("mask_prompt", False),
+        "data_sha256": (manifest or {}).get("sha256"),
+        "validation_identity": _validation_identity(manifest, window),
+        "monitored_subset": _monitored_subset(evals, training, manifest),
         "device": environment.get("device"),
         "parent_checkpoint": provenance.get("parent_checkpoint"),
         "training": {
@@ -220,6 +253,51 @@ def load_run(run_dir):
     }
 
 
+def _validation_identity(manifest, window):
+    """What fixes the validation tokens a run scores, or None when an old run lacks a field.
+
+    A token corpus hashes its validation split on its own (its top-level digest covers the
+    training split too). Text and instruction runs split one input file, so its digest plus
+    the split recorded for that format identifies the validation part. The window belongs
+    too: the same tokens scored with a shorter context give a higher loss.
+    """
+    m = manifest or {}
+    if m.get("format") == "tokens":
+        parts = [(m.get("splits") or {}).get("val", {}).get("sha256")]
+    elif m.get("format") == "instructions":
+        parts = [m.get("sha256"), m.get("dataset"), (m.get("examples") or {}).get("validation")]
+    else:
+        parts = [m.get("sha256"), m.get("split_character")]
+    parts.append(window)
+    if None in parts:  # an old run that didn't record it
+        return None
+    if m.get("format") == "instructions":
+        parts.append(m.get("limit"))  # None here means no limit, not unknown
+    return json.dumps(parts)
+
+
+def _monitored_subset(evals, training, manifest):
+    """How many validation targets each monitored loss averages, or None when unrecorded.
+
+    `validation_only` records the count; the book recipe doesn't, so its subset is given in
+    windows from `eval_iter` and the batch size instead.
+    """
+    counts = {e["eval_tokens"] for e in evals if e.get("eval_tokens") is not None}
+    if counts:
+        return f"{max(counts)} tokens"
+    windows = ((manifest or {}).get("windows") or {}).get("validation")
+    if not evals or windows is None:
+        return None
+    if training.eval_iter is None:
+        return f"{windows} windows"
+    return f"{min(training.eval_iter * training.batch_size, windows)} windows"
+
+
+def _differ(runs, key):
+    """Whether the runs that recorded `key` disagree; runs too old to record it are skipped."""
+    return len({json.dumps(r[key]) for r in runs if r[key] is not None}) > 1
+
+
 def _warnings(runs):
     """Reasons the overlaid runs' numbers may not compare, as the training-loop guide lists."""
     notes = []
@@ -227,13 +305,34 @@ def _warnings(runs):
         ("encoding", "tokenizers"),
         ("mask_prompt", "prompt masking"),
     ):
-        if len({json.dumps(r[key]) for r in runs}) > 1:
+        if _differ(runs, key):
             notes.append(f"These runs use different {label}, so their losses are not comparable.")
+    if _differ(runs, "validation_identity"):
+        notes.append(
+            "These runs validate on different tokens (split or context window), so their "
+            "validation losses are not comparable."
+        )
+    elif _differ(runs, "data_sha256"):
+        if all(r["validation_identity"] is not None for r in runs):
+            notes.append(
+                "These runs train on different data. Their validation losses share a split and "
+                "compare; their training losses do not."
+            )
+        else:
+            notes.append(
+                "These runs use different data, and an older run doesn't record its validation "
+                "split, so their losses may not compare."
+            )
     if len({r["training"]["recipe"] for r in runs}) > 1:
         notes.append(
             "These runs monitor with different recipes (validation_only is token-weighted; "
             "sampled_train_validation averages batch means), so validation losses differ in "
             "definition."
+        )
+    elif _differ(runs, "monitored_subset"):
+        notes.append(
+            "These runs monitor validation subsets of different sizes, so their validation "
+            "curves differ in coverage. Compare full_validation in the end-of-run evaluation."
         )
     paths = {str(Path(r["path"]).resolve()): r["name"] for r in runs}
     for r in runs:
@@ -270,9 +369,13 @@ def main(argv=None):
         parser.error(f"at most {MAX_RUNS} runs can be overlaid")
     if args.output is None and len(args.runs) > 1:
         parser.error("--output is required when overlaying several runs")
-    runs = [load_run(path) for path in args.runs]
     output = args.output or args.runs[0] / "run-view.html"
-    output.write_text(render(runs))
+    try:
+        runs = [load_run(path) for path in args.runs]
+        output.write_text(render(runs))
+    except (ValueError, OSError, yaml.YAMLError) as exc:
+        print(f"Error: {exc}", file=sys.stderr)
+        raise SystemExit(1) from exc
     for run in runs:
         check = run["schedule_check"]
         if check and check["mismatched"]:
