@@ -98,6 +98,9 @@ items extend it.
 | Item | Why it matters | Notes |
 | --- | --- | --- |
 | Live views on real weights | Attention heatmaps, logit lens, GQA head sharing, RoPE rotation | Uses the weights already in `data/`; could extend the explorer's traced pass with real inputs. Plotting or notebook dependencies go in an optional group, as `IMPLEMENTATION_PLAN.md` requires. Several days |
+| Run viewer for GRPO | The next-token run viewer (`explain/runs.py`, see the README) rejects GRPO runs, so GRPO's reward, answer length and rollouts have no view | Plot `reward_mean`, `mean_gen_len`, `hit_token_limit` and `grad_norm` per step, mark `updated: false` steps, mark snapshots, and show each step's rollouts from `rollouts.jsonl`. About half a day |
+| Run viewer: live refresh | The page is a snapshot of a running run | A `--watch` mode that rewrites the page as `metrics.jsonl` grows, or a page that rereads it. Browsers block `fetch` on `file://`, so rereading needs a local server. About half a day |
+| Run viewer: publish an example | Local only by choice (2026-10-28). A downsampled copy of the TinyStories run on GitHub Pages would show it without a checkout | Publishing a run's metrics and samples is a decision for the user. About an hour |
 | A guided learning path (`docs/learn.md`) | The guides say what each part does but not what order to read the code in | Tokenizer → embeddings → attention → block → training loop → GRPO, each linked to its book chapter and to the graphics. About half a day |
 
 Constraints for all of them:

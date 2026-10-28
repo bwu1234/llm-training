@@ -98,8 +98,8 @@ code. To add a family:
 ## Docs conventions
 
 - `docs/backlog.md` tracks only what is pending. When an item lands, delete it there and
-  describe it in its guide: `docs/gpt2.md`, `qwen3.md`, `finetuning.md`, `grpo.md`, or the gap
-  register `gpt2-parity-gaps.md`. When work is found or deferred, add it to the backlog, not
+  describe it in its guide: `docs/gpt2.md`, `qwen3.md`, `training-loop.md`, `finetuning.md`,
+  `grpo.md`, or the gap register `gpt2-parity-gaps.md`. When work is found or deferred, add it to the backlog, not
   to a guide.
 - `IMPLEMENTATION_PLAN.md` is the original plan. Where it conflicts with the gap register, the
   register's priorities win.
