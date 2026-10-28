@@ -130,6 +130,8 @@ li:not(.closed) > .row .toggle { transform: rotate(90deg); }
 .row.step .cls { color: var(--text); }
 .row.step .name { max-width: 35%; overflow: hidden; text-overflow: ellipsis; }  /* the label says more */
 .row.step .code { margin-left: 8px; color: var(--muted); }
+.row.group .name { max-width: 60%; font-weight: 600; }
+.row.group .code { margin-left: 0; }
 .row.step .code { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: 0.72rem; }
 .row.buffer .name { font-weight: 500; color: var(--muted); }
 .kind.unused { border-style: dashed; }
@@ -151,7 +153,7 @@ aside h3:has(+ .flow.to)::before { background: var(--seg-3); }
 .link { background: none; border: 0; padding: 0; font: inherit; color: var(--accent); cursor: pointer; text-align: left; text-decoration: underline; }
 @media (max-width: 520px) {
   .cls { order: 2; flex-basis: 100%; margin-left: 24px; white-space: normal; }
-  .row.step .code { display: none; }
+  .row.step:not(.group) .code { display: none; }
   .tree ul { margin-left: 8px; padding-left: 6px; }
   .row { flex-wrap: wrap; row-gap: 0; }
   .count { margin-left: auto; order: 1; }
@@ -181,7 +183,7 @@ footer { color: var(--muted); font-size: 0.8rem; padding-top: 24px; padding-bott
 <body>
 <header>
   <h1>Model architecture explorer</h1>
-  <p class="lede">GPT-2 and Qwen3 side by side, traced from this repository's own model code. Each row is something that actually runs in one forward pass, in the order it runs: a module, a function such as RoPE's <code>apply_rope</code>, or a single tensor operation, with its output shape and parameter count. Select a row to read what it does and the code that does it. Selecting a module also highlights the module at the same path in the other model.</p>
+  <p class="lede">GPT-2 and Qwen3 side by side, traced from this repository's own model code. Each row is something that actually runs in one forward pass, in the order it runs: a module, a function such as RoPE's <code>apply_rope</code>, or a tensor operation, with its output shape and parameter count. Operations that together do one thing are one row: LayerNorm's &ldquo;Normalize&rdquo; opens to its <code>sub</code>, <code>add</code>, <code>sqrt</code> and <code>div</code>. Select a row to read what it does and the code that does it. Selecting a module also highlights the module at the same path in the other model.</p>
   <div class="notes">
     <div><strong>Shapes</strong><code>B</code> is the batch size and <code>T</code> the number of tokens. Every other dimension is the preset's own number.</div>
     <div><strong>Steps</strong>Rows in <span style="color: var(--step)">this colour</span> are operations the repo's own code performs: residual additions, the head split, RoPE, causal masking, the SwiGLU multiply. Inside a PyTorch module such as <code>Linear</code>, the module row is the step. Buffers, such as RoPE's <code>cos</code> and <code>sin</code> tables, are listed under the module that stores them. Selecting a row marks where its inputs come from (<span style="color: var(--seg-2)">teal edge</span>) and what reads its output (<span style="color: var(--seg-3)">orange edge</span>).</div>
@@ -258,6 +260,7 @@ footer { color: var(--muted); font-size: 0.8rem; padding-top: 24px; padding-bott
   // `owner` is the nearest enclosing module call, which names a module relative to its parent.
   function label(node, owner) {
     if (node.op) return SPEC.ops[node.op].name;
+    if (node.group) return node.label;
     if (node.function) return SPEC.functions[node.function].name + "()";
     if (!owner) return cls(node.class).name;
     const name = rel(node, owner);
@@ -318,9 +321,14 @@ footer { color: var(--muted); font-size: 0.8rem; padding-top: 24px; padding-bott
 
   function walk(node, fn) { fn(node); node.children.forEach((c) => walk(c, fn)); }
 
+  const opNames = (group) => group.children.map((c) => SPEC.ops[c.op].name).join(" · ");
+  // The distinct source lines a group's operations run on.
+  const groupCode = (group) => [...new Set(group.children.map((c) => c.code))];
+
   // `container` is the nearest enclosing module or function call, whose code a step is in;
   // `times` is how often the enclosing calls run per forward pass, with blocks unfolded.
-  function item(node, owner, container, depth, side, times) {
+  // `grouped` marks an operation inside a group row, which already shows its label.
+  function item(node, owner, container, depth, side, times, grouped = false) {
     times *= node.repeat || 1;
     const kids = node.children;
     const buffers = isModule(node) ? node.buffers : [];
@@ -331,12 +339,12 @@ footer { color: var(--muted); font-size: 0.8rem; padding-top: 24px; padding-bott
     const open = ((depth < 2 || node.repeat > 1) && kids.some(isModule))
       || (isModule(node) && (kids.some((k) => k.function) || buffers.length > 0));
     const li = el("li", { class: open ? "" : "closed" });
-    const kind = node.op ? "step" : node.function ? "function" : "module";
+    const kind = node.op || node.group ? "step" : node.function ? "function" : "module";
     const count = isModule(node) ? node.total * (node.repeat || 1) : 0;
     const tied = isModule(node) && node.params.some((p) => p.tied_to);
     const row = el("button", {
-      class: "row " + kind, type: "button", "data-side": side,
-      title: node.op ? node.code : `${shape(node.in)} → ${shape(node.out)}`,
+      class: "row " + kind + (node.group ? " group" : ""), type: "button", "data-side": side,
+      title: node.op ? node.code : node.group ? groupCode(node).join("\n") : `${shape(node.in)} → ${shape(node.out)}`,
       onclick: (e) => {
         if (e.target.closest(".toggle") && expandable) { li.classList.toggle("closed"); return; }
         choose(row, node, owner, container, side, times);
@@ -349,11 +357,12 @@ footer { color: var(--muted); font-size: 0.8rem; padding-top: 24px; padding-bott
     },
       el("span", { class: "toggle" + (expandable ? "" : " leaf"), "aria-hidden": "true", text: "▶" }),
       el("span", { class: "name", text: label(node, owner) }),
-      node.op ? el("span", { class: "cls" }, node.label || "", el("span", { class: "code", text: node.code }))
+      node.op ? el("span", { class: "cls" }, grouped ? "" : node.label || "", el("span", { class: "code", text: node.code }))
+        : node.group ? el("span", { class: "cls" }, el("span", { class: "code", text: opNames(node) }))
         : node.function ? el("span", { class: "cls", text: SPEC.functions[node.function].note?.title || "" })
         : owner ? el("span", { class: "cls", text: [role(node, owner)?.label, cls(node.class).name].filter(Boolean).join(" · ") }) : null,
       node.function ? el("span", { class: "kind", text: "function" }) : null,
-      node.op && flows[side].unused(node) ? unusedTag() : null,
+      (node.op || node.group) && flows[side].unused(node) ? unusedTag() : null,
       node.repeat > 1 ? el("span", { class: "times", text: "× " + node.repeat }) : null,
       tied ? el("span", { class: "tied", text: "tied" }) : null,
       el("span", { class: "shape", text: shape(node.out) }),
@@ -369,10 +378,10 @@ footer { color: var(--muted); font-size: 0.8rem; padding-top: 24px; padding-bott
     li.append(row);
     if (expandable) {
       const nextOwner = isModule(node) ? node : owner;
-      const nextContainer = node.op ? container : node;
+      const nextContainer = node.op || node.group ? container : node;
       li.append(el("ul", {},
         ...buffers.map((b) => bufferItem(b, node, side)),
-        ...kids.map((k) => item(k, nextOwner, nextContainer, depth + 1, side, times))));
+        ...kids.map((k) => item(k, nextOwner, nextContainer, depth + 1, side, times, !!node.group))));
     }
     return li;
   }
@@ -404,17 +413,25 @@ footer { color: var(--muted); font-size: 0.8rem; padding-top: 24px; padding-bott
   // this package's modules and containers only pass it on to what's inside them.
   const computes = (n) => !isModule(n) || (cls(n.class).docs && !n.children.some(isModule));
 
+  // A group of operations stands for them outside it: what the group reads from outside is
+  // read by the group, and what reads one of its operations from outside reads the group.
   function graph(tree) {
     const nodes = new Map(), readers = new Map(), buffers = new Set(), read = new Set();
-    (function visit(n) {
+    const groups = [];
+    (function visit(n, group) {
       nodes.set(n.id, n);
+      if (n.group) groups.push(n);
       if (isModule(n)) n.buffers.forEach((b) => buffers.add(n.module ? `${n.module}.${b.name}` : b.name));
       for (const s of n.inputs) {
-        if ("from" in s) readers.set(s.from, [...(readers.get(s.from) || []), n]);
+        const inside = group && group.children.some((c) => c.id === s.from);
+        if ("from" in s && (!group || inside)) readers.set(s.from, [...(readers.get(s.from) || []), n]);
         if (s.tensor && computes(n)) read.add(s.tensor);
       }
-      n.children.forEach(visit);
+      n.children.forEach((c) => visit(c, n.group ? n : null));
     })(tree);
+    for (const g of groups) {
+      readers.set(g.id, g.children.flatMap((c) => (readers.get(c.id) || []).filter((r) => !g.children.includes(r))));
+    }
     // A step whose output nothing computes with: passed into modules that never use it.
     const unused = (n) => !("returned_by" in n) && !n.unchanged && !(readers.get(n.id) || []).some(computes);
     return { tree, nodes, readers, buffers, read, unused, row: new Map() };
@@ -425,6 +442,7 @@ footer { color: var(--muted); font-size: 0.8rem; padding-top: 24px; padding-bott
   }
 
   function title(n) {
+    if (n.group) return n.label;
     if (n.op) return `${n.label || SPEC.ops[n.op].name} (${SPEC.ops[n.op].name})`;
     if (n.function) return SPEC.functions[n.function].name + "()";
     const name = !n.module ? cls(n.class).name : n.repeat > 1 ? `${n.module} … ${n.last.split(".").pop()}` : n.module;
@@ -478,6 +496,7 @@ footer { color: var(--muted); font-size: 0.8rem; padding-top: 24px; padding-bott
   function choose(row, node, owner, container, side, times) {
     select(row);
     if (node.op) return showStep(node, container, times, side);
+    if (node.group) return showGroup(node, container, times, side);
     if (node.function) return showFunction(node, side);
     const other = side === "a" ? "b" : "a";
     document.querySelectorAll(`.row[data-side="${other}"]`).forEach((r) => {
@@ -512,13 +531,16 @@ footer { color: var(--muted); font-size: 0.8rem; padding-top: 24px; padding-bott
     return out;
   }
 
-  // A source excerpt with line numbers, linked to its file; `mark` highlights one line.
+  // A source excerpt with line numbers, linked to its file; `mark` highlights a line, or each
+  // line of a list.
   function source(file, start, code, header, mark) {
-    const link = el("p", {}, el("a", { href: `${ROOT}${file}#L${mark || start}`, class: "mono", text: `${file}:${mark || start}` }));
+    const marks = [].concat(mark ?? []);
+    const first = marks.length ? Math.min(...marks) : start;
+    const link = el("p", {}, el("a", { href: `${ROOT}${file}#L${first}`, class: "mono", text: `${file}:${first}` }));
     const pre = el("pre");
     pre.innerHTML = code.replace(/\n$/, "").split("\n").map((line, i) => {
       const html = `<span class="ln">${start + i}</span>${highlight(line)}`;
-      return start + i === mark ? `<span class="hl">${html}</span>` : html;
+      return marks.includes(start + i) ? `<span class="hl">${html}</span>` : html;
     }).join("\n");
     const license = header.length
       ? el("details", {}, el("summary", { text: "File license header" }), el("pre", { text: header.join("\n") }))
@@ -549,6 +571,25 @@ footer { color: var(--muted); font-size: 0.8rem; padding-top: 24px; padding-bott
       flow(node, side),
       el("h3", { text: "Code" }),
       source(where.file, where.line, where.code, where.header, node.line),
+    );
+  }
+
+  function showGroup(node, container, times, side) {
+    const where = code(container);
+    const ops = el("ul", { class: "readers" }, ...node.children.map((c) => el("li", {},
+      el("button", { type: "button", class: "link mono", onclick: () => rows[side].get(c)() }, SPEC.ops[c.op].name),
+      el("span", { class: "muted", text: "  → " + shape(c.out) }),
+      groupCode(node).length > 1 ? el("div", { class: "mono muted", text: c.code }) : null)));
+    detail(
+      el("h2", { text: node.label }),
+      el("p", { class: "sub", text: `${node.children.length} operations in ${where.name}` + (times > 1 ? `, run ${times} times per forward pass` : "") }),
+      el("h3", { text: "Operations, in order" }),
+      ops,
+      el("h3", { text: "Shapes" }),
+      el("div", { class: "io", text: `${node.in.map(shape).join(", ") || "no tensor inputs"}  →  ${shape(node.out)}` }),
+      flow(node, side),
+      el("h3", { text: "Code" }),
+      source(where.file, where.line, where.code, where.header, node.children.map((c) => c.line)),
     );
   }
 

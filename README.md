@@ -336,6 +336,8 @@ order it runs, with its output shape (`B` batch, `T` tokens):
 - a call to one of the package's functions, such as RoPE's `apply_rope`;
 - a tensor operation that the repo's own code performs: residual additions, the head split,
   the causal mask, softmax, the SwiGLU product, each step of RoPE and of the norms.
+  Consecutive operations that do one thing share a row, which opens to them: LayerNorm's
+  "Normalize" is `sub`, `add`, `sqrt` and `div`.
 
 Every row is named for what it does: "QK-norm, keys", "Residual connection", "Split queries
 into heads", "Rotate each channel pair". Buffers such as RoPE's `cos` and `sin` tables are

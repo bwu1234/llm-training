@@ -309,11 +309,31 @@ window.ARCHITECTURE = {
             "label": "Variance over channels"
            },
            {
-            "op": "torch.Tensor.sub",
-            "id": 11,
-            "line": 20,
-            "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
-            "uses": [],
+            "group": true,
+            "label": "Normalize",
+            "id": 617,
+            "in": [
+             [
+              "B",
+              "T",
+              768
+             ],
+             [
+              "B",
+              "T",
+              1
+             ],
+             [
+              "B",
+              "T",
+              1
+             ]
+            ],
+            "out": [
+             "B",
+             "T",
+             768
+            ],
             "inputs": [
              {
               "from": 5,
@@ -321,129 +341,166 @@ window.ARCHITECTURE = {
              },
              {
               "from": 9
-             }
-            ],
-            "in": [
-             [
-              "B",
-              "T",
-              768
-             ],
-             [
-              "B",
-              "T",
-              1
-             ]
-            ],
-            "out": [
-             "B",
-             "T",
-             768
-            ],
-            "children": [],
-            "total": 0,
-            "repeat": 1,
-            "label": "Normalize"
-           },
-           {
-            "op": "torch.Tensor.add",
-            "id": 12,
-            "line": 20,
-            "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
-            "uses": [],
-            "inputs": [
+             },
              {
               "from": 10
              }
             ],
-            "in": [
-             [
-              "B",
-              "T",
-              1
-             ]
-            ],
-            "out": [
-             "B",
-             "T",
-             1
-            ],
-            "children": [],
-            "total": 0,
-            "repeat": 1,
-            "label": "Normalize"
-           },
-           {
-            "op": "torch.sqrt",
-            "id": 13,
-            "line": 20,
-            "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
-            "uses": [],
-            "inputs": [
+            "children": [
              {
-              "from": 12
-             }
-            ],
-            "in": [
-             [
-              "B",
-              "T",
-              1
-             ]
-            ],
-            "out": [
-             "B",
-             "T",
-             1
-            ],
-            "children": [],
-            "total": 0,
-            "repeat": 1,
-            "label": "Normalize"
-           },
-           {
-            "op": "torch.Tensor.div",
-            "id": 14,
-            "line": 20,
-            "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
-            "uses": [],
-            "inputs": [
-             {
-              "from": 11
+              "op": "torch.Tensor.sub",
+              "id": 11,
+              "line": 20,
+              "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
+              "uses": [],
+              "inputs": [
+               {
+                "from": 5,
+                "first_copy": true
+               },
+               {
+                "from": 9
+               }
+              ],
+              "in": [
+               [
+                "B",
+                "T",
+                768
+               ],
+               [
+                "B",
+                "T",
+                1
+               ]
+              ],
+              "out": [
+               "B",
+               "T",
+               768
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Normalize"
              },
              {
-              "from": 13
+              "op": "torch.Tensor.add",
+              "id": 12,
+              "line": 20,
+              "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
+              "uses": [],
+              "inputs": [
+               {
+                "from": 10
+               }
+              ],
+              "in": [
+               [
+                "B",
+                "T",
+                1
+               ]
+              ],
+              "out": [
+               "B",
+               "T",
+               1
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Normalize"
+             },
+             {
+              "op": "torch.sqrt",
+              "id": 13,
+              "line": 20,
+              "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
+              "uses": [],
+              "inputs": [
+               {
+                "from": 12
+               }
+              ],
+              "in": [
+               [
+                "B",
+                "T",
+                1
+               ]
+              ],
+              "out": [
+               "B",
+               "T",
+               1
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Normalize"
+             },
+             {
+              "op": "torch.Tensor.div",
+              "id": 14,
+              "line": 20,
+              "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
+              "uses": [],
+              "inputs": [
+               {
+                "from": 11
+               },
+               {
+                "from": 13
+               }
+              ],
+              "in": [
+               [
+                "B",
+                "T",
+                768
+               ],
+               [
+                "B",
+                "T",
+                1
+               ]
+              ],
+              "out": [
+               "B",
+               "T",
+               768
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Normalize"
              }
             ],
+            "total": 0,
+            "repeat": 1
+           },
+           {
+            "group": true,
+            "label": "Learned scale and shift",
+            "id": 618,
             "in": [
+             [
+              768
+             ],
              [
               "B",
               "T",
               768
              ],
              [
-              "B",
-              "T",
-              1
+              768
              ]
             ],
             "out": [
              "B",
              "T",
              768
-            ],
-            "children": [],
-            "total": 0,
-            "repeat": 1,
-            "label": "Normalize"
-           },
-           {
-            "op": "torch.Tensor.mul",
-            "id": 15,
-            "line": 21,
-            "code": "return self.scale * norm_x + self.shift",
-            "uses": [
-             "scale"
             ],
             "inputs": [
              {
@@ -451,64 +508,89 @@ window.ARCHITECTURE = {
              },
              {
               "from": 14
-             }
-            ],
-            "in": [
-             [
-              768
-             ],
-             [
-              "B",
-              "T",
-              768
-             ]
-            ],
-            "out": [
-             "B",
-             "T",
-             768
-            ],
-            "children": [],
-            "total": 0,
-            "repeat": 1,
-            "label": "Learned scale and shift"
-           },
-           {
-            "op": "torch.Tensor.add",
-            "id": 16,
-            "line": 21,
-            "code": "return self.scale * norm_x + self.shift",
-            "uses": [
-             "shift"
-            ],
-            "inputs": [
-             {
-              "from": 15
              },
              {
               "tensor": "trf_blocks.0.norm1.shift"
              }
             ],
-            "returned_by": 8,
-            "in": [
-             [
-              "B",
-              "T",
-              768
-             ],
-             [
-              768
-             ]
+            "children": [
+             {
+              "op": "torch.Tensor.mul",
+              "id": 15,
+              "line": 21,
+              "code": "return self.scale * norm_x + self.shift",
+              "uses": [
+               "scale"
+              ],
+              "inputs": [
+               {
+                "tensor": "trf_blocks.0.norm1.scale"
+               },
+               {
+                "from": 14
+               }
+              ],
+              "in": [
+               [
+                768
+               ],
+               [
+                "B",
+                "T",
+                768
+               ]
+              ],
+              "out": [
+               "B",
+               "T",
+               768
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Learned scale and shift"
+             },
+             {
+              "op": "torch.Tensor.add",
+              "id": 16,
+              "line": 21,
+              "code": "return self.scale * norm_x + self.shift",
+              "uses": [
+               "shift"
+              ],
+              "inputs": [
+               {
+                "from": 15
+               },
+               {
+                "tensor": "trf_blocks.0.norm1.shift"
+               }
+              ],
+              "returned_by": 8,
+              "in": [
+               [
+                "B",
+                "T",
+                768
+               ],
+               [
+                768
+               ]
+              ],
+              "out": [
+               "B",
+               "T",
+               768
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Learned scale and shift"
+             }
             ],
-            "out": [
-             "B",
-             "T",
-             768
-            ],
-            "children": [],
             "total": 0,
             "repeat": 1,
-            "label": "Learned scale and shift"
+            "returned_by": 8
            }
           ],
           "class": "llm_training.model.gpt2.layers.LayerNorm",
@@ -908,51 +990,14 @@ window.ARCHITECTURE = {
             "label": "Causal attention, fused"
            },
            {
-            "op": "torch.Tensor.transpose",
-            "id": 28,
-            "line": 58,
-            "code": ").transpose(1, 2)",
-            "uses": [],
-            "inputs": [
-             {
-              "from": 27
-             }
-            ],
+            "group": true,
+            "label": "Merge heads",
+            "id": 619,
             "in": [
              [
               "B",
               12,
               "T",
-              64
-             ]
-            ],
-            "out": [
-             "B",
-             "T",
-             12,
-             64
-            ],
-            "children": [],
-            "total": 0,
-            "repeat": 1,
-            "label": "Merge heads"
-           },
-           {
-            "op": "torch.Tensor.reshape",
-            "id": 29,
-            "line": 76,
-            "code": "context_vec = context_vec.reshape(b, num_tokens, self.d_out)",
-            "uses": [],
-            "inputs": [
-             {
-              "from": 28
-             }
-            ],
-            "in": [
-             [
-              "B",
-              "T",
-              12,
               64
              ]
             ],
@@ -961,10 +1006,74 @@ window.ARCHITECTURE = {
              "T",
              768
             ],
-            "children": [],
+            "inputs": [
+             {
+              "from": 27
+             }
+            ],
+            "children": [
+             {
+              "op": "torch.Tensor.transpose",
+              "id": 28,
+              "line": 58,
+              "code": ").transpose(1, 2)",
+              "uses": [],
+              "inputs": [
+               {
+                "from": 27
+               }
+              ],
+              "in": [
+               [
+                "B",
+                12,
+                "T",
+                64
+               ]
+              ],
+              "out": [
+               "B",
+               "T",
+               12,
+               64
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Merge heads"
+             },
+             {
+              "op": "torch.Tensor.reshape",
+              "id": 29,
+              "line": 76,
+              "code": "context_vec = context_vec.reshape(b, num_tokens, self.d_out)",
+              "uses": [],
+              "inputs": [
+               {
+                "from": 28
+               }
+              ],
+              "in": [
+               [
+                "B",
+                "T",
+                12,
+                64
+               ]
+              ],
+              "out": [
+               "B",
+               "T",
+               768
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Merge heads"
+             }
+            ],
             "total": 0,
-            "repeat": 1,
-            "label": "Merge heads"
+            "repeat": 1
            },
            {
             "module": "trf_blocks.0.att.out_proj",
@@ -1168,140 +1277,196 @@ window.ARCHITECTURE = {
             "label": "Variance over channels"
            },
            {
-            "op": "torch.Tensor.sub",
-            "id": 36,
-            "line": 20,
-            "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
-            "uses": [],
+            "group": true,
+            "label": "Normalize",
+            "id": 620,
+            "in": [
+             [
+              "B",
+              "T",
+              768
+             ],
+             [
+              "B",
+              "T",
+              1
+             ],
+             [
+              "B",
+              "T",
+              1
+             ]
+            ],
+            "out": [
+             "B",
+             "T",
+             768
+            ],
             "inputs": [
              {
               "from": 32
              },
              {
               "from": 34
-             }
-            ],
-            "in": [
-             [
-              "B",
-              "T",
-              768
-             ],
-             [
-              "B",
-              "T",
-              1
-             ]
-            ],
-            "out": [
-             "B",
-             "T",
-             768
-            ],
-            "children": [],
-            "total": 0,
-            "repeat": 1,
-            "label": "Normalize"
-           },
-           {
-            "op": "torch.Tensor.add",
-            "id": 37,
-            "line": 20,
-            "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
-            "uses": [],
-            "inputs": [
+             },
              {
               "from": 35
              }
             ],
-            "in": [
-             [
-              "B",
-              "T",
-              1
-             ]
-            ],
-            "out": [
-             "B",
-             "T",
-             1
-            ],
-            "children": [],
-            "total": 0,
-            "repeat": 1,
-            "label": "Normalize"
-           },
-           {
-            "op": "torch.sqrt",
-            "id": 38,
-            "line": 20,
-            "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
-            "uses": [],
-            "inputs": [
+            "children": [
              {
-              "from": 37
-             }
-            ],
-            "in": [
-             [
-              "B",
-              "T",
-              1
-             ]
-            ],
-            "out": [
-             "B",
-             "T",
-             1
-            ],
-            "children": [],
-            "total": 0,
-            "repeat": 1,
-            "label": "Normalize"
-           },
-           {
-            "op": "torch.Tensor.div",
-            "id": 39,
-            "line": 20,
-            "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
-            "uses": [],
-            "inputs": [
-             {
-              "from": 36
+              "op": "torch.Tensor.sub",
+              "id": 36,
+              "line": 20,
+              "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
+              "uses": [],
+              "inputs": [
+               {
+                "from": 32
+               },
+               {
+                "from": 34
+               }
+              ],
+              "in": [
+               [
+                "B",
+                "T",
+                768
+               ],
+               [
+                "B",
+                "T",
+                1
+               ]
+              ],
+              "out": [
+               "B",
+               "T",
+               768
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Normalize"
              },
              {
-              "from": 38
+              "op": "torch.Tensor.add",
+              "id": 37,
+              "line": 20,
+              "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
+              "uses": [],
+              "inputs": [
+               {
+                "from": 35
+               }
+              ],
+              "in": [
+               [
+                "B",
+                "T",
+                1
+               ]
+              ],
+              "out": [
+               "B",
+               "T",
+               1
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Normalize"
+             },
+             {
+              "op": "torch.sqrt",
+              "id": 38,
+              "line": 20,
+              "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
+              "uses": [],
+              "inputs": [
+               {
+                "from": 37
+               }
+              ],
+              "in": [
+               [
+                "B",
+                "T",
+                1
+               ]
+              ],
+              "out": [
+               "B",
+               "T",
+               1
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Normalize"
+             },
+             {
+              "op": "torch.Tensor.div",
+              "id": 39,
+              "line": 20,
+              "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
+              "uses": [],
+              "inputs": [
+               {
+                "from": 36
+               },
+               {
+                "from": 38
+               }
+              ],
+              "in": [
+               [
+                "B",
+                "T",
+                768
+               ],
+               [
+                "B",
+                "T",
+                1
+               ]
+              ],
+              "out": [
+               "B",
+               "T",
+               768
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Normalize"
              }
             ],
+            "total": 0,
+            "repeat": 1
+           },
+           {
+            "group": true,
+            "label": "Learned scale and shift",
+            "id": 621,
             "in": [
+             [
+              768
+             ],
              [
               "B",
               "T",
               768
              ],
              [
-              "B",
-              "T",
-              1
+              768
              ]
             ],
             "out": [
              "B",
              "T",
              768
-            ],
-            "children": [],
-            "total": 0,
-            "repeat": 1,
-            "label": "Normalize"
-           },
-           {
-            "op": "torch.Tensor.mul",
-            "id": 40,
-            "line": 21,
-            "code": "return self.scale * norm_x + self.shift",
-            "uses": [
-             "scale"
             ],
             "inputs": [
              {
@@ -1309,64 +1474,89 @@ window.ARCHITECTURE = {
              },
              {
               "from": 39
-             }
-            ],
-            "in": [
-             [
-              768
-             ],
-             [
-              "B",
-              "T",
-              768
-             ]
-            ],
-            "out": [
-             "B",
-             "T",
-             768
-            ],
-            "children": [],
-            "total": 0,
-            "repeat": 1,
-            "label": "Learned scale and shift"
-           },
-           {
-            "op": "torch.Tensor.add",
-            "id": 41,
-            "line": 21,
-            "code": "return self.scale * norm_x + self.shift",
-            "uses": [
-             "shift"
-            ],
-            "inputs": [
-             {
-              "from": 40
              },
              {
               "tensor": "trf_blocks.0.norm2.shift"
              }
             ],
-            "returned_by": 33,
-            "in": [
-             [
-              "B",
-              "T",
-              768
-             ],
-             [
-              768
-             ]
+            "children": [
+             {
+              "op": "torch.Tensor.mul",
+              "id": 40,
+              "line": 21,
+              "code": "return self.scale * norm_x + self.shift",
+              "uses": [
+               "scale"
+              ],
+              "inputs": [
+               {
+                "tensor": "trf_blocks.0.norm2.scale"
+               },
+               {
+                "from": 39
+               }
+              ],
+              "in": [
+               [
+                768
+               ],
+               [
+                "B",
+                "T",
+                768
+               ]
+              ],
+              "out": [
+               "B",
+               "T",
+               768
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Learned scale and shift"
+             },
+             {
+              "op": "torch.Tensor.add",
+              "id": 41,
+              "line": 21,
+              "code": "return self.scale * norm_x + self.shift",
+              "uses": [
+               "shift"
+              ],
+              "inputs": [
+               {
+                "from": 40
+               },
+               {
+                "tensor": "trf_blocks.0.norm2.shift"
+               }
+              ],
+              "returned_by": 33,
+              "in": [
+               [
+                "B",
+                "T",
+                768
+               ],
+               [
+                768
+               ]
+              ],
+              "out": [
+               "B",
+               "T",
+               768
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Learned scale and shift"
+             }
             ],
-            "out": [
-             "B",
-             "T",
-             768
-            ],
-            "children": [],
             "total": 0,
             "repeat": 1,
-            "label": "Learned scale and shift"
+            "returned_by": 33
            }
           ],
           "class": "llm_training.model.gpt2.layers.LayerNorm",
@@ -1496,251 +1686,282 @@ window.ARCHITECTURE = {
               ],
               "children": [
                {
-                "op": "torch.Tensor.mul",
-                "id": 46,
-                "line": 34,
-                "code": "return 0.5 * x * (1 + torch.tanh(self._sqrt_two_over_pi * (x + 0.044715 * torch.pow(x, 3))))",
-                "uses": [],
-                "inputs": [
-                 {
-                  "from": 44
-                 }
-                ],
-                "in": [
-                 [
-                  "B",
-                  "T",
-                  3072
-                 ]
-                ],
-                "out": [
-                 "B",
-                 "T",
-                 3072
-                ],
-                "children": [],
-                "total": 0,
-                "repeat": 1,
-                "label": "GELU, tanh approximation"
-               },
-               {
-                "op": "torch.pow",
-                "id": 47,
-                "line": 34,
-                "code": "return 0.5 * x * (1 + torch.tanh(self._sqrt_two_over_pi * (x + 0.044715 * torch.pow(x, 3))))",
-                "uses": [],
-                "inputs": [
-                 {
-                  "from": 44
-                 }
-                ],
-                "in": [
-                 [
-                  "B",
-                  "T",
-                  3072
-                 ]
-                ],
-                "out": [
-                 "B",
-                 "T",
-                 3072
-                ],
-                "children": [],
-                "total": 0,
-                "repeat": 1,
-                "label": "GELU, tanh approximation"
-               },
-               {
-                "op": "torch.Tensor.mul",
-                "id": 48,
-                "line": 34,
-                "code": "return 0.5 * x * (1 + torch.tanh(self._sqrt_two_over_pi * (x + 0.044715 * torch.pow(x, 3))))",
-                "uses": [],
-                "inputs": [
-                 {
-                  "from": 47
-                 }
-                ],
-                "in": [
-                 [
-                  "B",
-                  "T",
-                  3072
-                 ]
-                ],
-                "out": [
-                 "B",
-                 "T",
-                 3072
-                ],
-                "children": [],
-                "total": 0,
-                "repeat": 1,
-                "label": "GELU, tanh approximation"
-               },
-               {
-                "op": "torch.Tensor.add",
-                "id": 49,
-                "line": 34,
-                "code": "return 0.5 * x * (1 + torch.tanh(self._sqrt_two_over_pi * (x + 0.044715 * torch.pow(x, 3))))",
-                "uses": [],
-                "inputs": [
-                 {
-                  "from": 44
-                 },
-                 {
-                  "from": 48
-                 }
-                ],
+                "group": true,
+                "label": "GELU, tanh approximation",
+                "id": 622,
                 "in": [
                  [
                   "B",
                   "T",
                   3072
                  ],
-                 [
-                  "B",
-                  "T",
-                  3072
-                 ]
+                 []
                 ],
                 "out": [
                  "B",
                  "T",
                  3072
                 ],
-                "children": [],
-                "total": 0,
-                "repeat": 1,
-                "label": "GELU, tanh approximation"
-               },
-               {
-                "op": "torch.Tensor.mul",
-                "id": 50,
-                "line": 34,
-                "code": "return 0.5 * x * (1 + torch.tanh(self._sqrt_two_over_pi * (x + 0.044715 * torch.pow(x, 3))))",
-                "uses": [
-                 "_sqrt_two_over_pi"
-                ],
                 "inputs": [
+                 {
+                  "from": 44
+                 },
                  {
                   "tensor": "trf_blocks.0.ff.layers.1._sqrt_two_over_pi"
+                 }
+                ],
+                "children": [
+                 {
+                  "op": "torch.Tensor.mul",
+                  "id": 46,
+                  "line": 34,
+                  "code": "return 0.5 * x * (1 + torch.tanh(self._sqrt_two_over_pi * (x + 0.044715 * torch.pow(x, 3))))",
+                  "uses": [],
+                  "inputs": [
+                   {
+                    "from": 44
+                   }
+                  ],
+                  "in": [
+                   [
+                    "B",
+                    "T",
+                    3072
+                   ]
+                  ],
+                  "out": [
+                   "B",
+                   "T",
+                   3072
+                  ],
+                  "children": [],
+                  "total": 0,
+                  "repeat": 1,
+                  "label": "GELU, tanh approximation"
                  },
                  {
-                  "from": 49
-                 }
-                ],
-                "in": [
-                 [],
-                 [
-                  "B",
-                  "T",
-                  3072
-                 ]
-                ],
-                "out": [
-                 "B",
-                 "T",
-                 3072
-                ],
-                "children": [],
-                "total": 0,
-                "repeat": 1,
-                "label": "GELU, tanh approximation"
-               },
-               {
-                "op": "torch.tanh",
-                "id": 51,
-                "line": 34,
-                "code": "return 0.5 * x * (1 + torch.tanh(self._sqrt_two_over_pi * (x + 0.044715 * torch.pow(x, 3))))",
-                "uses": [],
-                "inputs": [
-                 {
-                  "from": 50
-                 }
-                ],
-                "in": [
-                 [
-                  "B",
-                  "T",
-                  3072
-                 ]
-                ],
-                "out": [
-                 "B",
-                 "T",
-                 3072
-                ],
-                "children": [],
-                "total": 0,
-                "repeat": 1,
-                "label": "GELU, tanh approximation"
-               },
-               {
-                "op": "torch.Tensor.add",
-                "id": 52,
-                "line": 34,
-                "code": "return 0.5 * x * (1 + torch.tanh(self._sqrt_two_over_pi * (x + 0.044715 * torch.pow(x, 3))))",
-                "uses": [],
-                "inputs": [
-                 {
-                  "from": 51
-                 }
-                ],
-                "in": [
-                 [
-                  "B",
-                  "T",
-                  3072
-                 ]
-                ],
-                "out": [
-                 "B",
-                 "T",
-                 3072
-                ],
-                "children": [],
-                "total": 0,
-                "repeat": 1,
-                "label": "GELU, tanh approximation"
-               },
-               {
-                "op": "torch.Tensor.mul",
-                "id": 53,
-                "line": 34,
-                "code": "return 0.5 * x * (1 + torch.tanh(self._sqrt_two_over_pi * (x + 0.044715 * torch.pow(x, 3))))",
-                "uses": [],
-                "inputs": [
-                 {
-                  "from": 46
+                  "op": "torch.pow",
+                  "id": 47,
+                  "line": 34,
+                  "code": "return 0.5 * x * (1 + torch.tanh(self._sqrt_two_over_pi * (x + 0.044715 * torch.pow(x, 3))))",
+                  "uses": [],
+                  "inputs": [
+                   {
+                    "from": 44
+                   }
+                  ],
+                  "in": [
+                   [
+                    "B",
+                    "T",
+                    3072
+                   ]
+                  ],
+                  "out": [
+                   "B",
+                   "T",
+                   3072
+                  ],
+                  "children": [],
+                  "total": 0,
+                  "repeat": 1,
+                  "label": "GELU, tanh approximation"
                  },
                  {
-                  "from": 52
+                  "op": "torch.Tensor.mul",
+                  "id": 48,
+                  "line": 34,
+                  "code": "return 0.5 * x * (1 + torch.tanh(self._sqrt_two_over_pi * (x + 0.044715 * torch.pow(x, 3))))",
+                  "uses": [],
+                  "inputs": [
+                   {
+                    "from": 47
+                   }
+                  ],
+                  "in": [
+                   [
+                    "B",
+                    "T",
+                    3072
+                   ]
+                  ],
+                  "out": [
+                   "B",
+                   "T",
+                   3072
+                  ],
+                  "children": [],
+                  "total": 0,
+                  "repeat": 1,
+                  "label": "GELU, tanh approximation"
+                 },
+                 {
+                  "op": "torch.Tensor.add",
+                  "id": 49,
+                  "line": 34,
+                  "code": "return 0.5 * x * (1 + torch.tanh(self._sqrt_two_over_pi * (x + 0.044715 * torch.pow(x, 3))))",
+                  "uses": [],
+                  "inputs": [
+                   {
+                    "from": 44
+                   },
+                   {
+                    "from": 48
+                   }
+                  ],
+                  "in": [
+                   [
+                    "B",
+                    "T",
+                    3072
+                   ],
+                   [
+                    "B",
+                    "T",
+                    3072
+                   ]
+                  ],
+                  "out": [
+                   "B",
+                   "T",
+                   3072
+                  ],
+                  "children": [],
+                  "total": 0,
+                  "repeat": 1,
+                  "label": "GELU, tanh approximation"
+                 },
+                 {
+                  "op": "torch.Tensor.mul",
+                  "id": 50,
+                  "line": 34,
+                  "code": "return 0.5 * x * (1 + torch.tanh(self._sqrt_two_over_pi * (x + 0.044715 * torch.pow(x, 3))))",
+                  "uses": [
+                   "_sqrt_two_over_pi"
+                  ],
+                  "inputs": [
+                   {
+                    "tensor": "trf_blocks.0.ff.layers.1._sqrt_two_over_pi"
+                   },
+                   {
+                    "from": 49
+                   }
+                  ],
+                  "in": [
+                   [],
+                   [
+                    "B",
+                    "T",
+                    3072
+                   ]
+                  ],
+                  "out": [
+                   "B",
+                   "T",
+                   3072
+                  ],
+                  "children": [],
+                  "total": 0,
+                  "repeat": 1,
+                  "label": "GELU, tanh approximation"
+                 },
+                 {
+                  "op": "torch.tanh",
+                  "id": 51,
+                  "line": 34,
+                  "code": "return 0.5 * x * (1 + torch.tanh(self._sqrt_two_over_pi * (x + 0.044715 * torch.pow(x, 3))))",
+                  "uses": [],
+                  "inputs": [
+                   {
+                    "from": 50
+                   }
+                  ],
+                  "in": [
+                   [
+                    "B",
+                    "T",
+                    3072
+                   ]
+                  ],
+                  "out": [
+                   "B",
+                   "T",
+                   3072
+                  ],
+                  "children": [],
+                  "total": 0,
+                  "repeat": 1,
+                  "label": "GELU, tanh approximation"
+                 },
+                 {
+                  "op": "torch.Tensor.add",
+                  "id": 52,
+                  "line": 34,
+                  "code": "return 0.5 * x * (1 + torch.tanh(self._sqrt_two_over_pi * (x + 0.044715 * torch.pow(x, 3))))",
+                  "uses": [],
+                  "inputs": [
+                   {
+                    "from": 51
+                   }
+                  ],
+                  "in": [
+                   [
+                    "B",
+                    "T",
+                    3072
+                   ]
+                  ],
+                  "out": [
+                   "B",
+                   "T",
+                   3072
+                  ],
+                  "children": [],
+                  "total": 0,
+                  "repeat": 1,
+                  "label": "GELU, tanh approximation"
+                 },
+                 {
+                  "op": "torch.Tensor.mul",
+                  "id": 53,
+                  "line": 34,
+                  "code": "return 0.5 * x * (1 + torch.tanh(self._sqrt_two_over_pi * (x + 0.044715 * torch.pow(x, 3))))",
+                  "uses": [],
+                  "inputs": [
+                   {
+                    "from": 46
+                   },
+                   {
+                    "from": 52
+                   }
+                  ],
+                  "returned_by": 45,
+                  "in": [
+                   [
+                    "B",
+                    "T",
+                    3072
+                   ],
+                   [
+                    "B",
+                    "T",
+                    3072
+                   ]
+                  ],
+                  "out": [
+                   "B",
+                   "T",
+                   3072
+                  ],
+                  "children": [],
+                  "total": 0,
+                  "repeat": 1,
+                  "label": "GELU, tanh approximation"
                  }
                 ],
-                "returned_by": 45,
-                "in": [
-                 [
-                  "B",
-                  "T",
-                  3072
-                 ],
-                 [
-                  "B",
-                  "T",
-                  3072
-                 ]
-                ],
-                "out": [
-                 "B",
-                 "T",
-                 3072
-                ],
-                "children": [],
                 "total": 0,
                 "repeat": 1,
-                "label": "GELU, tanh approximation"
+                "returned_by": 45
                }
               ],
               "class": "llm_training.model.gpt2.layers.GELU",
@@ -1975,140 +2196,196 @@ window.ARCHITECTURE = {
         "label": "Variance over channels"
        },
        {
-        "op": "torch.Tensor.sub",
-        "id": 610,
-        "line": 20,
-        "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
-        "uses": [],
+        "group": true,
+        "label": "Normalize",
+        "id": 623,
+        "in": [
+         [
+          "B",
+          "T",
+          768
+         ],
+         [
+          "B",
+          "T",
+          1
+         ],
+         [
+          "B",
+          "T",
+          1
+         ]
+        ],
+        "out": [
+         "B",
+         "T",
+         768
+        ],
         "inputs": [
          {
           "from": 6
          },
          {
           "from": 608
-         }
-        ],
-        "in": [
-         [
-          "B",
-          "T",
-          768
-         ],
-         [
-          "B",
-          "T",
-          1
-         ]
-        ],
-        "out": [
-         "B",
-         "T",
-         768
-        ],
-        "children": [],
-        "total": 0,
-        "repeat": 1,
-        "label": "Normalize"
-       },
-       {
-        "op": "torch.Tensor.add",
-        "id": 611,
-        "line": 20,
-        "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
-        "uses": [],
-        "inputs": [
+         },
          {
           "from": 609
          }
         ],
-        "in": [
-         [
-          "B",
-          "T",
-          1
-         ]
-        ],
-        "out": [
-         "B",
-         "T",
-         1
-        ],
-        "children": [],
-        "total": 0,
-        "repeat": 1,
-        "label": "Normalize"
-       },
-       {
-        "op": "torch.sqrt",
-        "id": 612,
-        "line": 20,
-        "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
-        "uses": [],
-        "inputs": [
+        "children": [
          {
-          "from": 611
-         }
-        ],
-        "in": [
-         [
-          "B",
-          "T",
-          1
-         ]
-        ],
-        "out": [
-         "B",
-         "T",
-         1
-        ],
-        "children": [],
-        "total": 0,
-        "repeat": 1,
-        "label": "Normalize"
-       },
-       {
-        "op": "torch.Tensor.div",
-        "id": 613,
-        "line": 20,
-        "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
-        "uses": [],
-        "inputs": [
-         {
-          "from": 610
+          "op": "torch.Tensor.sub",
+          "id": 610,
+          "line": 20,
+          "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
+          "uses": [],
+          "inputs": [
+           {
+            "from": 6
+           },
+           {
+            "from": 608
+           }
+          ],
+          "in": [
+           [
+            "B",
+            "T",
+            768
+           ],
+           [
+            "B",
+            "T",
+            1
+           ]
+          ],
+          "out": [
+           "B",
+           "T",
+           768
+          ],
+          "children": [],
+          "total": 0,
+          "repeat": 1,
+          "label": "Normalize"
          },
          {
-          "from": 612
+          "op": "torch.Tensor.add",
+          "id": 611,
+          "line": 20,
+          "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
+          "uses": [],
+          "inputs": [
+           {
+            "from": 609
+           }
+          ],
+          "in": [
+           [
+            "B",
+            "T",
+            1
+           ]
+          ],
+          "out": [
+           "B",
+           "T",
+           1
+          ],
+          "children": [],
+          "total": 0,
+          "repeat": 1,
+          "label": "Normalize"
+         },
+         {
+          "op": "torch.sqrt",
+          "id": 612,
+          "line": 20,
+          "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
+          "uses": [],
+          "inputs": [
+           {
+            "from": 611
+           }
+          ],
+          "in": [
+           [
+            "B",
+            "T",
+            1
+           ]
+          ],
+          "out": [
+           "B",
+           "T",
+           1
+          ],
+          "children": [],
+          "total": 0,
+          "repeat": 1,
+          "label": "Normalize"
+         },
+         {
+          "op": "torch.Tensor.div",
+          "id": 613,
+          "line": 20,
+          "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
+          "uses": [],
+          "inputs": [
+           {
+            "from": 610
+           },
+           {
+            "from": 612
+           }
+          ],
+          "in": [
+           [
+            "B",
+            "T",
+            768
+           ],
+           [
+            "B",
+            "T",
+            1
+           ]
+          ],
+          "out": [
+           "B",
+           "T",
+           768
+          ],
+          "children": [],
+          "total": 0,
+          "repeat": 1,
+          "label": "Normalize"
          }
         ],
+        "total": 0,
+        "repeat": 1
+       },
+       {
+        "group": true,
+        "label": "Learned scale and shift",
+        "id": 624,
         "in": [
+         [
+          768
+         ],
          [
           "B",
           "T",
           768
          ],
          [
-          "B",
-          "T",
-          1
+          768
          ]
         ],
         "out": [
          "B",
          "T",
          768
-        ],
-        "children": [],
-        "total": 0,
-        "repeat": 1,
-        "label": "Normalize"
-       },
-       {
-        "op": "torch.Tensor.mul",
-        "id": 614,
-        "line": 21,
-        "code": "return self.scale * norm_x + self.shift",
-        "uses": [
-         "scale"
         ],
         "inputs": [
          {
@@ -2116,64 +2393,89 @@ window.ARCHITECTURE = {
          },
          {
           "from": 613
-         }
-        ],
-        "in": [
-         [
-          768
-         ],
-         [
-          "B",
-          "T",
-          768
-         ]
-        ],
-        "out": [
-         "B",
-         "T",
-         768
-        ],
-        "children": [],
-        "total": 0,
-        "repeat": 1,
-        "label": "Learned scale and shift"
-       },
-       {
-        "op": "torch.Tensor.add",
-        "id": 615,
-        "line": 21,
-        "code": "return self.scale * norm_x + self.shift",
-        "uses": [
-         "shift"
-        ],
-        "inputs": [
-         {
-          "from": 614
          },
          {
           "tensor": "final_norm.shift"
          }
         ],
-        "returned_by": 607,
-        "in": [
-         [
-          "B",
-          "T",
-          768
-         ],
-         [
-          768
-         ]
+        "children": [
+         {
+          "op": "torch.Tensor.mul",
+          "id": 614,
+          "line": 21,
+          "code": "return self.scale * norm_x + self.shift",
+          "uses": [
+           "scale"
+          ],
+          "inputs": [
+           {
+            "tensor": "final_norm.scale"
+           },
+           {
+            "from": 613
+           }
+          ],
+          "in": [
+           [
+            768
+           ],
+           [
+            "B",
+            "T",
+            768
+           ]
+          ],
+          "out": [
+           "B",
+           "T",
+           768
+          ],
+          "children": [],
+          "total": 0,
+          "repeat": 1,
+          "label": "Learned scale and shift"
+         },
+         {
+          "op": "torch.Tensor.add",
+          "id": 615,
+          "line": 21,
+          "code": "return self.scale * norm_x + self.shift",
+          "uses": [
+           "shift"
+          ],
+          "inputs": [
+           {
+            "from": 614
+           },
+           {
+            "tensor": "final_norm.shift"
+           }
+          ],
+          "returned_by": 607,
+          "in": [
+           [
+            "B",
+            "T",
+            768
+           ],
+           [
+            768
+           ]
+          ],
+          "out": [
+           "B",
+           "T",
+           768
+          ],
+          "children": [],
+          "total": 0,
+          "repeat": 1,
+          "label": "Learned scale and shift"
+         }
         ],
-        "out": [
-         "B",
-         "T",
-         768
-        ],
-        "children": [],
         "total": 0,
         "repeat": 1,
-        "label": "Learned scale and shift"
+        "returned_by": 607
        }
       ],
       "class": "llm_training.model.gpt2.layers.LayerNorm",
@@ -2322,75 +2624,92 @@ window.ARCHITECTURE = {
       "role": "llm_training.model.qwen3.model.Qwen3Model.tok_emb"
      },
      {
-      "op": "torch.ones",
-      "id": 2,
-      "line": 81,
-      "code": "torch.ones(num_tokens, num_tokens, device=x.device, dtype=torch.bool), diagonal=1",
-      "uses": [],
-      "inputs": [],
+      "group": true,
+      "label": "Causal mask",
+      "id": 2563,
       "in": [],
       "out": [
-       "T",
-       "T"
-      ],
-      "children": [],
-      "total": 0,
-      "repeat": 1,
-      "label": "Causal mask"
-     },
-     {
-      "op": "torch.triu",
-      "id": 3,
-      "line": 80,
-      "code": "mask = torch.triu(",
-      "uses": [],
-      "inputs": [
-       {
-        "from": 2
-       }
-      ],
-      "in": [
-       [
-        "T",
-        "T"
-       ]
-      ],
-      "out": [
-       "T",
-       "T"
-      ],
-      "children": [],
-      "total": 0,
-      "repeat": 1,
-      "label": "Causal mask"
-     },
-     {
-      "op": "torch.Tensor.__getitem__",
-      "id": 4,
-      "line": 92,
-      "code": "mask = mask[None, None, :, :]  # broadcast mask",
-      "uses": [],
-      "inputs": [
-       {
-        "from": 3
-       }
-      ],
-      "in": [
-       [
-        "T",
-        "T"
-       ]
-      ],
-      "out": [
        1,
        1,
        "T",
        "T"
       ],
-      "children": [],
+      "inputs": [],
+      "children": [
+       {
+        "op": "torch.ones",
+        "id": 2,
+        "line": 81,
+        "code": "torch.ones(num_tokens, num_tokens, device=x.device, dtype=torch.bool), diagonal=1",
+        "uses": [],
+        "inputs": [],
+        "in": [],
+        "out": [
+         "T",
+         "T"
+        ],
+        "children": [],
+        "total": 0,
+        "repeat": 1,
+        "label": "Causal mask"
+       },
+       {
+        "op": "torch.triu",
+        "id": 3,
+        "line": 80,
+        "code": "mask = torch.triu(",
+        "uses": [],
+        "inputs": [
+         {
+          "from": 2
+         }
+        ],
+        "in": [
+         [
+          "T",
+          "T"
+         ]
+        ],
+        "out": [
+         "T",
+         "T"
+        ],
+        "children": [],
+        "total": 0,
+        "repeat": 1,
+        "label": "Causal mask"
+       },
+       {
+        "op": "torch.Tensor.__getitem__",
+        "id": 4,
+        "line": 92,
+        "code": "mask = mask[None, None, :, :]  # broadcast mask",
+        "uses": [],
+        "inputs": [
+         {
+          "from": 3
+         }
+        ],
+        "in": [
+         [
+          "T",
+          "T"
+         ]
+        ],
+        "out": [
+         1,
+         1,
+         "T",
+         "T"
+        ],
+        "children": [],
+        "total": 0,
+        "repeat": 1,
+        "label": "Causal mask"
+       }
+      ],
       "total": 0,
-      "repeat": 1,
-      "label": "Causal mask"
+      "repeat": 1
      },
      {
       "module": "trf_blocks.0",
@@ -2477,45 +2796,9 @@ window.ARCHITECTURE = {
           "label": "Compute in float32"
          },
          {
-          "op": "torch.Tensor.pow",
-          "id": 8,
-          "line": 38,
-          "code": "variance = x.pow(2).mean(dim=-1, keepdim=True)",
-          "uses": [],
-          "inputs": [
-           {
-            "from": 1,
-            "first_copy": true
-           }
-          ],
-          "in": [
-           [
-            "B",
-            "T",
-            1024
-           ]
-          ],
-          "out": [
-           "B",
-           "T",
-           1024
-          ],
-          "children": [],
-          "total": 0,
-          "repeat": 1,
-          "label": "Mean square over channels"
-         },
-         {
-          "op": "torch.Tensor.mean",
-          "id": 9,
-          "line": 38,
-          "code": "variance = x.pow(2).mean(dim=-1, keepdim=True)",
-          "uses": [],
-          "inputs": [
-           {
-            "from": 8
-           }
-          ],
+          "group": true,
+          "label": "Mean square over channels",
+          "id": 2564,
           "in": [
            [
             "B",
@@ -2528,92 +2811,88 @@ window.ARCHITECTURE = {
            "T",
            1
           ],
-          "children": [],
-          "total": 0,
-          "repeat": 1,
-          "label": "Mean square over channels"
-         },
-         {
-          "op": "torch.Tensor.add",
-          "id": 10,
-          "line": 39,
-          "code": "norm_x = x * torch.rsqrt(variance + self.eps)",
-          "uses": [],
-          "inputs": [
-           {
-            "from": 9
-           }
-          ],
-          "in": [
-           [
-            "B",
-            "T",
-            1
-           ]
-          ],
-          "out": [
-           "B",
-           "T",
-           1
-          ],
-          "children": [],
-          "total": 0,
-          "repeat": 1,
-          "label": "Divide by the root mean square"
-         },
-         {
-          "op": "torch.rsqrt",
-          "id": 11,
-          "line": 39,
-          "code": "norm_x = x * torch.rsqrt(variance + self.eps)",
-          "uses": [],
-          "inputs": [
-           {
-            "from": 10
-           }
-          ],
-          "in": [
-           [
-            "B",
-            "T",
-            1
-           ]
-          ],
-          "out": [
-           "B",
-           "T",
-           1
-          ],
-          "children": [],
-          "total": 0,
-          "repeat": 1,
-          "label": "Divide by the root mean square"
-         },
-         {
-          "op": "torch.Tensor.mul",
-          "id": 12,
-          "line": 39,
-          "code": "norm_x = x * torch.rsqrt(variance + self.eps)",
-          "uses": [],
           "inputs": [
            {
             "from": 1,
             "first_copy": true
+           }
+          ],
+          "children": [
+           {
+            "op": "torch.Tensor.pow",
+            "id": 8,
+            "line": 38,
+            "code": "variance = x.pow(2).mean(dim=-1, keepdim=True)",
+            "uses": [],
+            "inputs": [
+             {
+              "from": 1,
+              "first_copy": true
+             }
+            ],
+            "in": [
+             [
+              "B",
+              "T",
+              1024
+             ]
+            ],
+            "out": [
+             "B",
+             "T",
+             1024
+            ],
+            "children": [],
+            "total": 0,
+            "repeat": 1,
+            "label": "Mean square over channels"
            },
            {
-            "from": 11
+            "op": "torch.Tensor.mean",
+            "id": 9,
+            "line": 38,
+            "code": "variance = x.pow(2).mean(dim=-1, keepdim=True)",
+            "uses": [],
+            "inputs": [
+             {
+              "from": 8
+             }
+            ],
+            "in": [
+             [
+              "B",
+              "T",
+              1024
+             ]
+            ],
+            "out": [
+             "B",
+             "T",
+             1
+            ],
+            "children": [],
+            "total": 0,
+            "repeat": 1,
+            "label": "Mean square over channels"
            }
           ],
+          "total": 0,
+          "repeat": 1
+         },
+         {
+          "group": true,
+          "label": "Divide by the root mean square",
+          "id": 2565,
           "in": [
            [
             "B",
             "T",
-            1024
+            1
            ],
            [
             "B",
             "T",
-            1
+            1024
            ]
           ],
           "out": [
@@ -2621,10 +2900,112 @@ window.ARCHITECTURE = {
            "T",
            1024
           ],
-          "children": [],
+          "inputs": [
+           {
+            "from": 9
+           },
+           {
+            "from": 1,
+            "first_copy": true
+           }
+          ],
+          "children": [
+           {
+            "op": "torch.Tensor.add",
+            "id": 10,
+            "line": 39,
+            "code": "norm_x = x * torch.rsqrt(variance + self.eps)",
+            "uses": [],
+            "inputs": [
+             {
+              "from": 9
+             }
+            ],
+            "in": [
+             [
+              "B",
+              "T",
+              1
+             ]
+            ],
+            "out": [
+             "B",
+             "T",
+             1
+            ],
+            "children": [],
+            "total": 0,
+            "repeat": 1,
+            "label": "Divide by the root mean square"
+           },
+           {
+            "op": "torch.rsqrt",
+            "id": 11,
+            "line": 39,
+            "code": "norm_x = x * torch.rsqrt(variance + self.eps)",
+            "uses": [],
+            "inputs": [
+             {
+              "from": 10
+             }
+            ],
+            "in": [
+             [
+              "B",
+              "T",
+              1
+             ]
+            ],
+            "out": [
+             "B",
+             "T",
+             1
+            ],
+            "children": [],
+            "total": 0,
+            "repeat": 1,
+            "label": "Divide by the root mean square"
+           },
+           {
+            "op": "torch.Tensor.mul",
+            "id": 12,
+            "line": 39,
+            "code": "norm_x = x * torch.rsqrt(variance + self.eps)",
+            "uses": [],
+            "inputs": [
+             {
+              "from": 1,
+              "first_copy": true
+             },
+             {
+              "from": 11
+             }
+            ],
+            "in": [
+             [
+              "B",
+              "T",
+              1024
+             ],
+             [
+              "B",
+              "T",
+              1
+             ]
+            ],
+            "out": [
+             "B",
+             "T",
+             1024
+            ],
+            "children": [],
+            "total": 0,
+            "repeat": 1,
+            "label": "Divide by the root mean square"
+           }
+          ],
           "total": 0,
-          "repeat": 1,
-          "label": "Divide by the root mean square"
+          "repeat": 1
          },
          {
           "op": "torch.Tensor.mul",
@@ -2850,16 +3231,9 @@ window.ARCHITECTURE = {
           "role": "llm_training.model.qwen3.attention.GroupedQueryAttention.W_value"
          },
          {
-          "op": "torch.Tensor.view",
-          "id": 19,
-          "line": 56,
-          "code": "queries = queries.view(b, num_tokens, self.num_heads, self.head_dim).transpose(1, 2)",
-          "uses": [],
-          "inputs": [
-           {
-            "from": 16
-           }
-          ],
+          "group": true,
+          "label": "Split queries into heads",
+          "id": 2566,
           "in": [
            [
             "B",
@@ -2869,56 +3243,169 @@ window.ARCHITECTURE = {
           ],
           "out": [
            "B",
-           "T",
            16,
+           "T",
            128
           ],
-          "children": [],
-          "total": 0,
-          "repeat": 1,
-          "label": "Split queries into heads"
-         },
-         {
-          "op": "torch.Tensor.transpose",
-          "id": 20,
-          "line": 56,
-          "code": "queries = queries.view(b, num_tokens, self.num_heads, self.head_dim).transpose(1, 2)",
-          "uses": [],
           "inputs": [
            {
-            "from": 19
+            "from": 16
            }
           ],
+          "children": [
+           {
+            "op": "torch.Tensor.view",
+            "id": 19,
+            "line": 56,
+            "code": "queries = queries.view(b, num_tokens, self.num_heads, self.head_dim).transpose(1, 2)",
+            "uses": [],
+            "inputs": [
+             {
+              "from": 16
+             }
+            ],
+            "in": [
+             [
+              "B",
+              "T",
+              2048
+             ]
+            ],
+            "out": [
+             "B",
+             "T",
+             16,
+             128
+            ],
+            "children": [],
+            "total": 0,
+            "repeat": 1,
+            "label": "Split queries into heads"
+           },
+           {
+            "op": "torch.Tensor.transpose",
+            "id": 20,
+            "line": 56,
+            "code": "queries = queries.view(b, num_tokens, self.num_heads, self.head_dim).transpose(1, 2)",
+            "uses": [],
+            "inputs": [
+             {
+              "from": 19
+             }
+            ],
+            "in": [
+             [
+              "B",
+              "T",
+              16,
+              128
+             ]
+            ],
+            "out": [
+             "B",
+             16,
+             "T",
+             128
+            ],
+            "children": [],
+            "total": 0,
+            "repeat": 1,
+            "label": "Split queries into heads"
+           }
+          ],
+          "total": 0,
+          "repeat": 1
+         },
+         {
+          "group": true,
+          "label": "Split keys into heads",
+          "id": 2567,
           "in": [
            [
             "B",
             "T",
-            16,
-            128
+            1024
            ]
           ],
           "out": [
            "B",
-           16,
+           8,
            "T",
            128
           ],
-          "children": [],
-          "total": 0,
-          "repeat": 1,
-          "label": "Split queries into heads"
-         },
-         {
-          "op": "torch.Tensor.view",
-          "id": 21,
-          "line": 57,
-          "code": "keys_new = keys.view(b, num_tokens, self.num_kv_groups, self.head_dim).transpose(1, 2)",
-          "uses": [],
           "inputs": [
            {
             "from": 17
            }
           ],
+          "children": [
+           {
+            "op": "torch.Tensor.view",
+            "id": 21,
+            "line": 57,
+            "code": "keys_new = keys.view(b, num_tokens, self.num_kv_groups, self.head_dim).transpose(1, 2)",
+            "uses": [],
+            "inputs": [
+             {
+              "from": 17
+             }
+            ],
+            "in": [
+             [
+              "B",
+              "T",
+              1024
+             ]
+            ],
+            "out": [
+             "B",
+             "T",
+             8,
+             128
+            ],
+            "children": [],
+            "total": 0,
+            "repeat": 1,
+            "label": "Split keys into heads"
+           },
+           {
+            "op": "torch.Tensor.transpose",
+            "id": 22,
+            "line": 57,
+            "code": "keys_new = keys.view(b, num_tokens, self.num_kv_groups, self.head_dim).transpose(1, 2)",
+            "uses": [],
+            "inputs": [
+             {
+              "from": 21
+             }
+            ],
+            "in": [
+             [
+              "B",
+              "T",
+              8,
+              128
+             ]
+            ],
+            "out": [
+             "B",
+             8,
+             "T",
+             128
+            ],
+            "children": [],
+            "total": 0,
+            "repeat": 1,
+            "label": "Split keys into heads"
+           }
+          ],
+          "total": 0,
+          "repeat": 1
+         },
+         {
+          "group": true,
+          "label": "Split values into heads",
+          "id": 2568,
           "in": [
            [
             "B",
@@ -2928,104 +3415,80 @@ window.ARCHITECTURE = {
           ],
           "out": [
            "B",
-           "T",
-           8,
-           128
-          ],
-          "children": [],
-          "total": 0,
-          "repeat": 1,
-          "label": "Split keys into heads"
-         },
-         {
-          "op": "torch.Tensor.transpose",
-          "id": 22,
-          "line": 57,
-          "code": "keys_new = keys.view(b, num_tokens, self.num_kv_groups, self.head_dim).transpose(1, 2)",
-          "uses": [],
-          "inputs": [
-           {
-            "from": 21
-           }
-          ],
-          "in": [
-           [
-            "B",
-            "T",
-            8,
-            128
-           ]
-          ],
-          "out": [
-           "B",
            8,
            "T",
            128
           ],
-          "children": [],
-          "total": 0,
-          "repeat": 1,
-          "label": "Split keys into heads"
-         },
-         {
-          "op": "torch.Tensor.view",
-          "id": 23,
-          "line": 58,
-          "code": "values_new = values.view(b, num_tokens, self.num_kv_groups, self.head_dim).transpose(1, 2)",
-          "uses": [],
           "inputs": [
            {
             "from": 18
            }
           ],
-          "in": [
-           [
-            "B",
-            "T",
-            1024
-           ]
-          ],
-          "out": [
-           "B",
-           "T",
-           8,
-           128
-          ],
-          "children": [],
-          "total": 0,
-          "repeat": 1,
-          "label": "Split values into heads"
-         },
-         {
-          "op": "torch.Tensor.transpose",
-          "id": 24,
-          "line": 58,
-          "code": "values_new = values.view(b, num_tokens, self.num_kv_groups, self.head_dim).transpose(1, 2)",
-          "uses": [],
-          "inputs": [
+          "children": [
            {
-            "from": 23
+            "op": "torch.Tensor.view",
+            "id": 23,
+            "line": 58,
+            "code": "values_new = values.view(b, num_tokens, self.num_kv_groups, self.head_dim).transpose(1, 2)",
+            "uses": [],
+            "inputs": [
+             {
+              "from": 18
+             }
+            ],
+            "in": [
+             [
+              "B",
+              "T",
+              1024
+             ]
+            ],
+            "out": [
+             "B",
+             "T",
+             8,
+             128
+            ],
+            "children": [],
+            "total": 0,
+            "repeat": 1,
+            "label": "Split values into heads"
+           },
+           {
+            "op": "torch.Tensor.transpose",
+            "id": 24,
+            "line": 58,
+            "code": "values_new = values.view(b, num_tokens, self.num_kv_groups, self.head_dim).transpose(1, 2)",
+            "uses": [],
+            "inputs": [
+             {
+              "from": 23
+             }
+            ],
+            "returned_by": 15,
+            "in": [
+             [
+              "B",
+              "T",
+              8,
+              128
+             ]
+            ],
+            "out": [
+             "B",
+             8,
+             "T",
+             128
+            ],
+            "children": [],
+            "total": 0,
+            "repeat": 1,
+            "label": "Split values into heads"
            }
           ],
-          "returned_by": 15,
-          "in": [
-           [
-            "B",
-            "T",
-            8,
-            128
-           ]
-          ],
-          "out": [
-           "B",
-           8,
-           "T",
-           128
-          ],
-          "children": [],
           "total": 0,
           "repeat": 1,
-          "label": "Split values into heads"
+          "returned_by": 15
          },
          {
           "module": "trf_blocks.0.att.q_norm",
@@ -3081,46 +3544,9 @@ window.ARCHITECTURE = {
             "label": "Compute in float32"
            },
            {
-            "op": "torch.Tensor.pow",
-            "id": 27,
-            "line": 38,
-            "code": "variance = x.pow(2).mean(dim=-1, keepdim=True)",
-            "uses": [],
-            "inputs": [
-             {
-              "from": 20
-             }
-            ],
-            "in": [
-             [
-              "B",
-              16,
-              "T",
-              128
-             ]
-            ],
-            "out": [
-             "B",
-             16,
-             "T",
-             128
-            ],
-            "children": [],
-            "total": 0,
-            "repeat": 1,
-            "label": "Mean square over channels"
-           },
-           {
-            "op": "torch.Tensor.mean",
-            "id": 28,
-            "line": 38,
-            "code": "variance = x.pow(2).mean(dim=-1, keepdim=True)",
-            "uses": [],
-            "inputs": [
-             {
-              "from": 27
-             }
-            ],
+            "group": true,
+            "label": "Mean square over channels",
+            "id": 2570,
             "in": [
              [
               "B",
@@ -3135,97 +3561,92 @@ window.ARCHITECTURE = {
              "T",
              1
             ],
-            "children": [],
-            "total": 0,
-            "repeat": 1,
-            "label": "Mean square over channels"
-           },
-           {
-            "op": "torch.Tensor.add",
-            "id": 29,
-            "line": 39,
-            "code": "norm_x = x * torch.rsqrt(variance + self.eps)",
-            "uses": [],
-            "inputs": [
-             {
-              "from": 28
-             }
-            ],
-            "in": [
-             [
-              "B",
-              16,
-              "T",
-              1
-             ]
-            ],
-            "out": [
-             "B",
-             16,
-             "T",
-             1
-            ],
-            "children": [],
-            "total": 0,
-            "repeat": 1,
-            "label": "Divide by the root mean square"
-           },
-           {
-            "op": "torch.rsqrt",
-            "id": 30,
-            "line": 39,
-            "code": "norm_x = x * torch.rsqrt(variance + self.eps)",
-            "uses": [],
-            "inputs": [
-             {
-              "from": 29
-             }
-            ],
-            "in": [
-             [
-              "B",
-              16,
-              "T",
-              1
-             ]
-            ],
-            "out": [
-             "B",
-             16,
-             "T",
-             1
-            ],
-            "children": [],
-            "total": 0,
-            "repeat": 1,
-            "label": "Divide by the root mean square"
-           },
-           {
-            "op": "torch.Tensor.mul",
-            "id": 31,
-            "line": 39,
-            "code": "norm_x = x * torch.rsqrt(variance + self.eps)",
-            "uses": [],
             "inputs": [
              {
               "from": 20
+             }
+            ],
+            "children": [
+             {
+              "op": "torch.Tensor.pow",
+              "id": 27,
+              "line": 38,
+              "code": "variance = x.pow(2).mean(dim=-1, keepdim=True)",
+              "uses": [],
+              "inputs": [
+               {
+                "from": 20
+               }
+              ],
+              "in": [
+               [
+                "B",
+                16,
+                "T",
+                128
+               ]
+              ],
+              "out": [
+               "B",
+               16,
+               "T",
+               128
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Mean square over channels"
              },
              {
-              "from": 30
+              "op": "torch.Tensor.mean",
+              "id": 28,
+              "line": 38,
+              "code": "variance = x.pow(2).mean(dim=-1, keepdim=True)",
+              "uses": [],
+              "inputs": [
+               {
+                "from": 27
+               }
+              ],
+              "in": [
+               [
+                "B",
+                16,
+                "T",
+                128
+               ]
+              ],
+              "out": [
+               "B",
+               16,
+               "T",
+               1
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Mean square over channels"
              }
             ],
+            "total": 0,
+            "repeat": 1
+           },
+           {
+            "group": true,
+            "label": "Divide by the root mean square",
+            "id": 2571,
             "in": [
              [
               "B",
               16,
               "T",
-              128
+              1
              ],
              [
               "B",
               16,
               "T",
-              1
+              128
              ]
             ],
             "out": [
@@ -3234,10 +3655,117 @@ window.ARCHITECTURE = {
              "T",
              128
             ],
-            "children": [],
+            "inputs": [
+             {
+              "from": 28
+             },
+             {
+              "from": 20
+             }
+            ],
+            "children": [
+             {
+              "op": "torch.Tensor.add",
+              "id": 29,
+              "line": 39,
+              "code": "norm_x = x * torch.rsqrt(variance + self.eps)",
+              "uses": [],
+              "inputs": [
+               {
+                "from": 28
+               }
+              ],
+              "in": [
+               [
+                "B",
+                16,
+                "T",
+                1
+               ]
+              ],
+              "out": [
+               "B",
+               16,
+               "T",
+               1
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Divide by the root mean square"
+             },
+             {
+              "op": "torch.rsqrt",
+              "id": 30,
+              "line": 39,
+              "code": "norm_x = x * torch.rsqrt(variance + self.eps)",
+              "uses": [],
+              "inputs": [
+               {
+                "from": 29
+               }
+              ],
+              "in": [
+               [
+                "B",
+                16,
+                "T",
+                1
+               ]
+              ],
+              "out": [
+               "B",
+               16,
+               "T",
+               1
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Divide by the root mean square"
+             },
+             {
+              "op": "torch.Tensor.mul",
+              "id": 31,
+              "line": 39,
+              "code": "norm_x = x * torch.rsqrt(variance + self.eps)",
+              "uses": [],
+              "inputs": [
+               {
+                "from": 20
+               },
+               {
+                "from": 30
+               }
+              ],
+              "in": [
+               [
+                "B",
+                16,
+                "T",
+                128
+               ],
+               [
+                "B",
+                16,
+                "T",
+                1
+               ]
+              ],
+              "out": [
+               "B",
+               16,
+               "T",
+               128
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Divide by the root mean square"
+             }
+            ],
             "total": 0,
-            "repeat": 1,
-            "label": "Divide by the root mean square"
+            "repeat": 1
            },
            {
             "op": "torch.Tensor.mul",
@@ -3379,46 +3907,9 @@ window.ARCHITECTURE = {
             "label": "Compute in float32"
            },
            {
-            "op": "torch.Tensor.pow",
-            "id": 36,
-            "line": 38,
-            "code": "variance = x.pow(2).mean(dim=-1, keepdim=True)",
-            "uses": [],
-            "inputs": [
-             {
-              "from": 22
-             }
-            ],
-            "in": [
-             [
-              "B",
-              8,
-              "T",
-              128
-             ]
-            ],
-            "out": [
-             "B",
-             8,
-             "T",
-             128
-            ],
-            "children": [],
-            "total": 0,
-            "repeat": 1,
-            "label": "Mean square over channels"
-           },
-           {
-            "op": "torch.Tensor.mean",
-            "id": 37,
-            "line": 38,
-            "code": "variance = x.pow(2).mean(dim=-1, keepdim=True)",
-            "uses": [],
-            "inputs": [
-             {
-              "from": 36
-             }
-            ],
+            "group": true,
+            "label": "Mean square over channels",
+            "id": 2572,
             "in": [
              [
               "B",
@@ -3433,97 +3924,92 @@ window.ARCHITECTURE = {
              "T",
              1
             ],
-            "children": [],
-            "total": 0,
-            "repeat": 1,
-            "label": "Mean square over channels"
-           },
-           {
-            "op": "torch.Tensor.add",
-            "id": 38,
-            "line": 39,
-            "code": "norm_x = x * torch.rsqrt(variance + self.eps)",
-            "uses": [],
-            "inputs": [
-             {
-              "from": 37
-             }
-            ],
-            "in": [
-             [
-              "B",
-              8,
-              "T",
-              1
-             ]
-            ],
-            "out": [
-             "B",
-             8,
-             "T",
-             1
-            ],
-            "children": [],
-            "total": 0,
-            "repeat": 1,
-            "label": "Divide by the root mean square"
-           },
-           {
-            "op": "torch.rsqrt",
-            "id": 39,
-            "line": 39,
-            "code": "norm_x = x * torch.rsqrt(variance + self.eps)",
-            "uses": [],
-            "inputs": [
-             {
-              "from": 38
-             }
-            ],
-            "in": [
-             [
-              "B",
-              8,
-              "T",
-              1
-             ]
-            ],
-            "out": [
-             "B",
-             8,
-             "T",
-             1
-            ],
-            "children": [],
-            "total": 0,
-            "repeat": 1,
-            "label": "Divide by the root mean square"
-           },
-           {
-            "op": "torch.Tensor.mul",
-            "id": 40,
-            "line": 39,
-            "code": "norm_x = x * torch.rsqrt(variance + self.eps)",
-            "uses": [],
             "inputs": [
              {
               "from": 22
+             }
+            ],
+            "children": [
+             {
+              "op": "torch.Tensor.pow",
+              "id": 36,
+              "line": 38,
+              "code": "variance = x.pow(2).mean(dim=-1, keepdim=True)",
+              "uses": [],
+              "inputs": [
+               {
+                "from": 22
+               }
+              ],
+              "in": [
+               [
+                "B",
+                8,
+                "T",
+                128
+               ]
+              ],
+              "out": [
+               "B",
+               8,
+               "T",
+               128
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Mean square over channels"
              },
              {
-              "from": 39
+              "op": "torch.Tensor.mean",
+              "id": 37,
+              "line": 38,
+              "code": "variance = x.pow(2).mean(dim=-1, keepdim=True)",
+              "uses": [],
+              "inputs": [
+               {
+                "from": 36
+               }
+              ],
+              "in": [
+               [
+                "B",
+                8,
+                "T",
+                128
+               ]
+              ],
+              "out": [
+               "B",
+               8,
+               "T",
+               1
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Mean square over channels"
              }
             ],
+            "total": 0,
+            "repeat": 1
+           },
+           {
+            "group": true,
+            "label": "Divide by the root mean square",
+            "id": 2573,
             "in": [
              [
               "B",
               8,
               "T",
-              128
+              1
              ],
              [
               "B",
               8,
               "T",
-              1
+              128
              ]
             ],
             "out": [
@@ -3532,10 +4018,117 @@ window.ARCHITECTURE = {
              "T",
              128
             ],
-            "children": [],
+            "inputs": [
+             {
+              "from": 37
+             },
+             {
+              "from": 22
+             }
+            ],
+            "children": [
+             {
+              "op": "torch.Tensor.add",
+              "id": 38,
+              "line": 39,
+              "code": "norm_x = x * torch.rsqrt(variance + self.eps)",
+              "uses": [],
+              "inputs": [
+               {
+                "from": 37
+               }
+              ],
+              "in": [
+               [
+                "B",
+                8,
+                "T",
+                1
+               ]
+              ],
+              "out": [
+               "B",
+               8,
+               "T",
+               1
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Divide by the root mean square"
+             },
+             {
+              "op": "torch.rsqrt",
+              "id": 39,
+              "line": 39,
+              "code": "norm_x = x * torch.rsqrt(variance + self.eps)",
+              "uses": [],
+              "inputs": [
+               {
+                "from": 38
+               }
+              ],
+              "in": [
+               [
+                "B",
+                8,
+                "T",
+                1
+               ]
+              ],
+              "out": [
+               "B",
+               8,
+               "T",
+               1
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Divide by the root mean square"
+             },
+             {
+              "op": "torch.Tensor.mul",
+              "id": 40,
+              "line": 39,
+              "code": "norm_x = x * torch.rsqrt(variance + self.eps)",
+              "uses": [],
+              "inputs": [
+               {
+                "from": 22
+               },
+               {
+                "from": 39
+               }
+              ],
+              "in": [
+               [
+                "B",
+                8,
+                "T",
+                128
+               ],
+               [
+                "B",
+                8,
+                "T",
+                1
+               ]
+              ],
+              "out": [
+               "B",
+               8,
+               "T",
+               128
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Divide by the root mean square"
+             }
+            ],
             "total": 0,
-            "repeat": 1,
-            "label": "Divide by the root mean square"
+            "repeat": 1
            },
            {
             "op": "torch.Tensor.mul",
@@ -3715,18 +4308,119 @@ window.ARCHITECTURE = {
             "label": "Second half of each head"
            },
            {
-            "op": "torch.Tensor.__getitem__",
-            "id": 46,
-            "line": 97,
-            "code": "cos[offset : offset + seq_len, :].unsqueeze(0).unsqueeze(0)",
-            "uses": [
-             "cos"
+            "group": true,
+            "label": "Cosines for positions 0 … T−1",
+            "id": 2574,
+            "in": [
+             [
+              40960,
+              128
+             ]
+            ],
+            "out": [
+             1,
+             1,
+             "T",
+             128
             ],
             "inputs": [
              {
               "tensor": "cos"
              }
             ],
+            "children": [
+             {
+              "op": "torch.Tensor.__getitem__",
+              "id": 46,
+              "line": 97,
+              "code": "cos[offset : offset + seq_len, :].unsqueeze(0).unsqueeze(0)",
+              "uses": [
+               "cos"
+              ],
+              "inputs": [
+               {
+                "tensor": "cos"
+               }
+              ],
+              "in": [
+               [
+                40960,
+                128
+               ]
+              ],
+              "out": [
+               "T",
+               128
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Cosines for positions 0 … T−1"
+             },
+             {
+              "op": "torch.Tensor.unsqueeze",
+              "id": 47,
+              "line": 97,
+              "code": "cos[offset : offset + seq_len, :].unsqueeze(0).unsqueeze(0)",
+              "uses": [],
+              "inputs": [
+               {
+                "from": 46
+               }
+              ],
+              "in": [
+               [
+                "T",
+                128
+               ]
+              ],
+              "out": [
+               1,
+               "T",
+               128
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Cosines for positions 0 … T−1"
+             },
+             {
+              "op": "torch.Tensor.unsqueeze",
+              "id": 48,
+              "line": 97,
+              "code": "cos[offset : offset + seq_len, :].unsqueeze(0).unsqueeze(0)",
+              "uses": [],
+              "inputs": [
+               {
+                "from": 47
+               }
+              ],
+              "in": [
+               [
+                1,
+                "T",
+                128
+               ]
+              ],
+              "out": [
+               1,
+               1,
+               "T",
+               128
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Cosines for positions 0 … T−1"
+             }
+            ],
+            "total": 0,
+            "repeat": 1
+           },
+           {
+            "group": true,
+            "label": "Sines for positions 0 … T−1",
+            "id": 2575,
             "in": [
              [
               40960,
@@ -3734,198 +4428,109 @@ window.ARCHITECTURE = {
              ]
             ],
             "out": [
-             "T",
-             128
-            ],
-            "children": [],
-            "total": 0,
-            "repeat": 1,
-            "label": "Cosines for positions 0 … T−1"
-           },
-           {
-            "op": "torch.Tensor.unsqueeze",
-            "id": 47,
-            "line": 97,
-            "code": "cos[offset : offset + seq_len, :].unsqueeze(0).unsqueeze(0)",
-            "uses": [],
-            "inputs": [
-             {
-              "from": 46
-             }
-            ],
-            "in": [
-             [
-              "T",
-              128
-             ]
-            ],
-            "out": [
-             1,
-             "T",
-             128
-            ],
-            "children": [],
-            "total": 0,
-            "repeat": 1,
-            "label": "Cosines for positions 0 … T−1"
-           },
-           {
-            "op": "torch.Tensor.unsqueeze",
-            "id": 48,
-            "line": 97,
-            "code": "cos[offset : offset + seq_len, :].unsqueeze(0).unsqueeze(0)",
-            "uses": [],
-            "inputs": [
-             {
-              "from": 47
-             }
-            ],
-            "in": [
-             [
-              1,
-              "T",
-              128
-             ]
-            ],
-            "out": [
              1,
              1,
              "T",
              128
-            ],
-            "children": [],
-            "total": 0,
-            "repeat": 1,
-            "label": "Cosines for positions 0 … T−1"
-           },
-           {
-            "op": "torch.Tensor.__getitem__",
-            "id": 49,
-            "line": 99,
-            "code": "sin = sin[offset : offset + seq_len, :].unsqueeze(0).unsqueeze(0)",
-            "uses": [
-             "sin"
             ],
             "inputs": [
              {
               "tensor": "sin"
              }
             ],
-            "in": [
-             [
-              40960,
-              128
-             ]
-            ],
-            "out": [
-             "T",
-             128
-            ],
-            "children": [],
-            "total": 0,
-            "repeat": 1,
-            "label": "Sines for positions 0 … T−1"
-           },
-           {
-            "op": "torch.Tensor.unsqueeze",
-            "id": 50,
-            "line": 99,
-            "code": "sin = sin[offset : offset + seq_len, :].unsqueeze(0).unsqueeze(0)",
-            "uses": [],
-            "inputs": [
+            "children": [
              {
-              "from": 49
-             }
-            ],
-            "in": [
-             [
-              "T",
-              128
-             ]
-            ],
-            "out": [
-             1,
-             "T",
-             128
-            ],
-            "children": [],
-            "total": 0,
-            "repeat": 1,
-            "label": "Sines for positions 0 … T−1"
-           },
-           {
-            "op": "torch.Tensor.unsqueeze",
-            "id": 51,
-            "line": 99,
-            "code": "sin = sin[offset : offset + seq_len, :].unsqueeze(0).unsqueeze(0)",
-            "uses": [],
-            "inputs": [
-             {
-              "from": 50
-             }
-            ],
-            "in": [
-             [
-              1,
-              "T",
-              128
-             ]
-            ],
-            "out": [
-             1,
-             1,
-             "T",
-             128
-            ],
-            "children": [],
-            "total": 0,
-            "repeat": 1,
-            "label": "Sines for positions 0 … T−1"
-           },
-           {
-            "op": "torch.Tensor.neg",
-            "id": 52,
-            "line": 102,
-            "code": "rotated = torch.cat((-x2, x1), dim=-1)",
-            "uses": [],
-            "inputs": [
-             {
-              "from": 45
-             }
-            ],
-            "in": [
-             [
-              "B",
-              16,
-              "T",
-              64
-             ]
-            ],
-            "out": [
-             "B",
-             16,
-             "T",
-             64
-            ],
-            "children": [],
-            "total": 0,
-            "repeat": 1,
-            "label": "Swap halves: (−x₂, x₁)"
-           },
-           {
-            "op": "torch.cat",
-            "id": 53,
-            "line": 102,
-            "code": "rotated = torch.cat((-x2, x1), dim=-1)",
-            "uses": [],
-            "inputs": [
-             {
-              "from": 52
+              "op": "torch.Tensor.__getitem__",
+              "id": 49,
+              "line": 99,
+              "code": "sin = sin[offset : offset + seq_len, :].unsqueeze(0).unsqueeze(0)",
+              "uses": [
+               "sin"
+              ],
+              "inputs": [
+               {
+                "tensor": "sin"
+               }
+              ],
+              "in": [
+               [
+                40960,
+                128
+               ]
+              ],
+              "out": [
+               "T",
+               128
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Sines for positions 0 … T−1"
              },
              {
-              "from": 44
+              "op": "torch.Tensor.unsqueeze",
+              "id": 50,
+              "line": 99,
+              "code": "sin = sin[offset : offset + seq_len, :].unsqueeze(0).unsqueeze(0)",
+              "uses": [],
+              "inputs": [
+               {
+                "from": 49
+               }
+              ],
+              "in": [
+               [
+                "T",
+                128
+               ]
+              ],
+              "out": [
+               1,
+               "T",
+               128
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Sines for positions 0 … T−1"
+             },
+             {
+              "op": "torch.Tensor.unsqueeze",
+              "id": 51,
+              "line": 99,
+              "code": "sin = sin[offset : offset + seq_len, :].unsqueeze(0).unsqueeze(0)",
+              "uses": [],
+              "inputs": [
+               {
+                "from": 50
+               }
+              ],
+              "in": [
+               [
+                1,
+                "T",
+                128
+               ]
+              ],
+              "out": [
+               1,
+               1,
+               "T",
+               128
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Sines for positions 0 … T−1"
              }
             ],
+            "total": 0,
+            "repeat": 1
+           },
+           {
+            "group": true,
+            "label": "Swap halves: (−x₂, x₁)",
+            "id": 2576,
             "in": [
              [
               "B",
@@ -3946,57 +4551,131 @@ window.ARCHITECTURE = {
              "T",
              128
             ],
-            "children": [],
+            "inputs": [
+             {
+              "from": 45
+             },
+             {
+              "from": 44
+             }
+            ],
+            "children": [
+             {
+              "op": "torch.Tensor.neg",
+              "id": 52,
+              "line": 102,
+              "code": "rotated = torch.cat((-x2, x1), dim=-1)",
+              "uses": [],
+              "inputs": [
+               {
+                "from": 45
+               }
+              ],
+              "in": [
+               [
+                "B",
+                16,
+                "T",
+                64
+               ]
+              ],
+              "out": [
+               "B",
+               16,
+               "T",
+               64
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Swap halves: (−x₂, x₁)"
+             },
+             {
+              "op": "torch.cat",
+              "id": 53,
+              "line": 102,
+              "code": "rotated = torch.cat((-x2, x1), dim=-1)",
+              "uses": [],
+              "inputs": [
+               {
+                "from": 52
+               },
+               {
+                "from": 44
+               }
+              ],
+              "in": [
+               [
+                "B",
+                16,
+                "T",
+                64
+               ],
+               [
+                "B",
+                16,
+                "T",
+                64
+               ]
+              ],
+              "out": [
+               "B",
+               16,
+               "T",
+               128
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Swap halves: (−x₂, x₁)"
+             }
+            ],
             "total": 0,
-            "repeat": 1,
-            "label": "Swap halves: (−x₂, x₁)"
+            "repeat": 1
            },
            {
-            "op": "torch.Tensor.mul",
-            "id": 54,
-            "line": 103,
-            "code": "x_rotated = (x * cos) + (rotated * sin)",
-            "uses": [],
+            "group": true,
+            "label": "Rotate each channel pair",
+            "id": 2577,
+            "in": [
+             [
+              "B",
+              16,
+              "T",
+              128
+             ],
+             [
+              1,
+              1,
+              "T",
+              128
+             ],
+             [
+              "B",
+              16,
+              "T",
+              128
+             ],
+             [
+              1,
+              1,
+              "T",
+              128
+             ]
+            ],
+            "out": [
+             "B",
+             16,
+             "T",
+             128
+            ],
             "inputs": [
              {
               "from": 25
              },
              {
               "from": 48
-             }
-            ],
-            "in": [
-             [
-              "B",
-              16,
-              "T",
-              128
-             ],
-             [
-              1,
-              1,
-              "T",
-              128
-             ]
-            ],
-            "out": [
-             "B",
-             16,
-             "T",
-             128
-            ],
-            "children": [],
-            "total": 0,
-            "repeat": 1,
-            "label": "Rotate each channel pair"
-           },
-           {
-            "op": "torch.Tensor.mul",
-            "id": 55,
-            "line": 103,
-            "code": "x_rotated = (x * cos) + (rotated * sin)",
-            "uses": [],
-            "inputs": [
+             },
              {
               "from": 53
              },
@@ -4004,70 +4683,129 @@ window.ARCHITECTURE = {
               "from": 51
              }
             ],
-            "in": [
-             [
-              "B",
-              16,
-              "T",
-              128
-             ],
-             [
-              1,
-              1,
-              "T",
-              128
-             ]
-            ],
-            "out": [
-             "B",
-             16,
-             "T",
-             128
-            ],
-            "children": [],
-            "total": 0,
-            "repeat": 1,
-            "label": "Rotate each channel pair"
-           },
-           {
-            "op": "torch.Tensor.add",
-            "id": 56,
-            "line": 103,
-            "code": "x_rotated = (x * cos) + (rotated * sin)",
-            "uses": [],
-            "inputs": [
+            "children": [
              {
-              "from": 54
+              "op": "torch.Tensor.mul",
+              "id": 54,
+              "line": 103,
+              "code": "x_rotated = (x * cos) + (rotated * sin)",
+              "uses": [],
+              "inputs": [
+               {
+                "from": 25
+               },
+               {
+                "from": 48
+               }
+              ],
+              "in": [
+               [
+                "B",
+                16,
+                "T",
+                128
+               ],
+               [
+                1,
+                1,
+                "T",
+                128
+               ]
+              ],
+              "out": [
+               "B",
+               16,
+               "T",
+               128
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Rotate each channel pair"
              },
              {
-              "from": 55
+              "op": "torch.Tensor.mul",
+              "id": 55,
+              "line": 103,
+              "code": "x_rotated = (x * cos) + (rotated * sin)",
+              "uses": [],
+              "inputs": [
+               {
+                "from": 53
+               },
+               {
+                "from": 51
+               }
+              ],
+              "in": [
+               [
+                "B",
+                16,
+                "T",
+                128
+               ],
+               [
+                1,
+                1,
+                "T",
+                128
+               ]
+              ],
+              "out": [
+               "B",
+               16,
+               "T",
+               128
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Rotate each channel pair"
+             },
+             {
+              "op": "torch.Tensor.add",
+              "id": 56,
+              "line": 103,
+              "code": "x_rotated = (x * cos) + (rotated * sin)",
+              "uses": [],
+              "inputs": [
+               {
+                "from": 54
+               },
+               {
+                "from": 55
+               }
+              ],
+              "returned_by": 43,
+              "in": [
+               [
+                "B",
+                16,
+                "T",
+                128
+               ],
+               [
+                "B",
+                16,
+                "T",
+                128
+               ]
+              ],
+              "out": [
+               "B",
+               16,
+               "T",
+               128
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Rotate each channel pair"
              }
             ],
-            "returned_by": 43,
-            "in": [
-             [
-              "B",
-              16,
-              "T",
-              128
-             ],
-             [
-              "B",
-              16,
-              "T",
-              128
-             ]
-            ],
-            "out": [
-             "B",
-             16,
-             "T",
-             128
-            ],
-            "children": [],
             "total": 0,
             "repeat": 1,
-            "label": "Rotate each channel pair"
+            "returned_by": 43
            },
            {
             "op": "torch.Tensor.to",
@@ -4197,18 +4935,119 @@ window.ARCHITECTURE = {
             "label": "Second half of each head"
            },
            {
-            "op": "torch.Tensor.__getitem__",
-            "id": 61,
-            "line": 97,
-            "code": "cos[offset : offset + seq_len, :].unsqueeze(0).unsqueeze(0)",
-            "uses": [
-             "cos"
+            "group": true,
+            "label": "Cosines for positions 0 … T−1",
+            "id": 2578,
+            "in": [
+             [
+              40960,
+              128
+             ]
+            ],
+            "out": [
+             1,
+             1,
+             "T",
+             128
             ],
             "inputs": [
              {
               "tensor": "cos"
              }
             ],
+            "children": [
+             {
+              "op": "torch.Tensor.__getitem__",
+              "id": 61,
+              "line": 97,
+              "code": "cos[offset : offset + seq_len, :].unsqueeze(0).unsqueeze(0)",
+              "uses": [
+               "cos"
+              ],
+              "inputs": [
+               {
+                "tensor": "cos"
+               }
+              ],
+              "in": [
+               [
+                40960,
+                128
+               ]
+              ],
+              "out": [
+               "T",
+               128
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Cosines for positions 0 … T−1"
+             },
+             {
+              "op": "torch.Tensor.unsqueeze",
+              "id": 62,
+              "line": 97,
+              "code": "cos[offset : offset + seq_len, :].unsqueeze(0).unsqueeze(0)",
+              "uses": [],
+              "inputs": [
+               {
+                "from": 61
+               }
+              ],
+              "in": [
+               [
+                "T",
+                128
+               ]
+              ],
+              "out": [
+               1,
+               "T",
+               128
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Cosines for positions 0 … T−1"
+             },
+             {
+              "op": "torch.Tensor.unsqueeze",
+              "id": 63,
+              "line": 97,
+              "code": "cos[offset : offset + seq_len, :].unsqueeze(0).unsqueeze(0)",
+              "uses": [],
+              "inputs": [
+               {
+                "from": 62
+               }
+              ],
+              "in": [
+               [
+                1,
+                "T",
+                128
+               ]
+              ],
+              "out": [
+               1,
+               1,
+               "T",
+               128
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Cosines for positions 0 … T−1"
+             }
+            ],
+            "total": 0,
+            "repeat": 1
+           },
+           {
+            "group": true,
+            "label": "Sines for positions 0 … T−1",
+            "id": 2579,
             "in": [
              [
               40960,
@@ -4216,198 +5055,109 @@ window.ARCHITECTURE = {
              ]
             ],
             "out": [
-             "T",
-             128
-            ],
-            "children": [],
-            "total": 0,
-            "repeat": 1,
-            "label": "Cosines for positions 0 … T−1"
-           },
-           {
-            "op": "torch.Tensor.unsqueeze",
-            "id": 62,
-            "line": 97,
-            "code": "cos[offset : offset + seq_len, :].unsqueeze(0).unsqueeze(0)",
-            "uses": [],
-            "inputs": [
-             {
-              "from": 61
-             }
-            ],
-            "in": [
-             [
-              "T",
-              128
-             ]
-            ],
-            "out": [
-             1,
-             "T",
-             128
-            ],
-            "children": [],
-            "total": 0,
-            "repeat": 1,
-            "label": "Cosines for positions 0 … T−1"
-           },
-           {
-            "op": "torch.Tensor.unsqueeze",
-            "id": 63,
-            "line": 97,
-            "code": "cos[offset : offset + seq_len, :].unsqueeze(0).unsqueeze(0)",
-            "uses": [],
-            "inputs": [
-             {
-              "from": 62
-             }
-            ],
-            "in": [
-             [
-              1,
-              "T",
-              128
-             ]
-            ],
-            "out": [
              1,
              1,
              "T",
              128
-            ],
-            "children": [],
-            "total": 0,
-            "repeat": 1,
-            "label": "Cosines for positions 0 … T−1"
-           },
-           {
-            "op": "torch.Tensor.__getitem__",
-            "id": 64,
-            "line": 99,
-            "code": "sin = sin[offset : offset + seq_len, :].unsqueeze(0).unsqueeze(0)",
-            "uses": [
-             "sin"
             ],
             "inputs": [
              {
               "tensor": "sin"
              }
             ],
-            "in": [
-             [
-              40960,
-              128
-             ]
-            ],
-            "out": [
-             "T",
-             128
-            ],
-            "children": [],
-            "total": 0,
-            "repeat": 1,
-            "label": "Sines for positions 0 … T−1"
-           },
-           {
-            "op": "torch.Tensor.unsqueeze",
-            "id": 65,
-            "line": 99,
-            "code": "sin = sin[offset : offset + seq_len, :].unsqueeze(0).unsqueeze(0)",
-            "uses": [],
-            "inputs": [
+            "children": [
              {
-              "from": 64
-             }
-            ],
-            "in": [
-             [
-              "T",
-              128
-             ]
-            ],
-            "out": [
-             1,
-             "T",
-             128
-            ],
-            "children": [],
-            "total": 0,
-            "repeat": 1,
-            "label": "Sines for positions 0 … T−1"
-           },
-           {
-            "op": "torch.Tensor.unsqueeze",
-            "id": 66,
-            "line": 99,
-            "code": "sin = sin[offset : offset + seq_len, :].unsqueeze(0).unsqueeze(0)",
-            "uses": [],
-            "inputs": [
-             {
-              "from": 65
-             }
-            ],
-            "in": [
-             [
-              1,
-              "T",
-              128
-             ]
-            ],
-            "out": [
-             1,
-             1,
-             "T",
-             128
-            ],
-            "children": [],
-            "total": 0,
-            "repeat": 1,
-            "label": "Sines for positions 0 … T−1"
-           },
-           {
-            "op": "torch.Tensor.neg",
-            "id": 67,
-            "line": 102,
-            "code": "rotated = torch.cat((-x2, x1), dim=-1)",
-            "uses": [],
-            "inputs": [
-             {
-              "from": 60
-             }
-            ],
-            "in": [
-             [
-              "B",
-              8,
-              "T",
-              64
-             ]
-            ],
-            "out": [
-             "B",
-             8,
-             "T",
-             64
-            ],
-            "children": [],
-            "total": 0,
-            "repeat": 1,
-            "label": "Swap halves: (−x₂, x₁)"
-           },
-           {
-            "op": "torch.cat",
-            "id": 68,
-            "line": 102,
-            "code": "rotated = torch.cat((-x2, x1), dim=-1)",
-            "uses": [],
-            "inputs": [
-             {
-              "from": 67
+              "op": "torch.Tensor.__getitem__",
+              "id": 64,
+              "line": 99,
+              "code": "sin = sin[offset : offset + seq_len, :].unsqueeze(0).unsqueeze(0)",
+              "uses": [
+               "sin"
+              ],
+              "inputs": [
+               {
+                "tensor": "sin"
+               }
+              ],
+              "in": [
+               [
+                40960,
+                128
+               ]
+              ],
+              "out": [
+               "T",
+               128
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Sines for positions 0 … T−1"
              },
              {
-              "from": 59
+              "op": "torch.Tensor.unsqueeze",
+              "id": 65,
+              "line": 99,
+              "code": "sin = sin[offset : offset + seq_len, :].unsqueeze(0).unsqueeze(0)",
+              "uses": [],
+              "inputs": [
+               {
+                "from": 64
+               }
+              ],
+              "in": [
+               [
+                "T",
+                128
+               ]
+              ],
+              "out": [
+               1,
+               "T",
+               128
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Sines for positions 0 … T−1"
+             },
+             {
+              "op": "torch.Tensor.unsqueeze",
+              "id": 66,
+              "line": 99,
+              "code": "sin = sin[offset : offset + seq_len, :].unsqueeze(0).unsqueeze(0)",
+              "uses": [],
+              "inputs": [
+               {
+                "from": 65
+               }
+              ],
+              "in": [
+               [
+                1,
+                "T",
+                128
+               ]
+              ],
+              "out": [
+               1,
+               1,
+               "T",
+               128
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Sines for positions 0 … T−1"
              }
             ],
+            "total": 0,
+            "repeat": 1
+           },
+           {
+            "group": true,
+            "label": "Swap halves: (−x₂, x₁)",
+            "id": 2580,
             "in": [
              [
               "B",
@@ -4428,57 +5178,131 @@ window.ARCHITECTURE = {
              "T",
              128
             ],
-            "children": [],
+            "inputs": [
+             {
+              "from": 60
+             },
+             {
+              "from": 59
+             }
+            ],
+            "children": [
+             {
+              "op": "torch.Tensor.neg",
+              "id": 67,
+              "line": 102,
+              "code": "rotated = torch.cat((-x2, x1), dim=-1)",
+              "uses": [],
+              "inputs": [
+               {
+                "from": 60
+               }
+              ],
+              "in": [
+               [
+                "B",
+                8,
+                "T",
+                64
+               ]
+              ],
+              "out": [
+               "B",
+               8,
+               "T",
+               64
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Swap halves: (−x₂, x₁)"
+             },
+             {
+              "op": "torch.cat",
+              "id": 68,
+              "line": 102,
+              "code": "rotated = torch.cat((-x2, x1), dim=-1)",
+              "uses": [],
+              "inputs": [
+               {
+                "from": 67
+               },
+               {
+                "from": 59
+               }
+              ],
+              "in": [
+               [
+                "B",
+                8,
+                "T",
+                64
+               ],
+               [
+                "B",
+                8,
+                "T",
+                64
+               ]
+              ],
+              "out": [
+               "B",
+               8,
+               "T",
+               128
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Swap halves: (−x₂, x₁)"
+             }
+            ],
             "total": 0,
-            "repeat": 1,
-            "label": "Swap halves: (−x₂, x₁)"
+            "repeat": 1
            },
            {
-            "op": "torch.Tensor.mul",
-            "id": 69,
-            "line": 103,
-            "code": "x_rotated = (x * cos) + (rotated * sin)",
-            "uses": [],
+            "group": true,
+            "label": "Rotate each channel pair",
+            "id": 2581,
+            "in": [
+             [
+              "B",
+              8,
+              "T",
+              128
+             ],
+             [
+              1,
+              1,
+              "T",
+              128
+             ],
+             [
+              "B",
+              8,
+              "T",
+              128
+             ],
+             [
+              1,
+              1,
+              "T",
+              128
+             ]
+            ],
+            "out": [
+             "B",
+             8,
+             "T",
+             128
+            ],
             "inputs": [
              {
               "from": 34
              },
              {
               "from": 63
-             }
-            ],
-            "in": [
-             [
-              "B",
-              8,
-              "T",
-              128
-             ],
-             [
-              1,
-              1,
-              "T",
-              128
-             ]
-            ],
-            "out": [
-             "B",
-             8,
-             "T",
-             128
-            ],
-            "children": [],
-            "total": 0,
-            "repeat": 1,
-            "label": "Rotate each channel pair"
-           },
-           {
-            "op": "torch.Tensor.mul",
-            "id": 70,
-            "line": 103,
-            "code": "x_rotated = (x * cos) + (rotated * sin)",
-            "uses": [],
-            "inputs": [
+             },
              {
               "from": 68
              },
@@ -4486,70 +5310,129 @@ window.ARCHITECTURE = {
               "from": 66
              }
             ],
-            "in": [
-             [
-              "B",
-              8,
-              "T",
-              128
-             ],
-             [
-              1,
-              1,
-              "T",
-              128
-             ]
-            ],
-            "out": [
-             "B",
-             8,
-             "T",
-             128
-            ],
-            "children": [],
-            "total": 0,
-            "repeat": 1,
-            "label": "Rotate each channel pair"
-           },
-           {
-            "op": "torch.Tensor.add",
-            "id": 71,
-            "line": 103,
-            "code": "x_rotated = (x * cos) + (rotated * sin)",
-            "uses": [],
-            "inputs": [
+            "children": [
              {
-              "from": 69
+              "op": "torch.Tensor.mul",
+              "id": 69,
+              "line": 103,
+              "code": "x_rotated = (x * cos) + (rotated * sin)",
+              "uses": [],
+              "inputs": [
+               {
+                "from": 34
+               },
+               {
+                "from": 63
+               }
+              ],
+              "in": [
+               [
+                "B",
+                8,
+                "T",
+                128
+               ],
+               [
+                1,
+                1,
+                "T",
+                128
+               ]
+              ],
+              "out": [
+               "B",
+               8,
+               "T",
+               128
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Rotate each channel pair"
              },
              {
-              "from": 70
+              "op": "torch.Tensor.mul",
+              "id": 70,
+              "line": 103,
+              "code": "x_rotated = (x * cos) + (rotated * sin)",
+              "uses": [],
+              "inputs": [
+               {
+                "from": 68
+               },
+               {
+                "from": 66
+               }
+              ],
+              "in": [
+               [
+                "B",
+                8,
+                "T",
+                128
+               ],
+               [
+                1,
+                1,
+                "T",
+                128
+               ]
+              ],
+              "out": [
+               "B",
+               8,
+               "T",
+               128
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Rotate each channel pair"
+             },
+             {
+              "op": "torch.Tensor.add",
+              "id": 71,
+              "line": 103,
+              "code": "x_rotated = (x * cos) + (rotated * sin)",
+              "uses": [],
+              "inputs": [
+               {
+                "from": 69
+               },
+               {
+                "from": 70
+               }
+              ],
+              "returned_by": 58,
+              "in": [
+               [
+                "B",
+                8,
+                "T",
+                128
+               ],
+               [
+                "B",
+                8,
+                "T",
+                128
+               ]
+              ],
+              "out": [
+               "B",
+               8,
+               "T",
+               128
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Rotate each channel pair"
              }
             ],
-            "returned_by": 58,
-            "in": [
-             [
-              "B",
-              8,
-              "T",
-              128
-             ],
-             [
-              "B",
-              8,
-              "T",
-              128
-             ]
-            ],
-            "out": [
-             "B",
-             8,
-             "T",
-             128
-            ],
-            "children": [],
             "total": 0,
             "repeat": 1,
-            "label": "Rotate each channel pair"
+            "returned_by": 58
            },
            {
             "op": "torch.Tensor.to",
@@ -4695,51 +5578,14 @@ window.ARCHITECTURE = {
           "label": "Causal attention, fused"
          },
          {
-          "op": "torch.Tensor.transpose",
-          "id": 76,
-          "line": 95,
-          "code": "context = context.transpose(1, 2).reshape(b, num_tokens, self.d_out)",
-          "uses": [],
-          "inputs": [
-           {
-            "from": 75
-           }
-          ],
+          "group": true,
+          "label": "Merge heads",
+          "id": 2569,
           "in": [
            [
             "B",
             16,
             "T",
-            128
-           ]
-          ],
-          "out": [
-           "B",
-           "T",
-           16,
-           128
-          ],
-          "children": [],
-          "total": 0,
-          "repeat": 1,
-          "label": "Merge heads"
-         },
-         {
-          "op": "torch.Tensor.reshape",
-          "id": 77,
-          "line": 95,
-          "code": "context = context.transpose(1, 2).reshape(b, num_tokens, self.d_out)",
-          "uses": [],
-          "inputs": [
-           {
-            "from": 76
-           }
-          ],
-          "in": [
-           [
-            "B",
-            "T",
-            16,
             128
            ]
           ],
@@ -4748,10 +5594,74 @@ window.ARCHITECTURE = {
            "T",
            2048
           ],
-          "children": [],
+          "inputs": [
+           {
+            "from": 75
+           }
+          ],
+          "children": [
+           {
+            "op": "torch.Tensor.transpose",
+            "id": 76,
+            "line": 95,
+            "code": "context = context.transpose(1, 2).reshape(b, num_tokens, self.d_out)",
+            "uses": [],
+            "inputs": [
+             {
+              "from": 75
+             }
+            ],
+            "in": [
+             [
+              "B",
+              16,
+              "T",
+              128
+             ]
+            ],
+            "out": [
+             "B",
+             "T",
+             16,
+             128
+            ],
+            "children": [],
+            "total": 0,
+            "repeat": 1,
+            "label": "Merge heads"
+           },
+           {
+            "op": "torch.Tensor.reshape",
+            "id": 77,
+            "line": 95,
+            "code": "context = context.transpose(1, 2).reshape(b, num_tokens, self.d_out)",
+            "uses": [],
+            "inputs": [
+             {
+              "from": 76
+             }
+            ],
+            "in": [
+             [
+              "B",
+              "T",
+              16,
+              128
+             ]
+            ],
+            "out": [
+             "B",
+             "T",
+             2048
+            ],
+            "children": [],
+            "total": 0,
+            "repeat": 1,
+            "label": "Merge heads"
+           }
+          ],
           "total": 0,
-          "repeat": 1,
-          "label": "Merge heads"
+          "repeat": 1
          },
          {
           "module": "trf_blocks.0.att.out_proj",
@@ -4885,44 +5795,9 @@ window.ARCHITECTURE = {
           "label": "Compute in float32"
          },
          {
-          "op": "torch.Tensor.pow",
-          "id": 82,
-          "line": 38,
-          "code": "variance = x.pow(2).mean(dim=-1, keepdim=True)",
-          "uses": [],
-          "inputs": [
-           {
-            "from": 79
-           }
-          ],
-          "in": [
-           [
-            "B",
-            "T",
-            1024
-           ]
-          ],
-          "out": [
-           "B",
-           "T",
-           1024
-          ],
-          "children": [],
-          "total": 0,
-          "repeat": 1,
-          "label": "Mean square over channels"
-         },
-         {
-          "op": "torch.Tensor.mean",
-          "id": 83,
-          "line": 38,
-          "code": "variance = x.pow(2).mean(dim=-1, keepdim=True)",
-          "uses": [],
-          "inputs": [
-           {
-            "from": 82
-           }
-          ],
+          "group": true,
+          "label": "Mean square over channels",
+          "id": 2582,
           "in": [
            [
             "B",
@@ -4935,91 +5810,86 @@ window.ARCHITECTURE = {
            "T",
            1
           ],
-          "children": [],
-          "total": 0,
-          "repeat": 1,
-          "label": "Mean square over channels"
-         },
-         {
-          "op": "torch.Tensor.add",
-          "id": 84,
-          "line": 39,
-          "code": "norm_x = x * torch.rsqrt(variance + self.eps)",
-          "uses": [],
-          "inputs": [
-           {
-            "from": 83
-           }
-          ],
-          "in": [
-           [
-            "B",
-            "T",
-            1
-           ]
-          ],
-          "out": [
-           "B",
-           "T",
-           1
-          ],
-          "children": [],
-          "total": 0,
-          "repeat": 1,
-          "label": "Divide by the root mean square"
-         },
-         {
-          "op": "torch.rsqrt",
-          "id": 85,
-          "line": 39,
-          "code": "norm_x = x * torch.rsqrt(variance + self.eps)",
-          "uses": [],
-          "inputs": [
-           {
-            "from": 84
-           }
-          ],
-          "in": [
-           [
-            "B",
-            "T",
-            1
-           ]
-          ],
-          "out": [
-           "B",
-           "T",
-           1
-          ],
-          "children": [],
-          "total": 0,
-          "repeat": 1,
-          "label": "Divide by the root mean square"
-         },
-         {
-          "op": "torch.Tensor.mul",
-          "id": 86,
-          "line": 39,
-          "code": "norm_x = x * torch.rsqrt(variance + self.eps)",
-          "uses": [],
           "inputs": [
            {
             "from": 79
+           }
+          ],
+          "children": [
+           {
+            "op": "torch.Tensor.pow",
+            "id": 82,
+            "line": 38,
+            "code": "variance = x.pow(2).mean(dim=-1, keepdim=True)",
+            "uses": [],
+            "inputs": [
+             {
+              "from": 79
+             }
+            ],
+            "in": [
+             [
+              "B",
+              "T",
+              1024
+             ]
+            ],
+            "out": [
+             "B",
+             "T",
+             1024
+            ],
+            "children": [],
+            "total": 0,
+            "repeat": 1,
+            "label": "Mean square over channels"
            },
            {
-            "from": 85
+            "op": "torch.Tensor.mean",
+            "id": 83,
+            "line": 38,
+            "code": "variance = x.pow(2).mean(dim=-1, keepdim=True)",
+            "uses": [],
+            "inputs": [
+             {
+              "from": 82
+             }
+            ],
+            "in": [
+             [
+              "B",
+              "T",
+              1024
+             ]
+            ],
+            "out": [
+             "B",
+             "T",
+             1
+            ],
+            "children": [],
+            "total": 0,
+            "repeat": 1,
+            "label": "Mean square over channels"
            }
           ],
+          "total": 0,
+          "repeat": 1
+         },
+         {
+          "group": true,
+          "label": "Divide by the root mean square",
+          "id": 2583,
           "in": [
            [
             "B",
             "T",
-            1024
+            1
            ],
            [
             "B",
             "T",
-            1
+            1024
            ]
           ],
           "out": [
@@ -5027,10 +5897,110 @@ window.ARCHITECTURE = {
            "T",
            1024
           ],
-          "children": [],
+          "inputs": [
+           {
+            "from": 83
+           },
+           {
+            "from": 79
+           }
+          ],
+          "children": [
+           {
+            "op": "torch.Tensor.add",
+            "id": 84,
+            "line": 39,
+            "code": "norm_x = x * torch.rsqrt(variance + self.eps)",
+            "uses": [],
+            "inputs": [
+             {
+              "from": 83
+             }
+            ],
+            "in": [
+             [
+              "B",
+              "T",
+              1
+             ]
+            ],
+            "out": [
+             "B",
+             "T",
+             1
+            ],
+            "children": [],
+            "total": 0,
+            "repeat": 1,
+            "label": "Divide by the root mean square"
+           },
+           {
+            "op": "torch.rsqrt",
+            "id": 85,
+            "line": 39,
+            "code": "norm_x = x * torch.rsqrt(variance + self.eps)",
+            "uses": [],
+            "inputs": [
+             {
+              "from": 84
+             }
+            ],
+            "in": [
+             [
+              "B",
+              "T",
+              1
+             ]
+            ],
+            "out": [
+             "B",
+             "T",
+             1
+            ],
+            "children": [],
+            "total": 0,
+            "repeat": 1,
+            "label": "Divide by the root mean square"
+           },
+           {
+            "op": "torch.Tensor.mul",
+            "id": 86,
+            "line": 39,
+            "code": "norm_x = x * torch.rsqrt(variance + self.eps)",
+            "uses": [],
+            "inputs": [
+             {
+              "from": 79
+             },
+             {
+              "from": 85
+             }
+            ],
+            "in": [
+             [
+              "B",
+              "T",
+              1024
+             ],
+             [
+              "B",
+              "T",
+              1
+             ]
+            ],
+            "out": [
+             "B",
+             "T",
+             1024
+            ],
+            "children": [],
+            "total": 0,
+            "repeat": 1,
+            "label": "Divide by the root mean square"
+           }
+          ],
           "total": 0,
-          "repeat": 1,
-          "label": "Divide by the root mean square"
+          "repeat": 1
          },
          {
           "op": "torch.Tensor.mul",
@@ -5411,44 +6381,9 @@ window.ARCHITECTURE = {
         "label": "Compute in float32"
        },
        {
-        "op": "torch.Tensor.pow",
-        "id": 2555,
-        "line": 38,
-        "code": "variance = x.pow(2).mean(dim=-1, keepdim=True)",
-        "uses": [],
-        "inputs": [
-         {
-          "from": 5
-         }
-        ],
-        "in": [
-         [
-          "B",
-          "T",
-          1024
-         ]
-        ],
-        "out": [
-         "B",
-         "T",
-         1024
-        ],
-        "children": [],
-        "total": 0,
-        "repeat": 1,
-        "label": "Mean square over channels"
-       },
-       {
-        "op": "torch.Tensor.mean",
-        "id": 2556,
-        "line": 38,
-        "code": "variance = x.pow(2).mean(dim=-1, keepdim=True)",
-        "uses": [],
-        "inputs": [
-         {
-          "from": 2555
-         }
-        ],
+        "group": true,
+        "label": "Mean square over channels",
+        "id": 2584,
         "in": [
          [
           "B",
@@ -5461,91 +6396,86 @@ window.ARCHITECTURE = {
          "T",
          1
         ],
-        "children": [],
-        "total": 0,
-        "repeat": 1,
-        "label": "Mean square over channels"
-       },
-       {
-        "op": "torch.Tensor.add",
-        "id": 2557,
-        "line": 39,
-        "code": "norm_x = x * torch.rsqrt(variance + self.eps)",
-        "uses": [],
-        "inputs": [
-         {
-          "from": 2556
-         }
-        ],
-        "in": [
-         [
-          "B",
-          "T",
-          1
-         ]
-        ],
-        "out": [
-         "B",
-         "T",
-         1
-        ],
-        "children": [],
-        "total": 0,
-        "repeat": 1,
-        "label": "Divide by the root mean square"
-       },
-       {
-        "op": "torch.rsqrt",
-        "id": 2558,
-        "line": 39,
-        "code": "norm_x = x * torch.rsqrt(variance + self.eps)",
-        "uses": [],
-        "inputs": [
-         {
-          "from": 2557
-         }
-        ],
-        "in": [
-         [
-          "B",
-          "T",
-          1
-         ]
-        ],
-        "out": [
-         "B",
-         "T",
-         1
-        ],
-        "children": [],
-        "total": 0,
-        "repeat": 1,
-        "label": "Divide by the root mean square"
-       },
-       {
-        "op": "torch.Tensor.mul",
-        "id": 2559,
-        "line": 39,
-        "code": "norm_x = x * torch.rsqrt(variance + self.eps)",
-        "uses": [],
         "inputs": [
          {
           "from": 5
+         }
+        ],
+        "children": [
+         {
+          "op": "torch.Tensor.pow",
+          "id": 2555,
+          "line": 38,
+          "code": "variance = x.pow(2).mean(dim=-1, keepdim=True)",
+          "uses": [],
+          "inputs": [
+           {
+            "from": 5
+           }
+          ],
+          "in": [
+           [
+            "B",
+            "T",
+            1024
+           ]
+          ],
+          "out": [
+           "B",
+           "T",
+           1024
+          ],
+          "children": [],
+          "total": 0,
+          "repeat": 1,
+          "label": "Mean square over channels"
          },
          {
-          "from": 2558
+          "op": "torch.Tensor.mean",
+          "id": 2556,
+          "line": 38,
+          "code": "variance = x.pow(2).mean(dim=-1, keepdim=True)",
+          "uses": [],
+          "inputs": [
+           {
+            "from": 2555
+           }
+          ],
+          "in": [
+           [
+            "B",
+            "T",
+            1024
+           ]
+          ],
+          "out": [
+           "B",
+           "T",
+           1
+          ],
+          "children": [],
+          "total": 0,
+          "repeat": 1,
+          "label": "Mean square over channels"
          }
         ],
+        "total": 0,
+        "repeat": 1
+       },
+       {
+        "group": true,
+        "label": "Divide by the root mean square",
+        "id": 2585,
         "in": [
          [
           "B",
           "T",
-          1024
+          1
          ],
          [
           "B",
           "T",
-          1
+          1024
          ]
         ],
         "out": [
@@ -5553,10 +6483,110 @@ window.ARCHITECTURE = {
          "T",
          1024
         ],
-        "children": [],
+        "inputs": [
+         {
+          "from": 2556
+         },
+         {
+          "from": 5
+         }
+        ],
+        "children": [
+         {
+          "op": "torch.Tensor.add",
+          "id": 2557,
+          "line": 39,
+          "code": "norm_x = x * torch.rsqrt(variance + self.eps)",
+          "uses": [],
+          "inputs": [
+           {
+            "from": 2556
+           }
+          ],
+          "in": [
+           [
+            "B",
+            "T",
+            1
+           ]
+          ],
+          "out": [
+           "B",
+           "T",
+           1
+          ],
+          "children": [],
+          "total": 0,
+          "repeat": 1,
+          "label": "Divide by the root mean square"
+         },
+         {
+          "op": "torch.rsqrt",
+          "id": 2558,
+          "line": 39,
+          "code": "norm_x = x * torch.rsqrt(variance + self.eps)",
+          "uses": [],
+          "inputs": [
+           {
+            "from": 2557
+           }
+          ],
+          "in": [
+           [
+            "B",
+            "T",
+            1
+           ]
+          ],
+          "out": [
+           "B",
+           "T",
+           1
+          ],
+          "children": [],
+          "total": 0,
+          "repeat": 1,
+          "label": "Divide by the root mean square"
+         },
+         {
+          "op": "torch.Tensor.mul",
+          "id": 2559,
+          "line": 39,
+          "code": "norm_x = x * torch.rsqrt(variance + self.eps)",
+          "uses": [],
+          "inputs": [
+           {
+            "from": 5
+           },
+           {
+            "from": 2558
+           }
+          ],
+          "in": [
+           [
+            "B",
+            "T",
+            1024
+           ],
+           [
+            "B",
+            "T",
+            1
+           ]
+          ],
+          "out": [
+           "B",
+           "T",
+           1024
+          ],
+          "children": [],
+          "total": 0,
+          "repeat": 1,
+          "label": "Divide by the root mean square"
+         }
+        ],
         "total": 0,
-        "repeat": 1,
-        "label": "Divide by the root mean square"
+        "repeat": 1
        },
        {
         "op": "torch.Tensor.mul",
@@ -6009,11 +7039,31 @@ window.ARCHITECTURE = {
             "label": "Variance over channels"
            },
            {
-            "op": "torch.Tensor.sub",
-            "id": 11,
-            "line": 20,
-            "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
-            "uses": [],
+            "group": true,
+            "label": "Normalize",
+            "id": 713,
+            "in": [
+             [
+              "B",
+              "T",
+              768
+             ],
+             [
+              "B",
+              "T",
+              1
+             ],
+             [
+              "B",
+              "T",
+              1
+             ]
+            ],
+            "out": [
+             "B",
+             "T",
+             768
+            ],
             "inputs": [
              {
               "from": 5,
@@ -6021,129 +7071,166 @@ window.ARCHITECTURE = {
              },
              {
               "from": 9
-             }
-            ],
-            "in": [
-             [
-              "B",
-              "T",
-              768
-             ],
-             [
-              "B",
-              "T",
-              1
-             ]
-            ],
-            "out": [
-             "B",
-             "T",
-             768
-            ],
-            "children": [],
-            "total": 0,
-            "repeat": 1,
-            "label": "Normalize"
-           },
-           {
-            "op": "torch.Tensor.add",
-            "id": 12,
-            "line": 20,
-            "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
-            "uses": [],
-            "inputs": [
+             },
              {
               "from": 10
              }
             ],
-            "in": [
-             [
-              "B",
-              "T",
-              1
-             ]
-            ],
-            "out": [
-             "B",
-             "T",
-             1
-            ],
-            "children": [],
-            "total": 0,
-            "repeat": 1,
-            "label": "Normalize"
-           },
-           {
-            "op": "torch.sqrt",
-            "id": 13,
-            "line": 20,
-            "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
-            "uses": [],
-            "inputs": [
+            "children": [
              {
-              "from": 12
-             }
-            ],
-            "in": [
-             [
-              "B",
-              "T",
-              1
-             ]
-            ],
-            "out": [
-             "B",
-             "T",
-             1
-            ],
-            "children": [],
-            "total": 0,
-            "repeat": 1,
-            "label": "Normalize"
-           },
-           {
-            "op": "torch.Tensor.div",
-            "id": 14,
-            "line": 20,
-            "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
-            "uses": [],
-            "inputs": [
-             {
-              "from": 11
+              "op": "torch.Tensor.sub",
+              "id": 11,
+              "line": 20,
+              "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
+              "uses": [],
+              "inputs": [
+               {
+                "from": 5,
+                "first_copy": true
+               },
+               {
+                "from": 9
+               }
+              ],
+              "in": [
+               [
+                "B",
+                "T",
+                768
+               ],
+               [
+                "B",
+                "T",
+                1
+               ]
+              ],
+              "out": [
+               "B",
+               "T",
+               768
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Normalize"
              },
              {
-              "from": 13
+              "op": "torch.Tensor.add",
+              "id": 12,
+              "line": 20,
+              "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
+              "uses": [],
+              "inputs": [
+               {
+                "from": 10
+               }
+              ],
+              "in": [
+               [
+                "B",
+                "T",
+                1
+               ]
+              ],
+              "out": [
+               "B",
+               "T",
+               1
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Normalize"
+             },
+             {
+              "op": "torch.sqrt",
+              "id": 13,
+              "line": 20,
+              "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
+              "uses": [],
+              "inputs": [
+               {
+                "from": 12
+               }
+              ],
+              "in": [
+               [
+                "B",
+                "T",
+                1
+               ]
+              ],
+              "out": [
+               "B",
+               "T",
+               1
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Normalize"
+             },
+             {
+              "op": "torch.Tensor.div",
+              "id": 14,
+              "line": 20,
+              "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
+              "uses": [],
+              "inputs": [
+               {
+                "from": 11
+               },
+               {
+                "from": 13
+               }
+              ],
+              "in": [
+               [
+                "B",
+                "T",
+                768
+               ],
+               [
+                "B",
+                "T",
+                1
+               ]
+              ],
+              "out": [
+               "B",
+               "T",
+               768
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Normalize"
              }
             ],
+            "total": 0,
+            "repeat": 1
+           },
+           {
+            "group": true,
+            "label": "Learned scale and shift",
+            "id": 714,
             "in": [
+             [
+              768
+             ],
              [
               "B",
               "T",
               768
              ],
              [
-              "B",
-              "T",
-              1
+              768
              ]
             ],
             "out": [
              "B",
              "T",
              768
-            ],
-            "children": [],
-            "total": 0,
-            "repeat": 1,
-            "label": "Normalize"
-           },
-           {
-            "op": "torch.Tensor.mul",
-            "id": 15,
-            "line": 21,
-            "code": "return self.scale * norm_x + self.shift",
-            "uses": [
-             "scale"
             ],
             "inputs": [
              {
@@ -6151,64 +7238,89 @@ window.ARCHITECTURE = {
              },
              {
               "from": 14
-             }
-            ],
-            "in": [
-             [
-              768
-             ],
-             [
-              "B",
-              "T",
-              768
-             ]
-            ],
-            "out": [
-             "B",
-             "T",
-             768
-            ],
-            "children": [],
-            "total": 0,
-            "repeat": 1,
-            "label": "Learned scale and shift"
-           },
-           {
-            "op": "torch.Tensor.add",
-            "id": 16,
-            "line": 21,
-            "code": "return self.scale * norm_x + self.shift",
-            "uses": [
-             "shift"
-            ],
-            "inputs": [
-             {
-              "from": 15
              },
              {
               "tensor": "trf_blocks.0.norm1.shift"
              }
             ],
-            "returned_by": 8,
-            "in": [
-             [
-              "B",
-              "T",
-              768
-             ],
-             [
-              768
-             ]
+            "children": [
+             {
+              "op": "torch.Tensor.mul",
+              "id": 15,
+              "line": 21,
+              "code": "return self.scale * norm_x + self.shift",
+              "uses": [
+               "scale"
+              ],
+              "inputs": [
+               {
+                "tensor": "trf_blocks.0.norm1.scale"
+               },
+               {
+                "from": 14
+               }
+              ],
+              "in": [
+               [
+                768
+               ],
+               [
+                "B",
+                "T",
+                768
+               ]
+              ],
+              "out": [
+               "B",
+               "T",
+               768
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Learned scale and shift"
+             },
+             {
+              "op": "torch.Tensor.add",
+              "id": 16,
+              "line": 21,
+              "code": "return self.scale * norm_x + self.shift",
+              "uses": [
+               "shift"
+              ],
+              "inputs": [
+               {
+                "from": 15
+               },
+               {
+                "tensor": "trf_blocks.0.norm1.shift"
+               }
+              ],
+              "returned_by": 8,
+              "in": [
+               [
+                "B",
+                "T",
+                768
+               ],
+               [
+                768
+               ]
+              ],
+              "out": [
+               "B",
+               "T",
+               768
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Learned scale and shift"
+             }
             ],
-            "out": [
-             "B",
-             "T",
-             768
-            ],
-            "children": [],
             "total": 0,
             "repeat": 1,
-            "label": "Learned scale and shift"
+            "returned_by": 8
            }
           ],
           "class": "llm_training.model.gpt2.layers.LayerNorm",
@@ -6539,49 +7651,9 @@ window.ARCHITECTURE = {
             "label": "Split values into heads"
            },
            {
-            "op": "torch.Tensor.transpose",
-            "id": 27,
-            "line": 61,
-            "code": "attn_scores = queries @ keys.transpose(2, 3)  # Dot product for each head",
-            "uses": [],
-            "inputs": [
-             {
-              "from": 24
-             }
-            ],
-            "in": [
-             [
-              "B",
-              12,
-              "T",
-              64
-             ]
-            ],
-            "out": [
-             "B",
-             12,
-             64,
-             "T"
-            ],
-            "children": [],
-            "total": 0,
-            "repeat": 1,
-            "label": "Attention scores Q·Kᵀ"
-           },
-           {
-            "op": "torch.Tensor.matmul",
-            "id": 28,
-            "line": 61,
-            "code": "attn_scores = queries @ keys.transpose(2, 3)  # Dot product for each head",
-            "uses": [],
-            "inputs": [
-             {
-              "from": 25
-             },
-             {
-              "from": 27
-             }
-            ],
+            "group": true,
+            "label": "Attention scores Q·Kᵀ",
+            "id": 715,
             "in": [
              [
               "B",
@@ -6592,8 +7664,8 @@ window.ARCHITECTURE = {
              [
               "B",
               12,
-              64,
-              "T"
+              "T",
+              64
              ]
             ],
             "out": [
@@ -6602,101 +7674,213 @@ window.ARCHITECTURE = {
              "T",
              "T"
             ],
-            "children": [],
+            "inputs": [
+             {
+              "from": 24
+             },
+             {
+              "from": 25
+             }
+            ],
+            "children": [
+             {
+              "op": "torch.Tensor.transpose",
+              "id": 27,
+              "line": 61,
+              "code": "attn_scores = queries @ keys.transpose(2, 3)  # Dot product for each head",
+              "uses": [],
+              "inputs": [
+               {
+                "from": 24
+               }
+              ],
+              "in": [
+               [
+                "B",
+                12,
+                "T",
+                64
+               ]
+              ],
+              "out": [
+               "B",
+               12,
+               64,
+               "T"
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Attention scores Q·Kᵀ"
+             },
+             {
+              "op": "torch.Tensor.matmul",
+              "id": 28,
+              "line": 61,
+              "code": "attn_scores = queries @ keys.transpose(2, 3)  # Dot product for each head",
+              "uses": [],
+              "inputs": [
+               {
+                "from": 25
+               },
+               {
+                "from": 27
+               }
+              ],
+              "in": [
+               [
+                "B",
+                12,
+                "T",
+                64
+               ],
+               [
+                "B",
+                12,
+                64,
+                "T"
+               ]
+              ],
+              "out": [
+               "B",
+               12,
+               "T",
+               "T"
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Attention scores Q·Kᵀ"
+             }
+            ],
             "total": 0,
-            "repeat": 1,
-            "label": "Attention scores Q·Kᵀ"
+            "repeat": 1
            },
            {
-            "op": "torch.Tensor.bool",
-            "id": 29,
-            "line": 64,
-            "code": "mask_bool = self.mask.bool()[:num_tokens, :num_tokens]",
-            "uses": [
-             "mask"
+            "group": true,
+            "label": "Causal mask",
+            "id": 716,
+            "in": [
+             [
+              256,
+              256
+             ],
+             [
+              "B",
+              12,
+              "T",
+              "T"
+             ]
+            ],
+            "out": [
+             "B",
+             12,
+             "T",
+             "T"
             ],
             "inputs": [
              {
               "tensor": "trf_blocks.0.att.mask"
-             }
-            ],
-            "in": [
-             [
-              256,
-              256
-             ]
-            ],
-            "out": [
-             256,
-             256
-            ],
-            "children": [],
-            "total": 0,
-            "repeat": 1,
-            "label": "Causal mask"
-           },
-           {
-            "op": "torch.Tensor.__getitem__",
-            "id": 30,
-            "line": 64,
-            "code": "mask_bool = self.mask.bool()[:num_tokens, :num_tokens]",
-            "uses": [],
-            "inputs": [
-             {
-              "from": 29
-             }
-            ],
-            "in": [
-             [
-              256,
-              256
-             ]
-            ],
-            "out": [
-             "T",
-             "T"
-            ],
-            "children": [],
-            "total": 0,
-            "repeat": 1,
-            "label": "Causal mask"
-           },
-           {
-            "op": "torch.Tensor.masked_fill_",
-            "id": 31,
-            "line": 67,
-            "code": "attn_scores.masked_fill_(mask_bool, -torch.inf)",
-            "uses": [],
-            "inputs": [
-             {
-              "from": 28
              },
              {
-              "from": 30
+              "from": 28
              }
             ],
-            "in": [
-             [
-              "B",
-              12,
-              "T",
-              "T"
-             ],
-             [
-              "T",
-              "T"
-             ]
+            "children": [
+             {
+              "op": "torch.Tensor.bool",
+              "id": 29,
+              "line": 64,
+              "code": "mask_bool = self.mask.bool()[:num_tokens, :num_tokens]",
+              "uses": [
+               "mask"
+              ],
+              "inputs": [
+               {
+                "tensor": "trf_blocks.0.att.mask"
+               }
+              ],
+              "in": [
+               [
+                256,
+                256
+               ]
+              ],
+              "out": [
+               256,
+               256
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Causal mask"
+             },
+             {
+              "op": "torch.Tensor.__getitem__",
+              "id": 30,
+              "line": 64,
+              "code": "mask_bool = self.mask.bool()[:num_tokens, :num_tokens]",
+              "uses": [],
+              "inputs": [
+               {
+                "from": 29
+               }
+              ],
+              "in": [
+               [
+                256,
+                256
+               ]
+              ],
+              "out": [
+               "T",
+               "T"
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Causal mask"
+             },
+             {
+              "op": "torch.Tensor.masked_fill_",
+              "id": 31,
+              "line": 67,
+              "code": "attn_scores.masked_fill_(mask_bool, -torch.inf)",
+              "uses": [],
+              "inputs": [
+               {
+                "from": 28
+               },
+               {
+                "from": 30
+               }
+              ],
+              "in": [
+               [
+                "B",
+                12,
+                "T",
+                "T"
+               ],
+               [
+                "T",
+                "T"
+               ]
+              ],
+              "out": [
+               "B",
+               12,
+               "T",
+               "T"
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Causal mask"
+             }
             ],
-            "out": [
-             "B",
-             12,
-             "T",
-             "T"
-            ],
-            "children": [],
             "total": 0,
-            "repeat": 1,
-            "label": "Causal mask"
+            "repeat": 1
            },
            {
             "op": "torch.Tensor.div",
@@ -6827,51 +8011,14 @@ window.ARCHITECTURE = {
             "label": "Weighted sum of values"
            },
            {
-            "op": "torch.Tensor.transpose",
-            "id": 36,
-            "line": 73,
-            "code": "context_vec = (attn_weights @ values).transpose(1, 2)",
-            "uses": [],
-            "inputs": [
-             {
-              "from": 35
-             }
-            ],
+            "group": true,
+            "label": "Merge heads",
+            "id": 717,
             "in": [
              [
               "B",
               12,
               "T",
-              64
-             ]
-            ],
-            "out": [
-             "B",
-             "T",
-             12,
-             64
-            ],
-            "children": [],
-            "total": 0,
-            "repeat": 1,
-            "label": "Merge heads"
-           },
-           {
-            "op": "torch.Tensor.reshape",
-            "id": 37,
-            "line": 76,
-            "code": "context_vec = context_vec.reshape(b, num_tokens, self.d_out)",
-            "uses": [],
-            "inputs": [
-             {
-              "from": 36
-             }
-            ],
-            "in": [
-             [
-              "B",
-              "T",
-              12,
               64
              ]
             ],
@@ -6880,10 +8027,74 @@ window.ARCHITECTURE = {
              "T",
              768
             ],
-            "children": [],
+            "inputs": [
+             {
+              "from": 35
+             }
+            ],
+            "children": [
+             {
+              "op": "torch.Tensor.transpose",
+              "id": 36,
+              "line": 73,
+              "code": "context_vec = (attn_weights @ values).transpose(1, 2)",
+              "uses": [],
+              "inputs": [
+               {
+                "from": 35
+               }
+              ],
+              "in": [
+               [
+                "B",
+                12,
+                "T",
+                64
+               ]
+              ],
+              "out": [
+               "B",
+               "T",
+               12,
+               64
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Merge heads"
+             },
+             {
+              "op": "torch.Tensor.reshape",
+              "id": 37,
+              "line": 76,
+              "code": "context_vec = context_vec.reshape(b, num_tokens, self.d_out)",
+              "uses": [],
+              "inputs": [
+               {
+                "from": 36
+               }
+              ],
+              "in": [
+               [
+                "B",
+                "T",
+                12,
+                64
+               ]
+              ],
+              "out": [
+               "B",
+               "T",
+               768
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Merge heads"
+             }
+            ],
             "total": 0,
-            "repeat": 1,
-            "label": "Merge heads"
+            "repeat": 1
            },
            {
             "module": "trf_blocks.0.att.out_proj",
@@ -7087,140 +8298,196 @@ window.ARCHITECTURE = {
             "label": "Variance over channels"
            },
            {
-            "op": "torch.Tensor.sub",
-            "id": 44,
-            "line": 20,
-            "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
-            "uses": [],
+            "group": true,
+            "label": "Normalize",
+            "id": 718,
+            "in": [
+             [
+              "B",
+              "T",
+              768
+             ],
+             [
+              "B",
+              "T",
+              1
+             ],
+             [
+              "B",
+              "T",
+              1
+             ]
+            ],
+            "out": [
+             "B",
+             "T",
+             768
+            ],
             "inputs": [
              {
               "from": 40
              },
              {
               "from": 42
-             }
-            ],
-            "in": [
-             [
-              "B",
-              "T",
-              768
-             ],
-             [
-              "B",
-              "T",
-              1
-             ]
-            ],
-            "out": [
-             "B",
-             "T",
-             768
-            ],
-            "children": [],
-            "total": 0,
-            "repeat": 1,
-            "label": "Normalize"
-           },
-           {
-            "op": "torch.Tensor.add",
-            "id": 45,
-            "line": 20,
-            "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
-            "uses": [],
-            "inputs": [
+             },
              {
               "from": 43
              }
             ],
-            "in": [
-             [
-              "B",
-              "T",
-              1
-             ]
-            ],
-            "out": [
-             "B",
-             "T",
-             1
-            ],
-            "children": [],
-            "total": 0,
-            "repeat": 1,
-            "label": "Normalize"
-           },
-           {
-            "op": "torch.sqrt",
-            "id": 46,
-            "line": 20,
-            "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
-            "uses": [],
-            "inputs": [
+            "children": [
              {
-              "from": 45
-             }
-            ],
-            "in": [
-             [
-              "B",
-              "T",
-              1
-             ]
-            ],
-            "out": [
-             "B",
-             "T",
-             1
-            ],
-            "children": [],
-            "total": 0,
-            "repeat": 1,
-            "label": "Normalize"
-           },
-           {
-            "op": "torch.Tensor.div",
-            "id": 47,
-            "line": 20,
-            "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
-            "uses": [],
-            "inputs": [
-             {
-              "from": 44
+              "op": "torch.Tensor.sub",
+              "id": 44,
+              "line": 20,
+              "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
+              "uses": [],
+              "inputs": [
+               {
+                "from": 40
+               },
+               {
+                "from": 42
+               }
+              ],
+              "in": [
+               [
+                "B",
+                "T",
+                768
+               ],
+               [
+                "B",
+                "T",
+                1
+               ]
+              ],
+              "out": [
+               "B",
+               "T",
+               768
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Normalize"
              },
              {
-              "from": 46
+              "op": "torch.Tensor.add",
+              "id": 45,
+              "line": 20,
+              "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
+              "uses": [],
+              "inputs": [
+               {
+                "from": 43
+               }
+              ],
+              "in": [
+               [
+                "B",
+                "T",
+                1
+               ]
+              ],
+              "out": [
+               "B",
+               "T",
+               1
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Normalize"
+             },
+             {
+              "op": "torch.sqrt",
+              "id": 46,
+              "line": 20,
+              "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
+              "uses": [],
+              "inputs": [
+               {
+                "from": 45
+               }
+              ],
+              "in": [
+               [
+                "B",
+                "T",
+                1
+               ]
+              ],
+              "out": [
+               "B",
+               "T",
+               1
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Normalize"
+             },
+             {
+              "op": "torch.Tensor.div",
+              "id": 47,
+              "line": 20,
+              "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
+              "uses": [],
+              "inputs": [
+               {
+                "from": 44
+               },
+               {
+                "from": 46
+               }
+              ],
+              "in": [
+               [
+                "B",
+                "T",
+                768
+               ],
+               [
+                "B",
+                "T",
+                1
+               ]
+              ],
+              "out": [
+               "B",
+               "T",
+               768
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Normalize"
              }
             ],
+            "total": 0,
+            "repeat": 1
+           },
+           {
+            "group": true,
+            "label": "Learned scale and shift",
+            "id": 719,
             "in": [
+             [
+              768
+             ],
              [
               "B",
               "T",
               768
              ],
              [
-              "B",
-              "T",
-              1
+              768
              ]
             ],
             "out": [
              "B",
              "T",
              768
-            ],
-            "children": [],
-            "total": 0,
-            "repeat": 1,
-            "label": "Normalize"
-           },
-           {
-            "op": "torch.Tensor.mul",
-            "id": 48,
-            "line": 21,
-            "code": "return self.scale * norm_x + self.shift",
-            "uses": [
-             "scale"
             ],
             "inputs": [
              {
@@ -7228,64 +8495,89 @@ window.ARCHITECTURE = {
              },
              {
               "from": 47
-             }
-            ],
-            "in": [
-             [
-              768
-             ],
-             [
-              "B",
-              "T",
-              768
-             ]
-            ],
-            "out": [
-             "B",
-             "T",
-             768
-            ],
-            "children": [],
-            "total": 0,
-            "repeat": 1,
-            "label": "Learned scale and shift"
-           },
-           {
-            "op": "torch.Tensor.add",
-            "id": 49,
-            "line": 21,
-            "code": "return self.scale * norm_x + self.shift",
-            "uses": [
-             "shift"
-            ],
-            "inputs": [
-             {
-              "from": 48
              },
              {
               "tensor": "trf_blocks.0.norm2.shift"
              }
             ],
-            "returned_by": 41,
-            "in": [
-             [
-              "B",
-              "T",
-              768
-             ],
-             [
-              768
-             ]
+            "children": [
+             {
+              "op": "torch.Tensor.mul",
+              "id": 48,
+              "line": 21,
+              "code": "return self.scale * norm_x + self.shift",
+              "uses": [
+               "scale"
+              ],
+              "inputs": [
+               {
+                "tensor": "trf_blocks.0.norm2.scale"
+               },
+               {
+                "from": 47
+               }
+              ],
+              "in": [
+               [
+                768
+               ],
+               [
+                "B",
+                "T",
+                768
+               ]
+              ],
+              "out": [
+               "B",
+               "T",
+               768
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Learned scale and shift"
+             },
+             {
+              "op": "torch.Tensor.add",
+              "id": 49,
+              "line": 21,
+              "code": "return self.scale * norm_x + self.shift",
+              "uses": [
+               "shift"
+              ],
+              "inputs": [
+               {
+                "from": 48
+               },
+               {
+                "tensor": "trf_blocks.0.norm2.shift"
+               }
+              ],
+              "returned_by": 41,
+              "in": [
+               [
+                "B",
+                "T",
+                768
+               ],
+               [
+                768
+               ]
+              ],
+              "out": [
+               "B",
+               "T",
+               768
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Learned scale and shift"
+             }
             ],
-            "out": [
-             "B",
-             "T",
-             768
-            ],
-            "children": [],
             "total": 0,
             "repeat": 1,
-            "label": "Learned scale and shift"
+            "returned_by": 41
            }
           ],
           "class": "llm_training.model.gpt2.layers.LayerNorm",
@@ -7415,251 +8707,282 @@ window.ARCHITECTURE = {
               ],
               "children": [
                {
-                "op": "torch.Tensor.mul",
-                "id": 54,
-                "line": 34,
-                "code": "return 0.5 * x * (1 + torch.tanh(self._sqrt_two_over_pi * (x + 0.044715 * torch.pow(x, 3))))",
-                "uses": [],
-                "inputs": [
-                 {
-                  "from": 52
-                 }
-                ],
-                "in": [
-                 [
-                  "B",
-                  "T",
-                  3072
-                 ]
-                ],
-                "out": [
-                 "B",
-                 "T",
-                 3072
-                ],
-                "children": [],
-                "total": 0,
-                "repeat": 1,
-                "label": "GELU, tanh approximation"
-               },
-               {
-                "op": "torch.pow",
-                "id": 55,
-                "line": 34,
-                "code": "return 0.5 * x * (1 + torch.tanh(self._sqrt_two_over_pi * (x + 0.044715 * torch.pow(x, 3))))",
-                "uses": [],
-                "inputs": [
-                 {
-                  "from": 52
-                 }
-                ],
-                "in": [
-                 [
-                  "B",
-                  "T",
-                  3072
-                 ]
-                ],
-                "out": [
-                 "B",
-                 "T",
-                 3072
-                ],
-                "children": [],
-                "total": 0,
-                "repeat": 1,
-                "label": "GELU, tanh approximation"
-               },
-               {
-                "op": "torch.Tensor.mul",
-                "id": 56,
-                "line": 34,
-                "code": "return 0.5 * x * (1 + torch.tanh(self._sqrt_two_over_pi * (x + 0.044715 * torch.pow(x, 3))))",
-                "uses": [],
-                "inputs": [
-                 {
-                  "from": 55
-                 }
-                ],
-                "in": [
-                 [
-                  "B",
-                  "T",
-                  3072
-                 ]
-                ],
-                "out": [
-                 "B",
-                 "T",
-                 3072
-                ],
-                "children": [],
-                "total": 0,
-                "repeat": 1,
-                "label": "GELU, tanh approximation"
-               },
-               {
-                "op": "torch.Tensor.add",
-                "id": 57,
-                "line": 34,
-                "code": "return 0.5 * x * (1 + torch.tanh(self._sqrt_two_over_pi * (x + 0.044715 * torch.pow(x, 3))))",
-                "uses": [],
-                "inputs": [
-                 {
-                  "from": 52
-                 },
-                 {
-                  "from": 56
-                 }
-                ],
+                "group": true,
+                "label": "GELU, tanh approximation",
+                "id": 720,
                 "in": [
                  [
                   "B",
                   "T",
                   3072
                  ],
-                 [
-                  "B",
-                  "T",
-                  3072
-                 ]
+                 []
                 ],
                 "out": [
                  "B",
                  "T",
                  3072
                 ],
-                "children": [],
-                "total": 0,
-                "repeat": 1,
-                "label": "GELU, tanh approximation"
-               },
-               {
-                "op": "torch.Tensor.mul",
-                "id": 58,
-                "line": 34,
-                "code": "return 0.5 * x * (1 + torch.tanh(self._sqrt_two_over_pi * (x + 0.044715 * torch.pow(x, 3))))",
-                "uses": [
-                 "_sqrt_two_over_pi"
-                ],
                 "inputs": [
+                 {
+                  "from": 52
+                 },
                  {
                   "tensor": "trf_blocks.0.ff.layers.1._sqrt_two_over_pi"
+                 }
+                ],
+                "children": [
+                 {
+                  "op": "torch.Tensor.mul",
+                  "id": 54,
+                  "line": 34,
+                  "code": "return 0.5 * x * (1 + torch.tanh(self._sqrt_two_over_pi * (x + 0.044715 * torch.pow(x, 3))))",
+                  "uses": [],
+                  "inputs": [
+                   {
+                    "from": 52
+                   }
+                  ],
+                  "in": [
+                   [
+                    "B",
+                    "T",
+                    3072
+                   ]
+                  ],
+                  "out": [
+                   "B",
+                   "T",
+                   3072
+                  ],
+                  "children": [],
+                  "total": 0,
+                  "repeat": 1,
+                  "label": "GELU, tanh approximation"
                  },
                  {
-                  "from": 57
-                 }
-                ],
-                "in": [
-                 [],
-                 [
-                  "B",
-                  "T",
-                  3072
-                 ]
-                ],
-                "out": [
-                 "B",
-                 "T",
-                 3072
-                ],
-                "children": [],
-                "total": 0,
-                "repeat": 1,
-                "label": "GELU, tanh approximation"
-               },
-               {
-                "op": "torch.tanh",
-                "id": 59,
-                "line": 34,
-                "code": "return 0.5 * x * (1 + torch.tanh(self._sqrt_two_over_pi * (x + 0.044715 * torch.pow(x, 3))))",
-                "uses": [],
-                "inputs": [
-                 {
-                  "from": 58
-                 }
-                ],
-                "in": [
-                 [
-                  "B",
-                  "T",
-                  3072
-                 ]
-                ],
-                "out": [
-                 "B",
-                 "T",
-                 3072
-                ],
-                "children": [],
-                "total": 0,
-                "repeat": 1,
-                "label": "GELU, tanh approximation"
-               },
-               {
-                "op": "torch.Tensor.add",
-                "id": 60,
-                "line": 34,
-                "code": "return 0.5 * x * (1 + torch.tanh(self._sqrt_two_over_pi * (x + 0.044715 * torch.pow(x, 3))))",
-                "uses": [],
-                "inputs": [
-                 {
-                  "from": 59
-                 }
-                ],
-                "in": [
-                 [
-                  "B",
-                  "T",
-                  3072
-                 ]
-                ],
-                "out": [
-                 "B",
-                 "T",
-                 3072
-                ],
-                "children": [],
-                "total": 0,
-                "repeat": 1,
-                "label": "GELU, tanh approximation"
-               },
-               {
-                "op": "torch.Tensor.mul",
-                "id": 61,
-                "line": 34,
-                "code": "return 0.5 * x * (1 + torch.tanh(self._sqrt_two_over_pi * (x + 0.044715 * torch.pow(x, 3))))",
-                "uses": [],
-                "inputs": [
-                 {
-                  "from": 54
+                  "op": "torch.pow",
+                  "id": 55,
+                  "line": 34,
+                  "code": "return 0.5 * x * (1 + torch.tanh(self._sqrt_two_over_pi * (x + 0.044715 * torch.pow(x, 3))))",
+                  "uses": [],
+                  "inputs": [
+                   {
+                    "from": 52
+                   }
+                  ],
+                  "in": [
+                   [
+                    "B",
+                    "T",
+                    3072
+                   ]
+                  ],
+                  "out": [
+                   "B",
+                   "T",
+                   3072
+                  ],
+                  "children": [],
+                  "total": 0,
+                  "repeat": 1,
+                  "label": "GELU, tanh approximation"
                  },
                  {
-                  "from": 60
+                  "op": "torch.Tensor.mul",
+                  "id": 56,
+                  "line": 34,
+                  "code": "return 0.5 * x * (1 + torch.tanh(self._sqrt_two_over_pi * (x + 0.044715 * torch.pow(x, 3))))",
+                  "uses": [],
+                  "inputs": [
+                   {
+                    "from": 55
+                   }
+                  ],
+                  "in": [
+                   [
+                    "B",
+                    "T",
+                    3072
+                   ]
+                  ],
+                  "out": [
+                   "B",
+                   "T",
+                   3072
+                  ],
+                  "children": [],
+                  "total": 0,
+                  "repeat": 1,
+                  "label": "GELU, tanh approximation"
+                 },
+                 {
+                  "op": "torch.Tensor.add",
+                  "id": 57,
+                  "line": 34,
+                  "code": "return 0.5 * x * (1 + torch.tanh(self._sqrt_two_over_pi * (x + 0.044715 * torch.pow(x, 3))))",
+                  "uses": [],
+                  "inputs": [
+                   {
+                    "from": 52
+                   },
+                   {
+                    "from": 56
+                   }
+                  ],
+                  "in": [
+                   [
+                    "B",
+                    "T",
+                    3072
+                   ],
+                   [
+                    "B",
+                    "T",
+                    3072
+                   ]
+                  ],
+                  "out": [
+                   "B",
+                   "T",
+                   3072
+                  ],
+                  "children": [],
+                  "total": 0,
+                  "repeat": 1,
+                  "label": "GELU, tanh approximation"
+                 },
+                 {
+                  "op": "torch.Tensor.mul",
+                  "id": 58,
+                  "line": 34,
+                  "code": "return 0.5 * x * (1 + torch.tanh(self._sqrt_two_over_pi * (x + 0.044715 * torch.pow(x, 3))))",
+                  "uses": [
+                   "_sqrt_two_over_pi"
+                  ],
+                  "inputs": [
+                   {
+                    "tensor": "trf_blocks.0.ff.layers.1._sqrt_two_over_pi"
+                   },
+                   {
+                    "from": 57
+                   }
+                  ],
+                  "in": [
+                   [],
+                   [
+                    "B",
+                    "T",
+                    3072
+                   ]
+                  ],
+                  "out": [
+                   "B",
+                   "T",
+                   3072
+                  ],
+                  "children": [],
+                  "total": 0,
+                  "repeat": 1,
+                  "label": "GELU, tanh approximation"
+                 },
+                 {
+                  "op": "torch.tanh",
+                  "id": 59,
+                  "line": 34,
+                  "code": "return 0.5 * x * (1 + torch.tanh(self._sqrt_two_over_pi * (x + 0.044715 * torch.pow(x, 3))))",
+                  "uses": [],
+                  "inputs": [
+                   {
+                    "from": 58
+                   }
+                  ],
+                  "in": [
+                   [
+                    "B",
+                    "T",
+                    3072
+                   ]
+                  ],
+                  "out": [
+                   "B",
+                   "T",
+                   3072
+                  ],
+                  "children": [],
+                  "total": 0,
+                  "repeat": 1,
+                  "label": "GELU, tanh approximation"
+                 },
+                 {
+                  "op": "torch.Tensor.add",
+                  "id": 60,
+                  "line": 34,
+                  "code": "return 0.5 * x * (1 + torch.tanh(self._sqrt_two_over_pi * (x + 0.044715 * torch.pow(x, 3))))",
+                  "uses": [],
+                  "inputs": [
+                   {
+                    "from": 59
+                   }
+                  ],
+                  "in": [
+                   [
+                    "B",
+                    "T",
+                    3072
+                   ]
+                  ],
+                  "out": [
+                   "B",
+                   "T",
+                   3072
+                  ],
+                  "children": [],
+                  "total": 0,
+                  "repeat": 1,
+                  "label": "GELU, tanh approximation"
+                 },
+                 {
+                  "op": "torch.Tensor.mul",
+                  "id": 61,
+                  "line": 34,
+                  "code": "return 0.5 * x * (1 + torch.tanh(self._sqrt_two_over_pi * (x + 0.044715 * torch.pow(x, 3))))",
+                  "uses": [],
+                  "inputs": [
+                   {
+                    "from": 54
+                   },
+                   {
+                    "from": 60
+                   }
+                  ],
+                  "returned_by": 53,
+                  "in": [
+                   [
+                    "B",
+                    "T",
+                    3072
+                   ],
+                   [
+                    "B",
+                    "T",
+                    3072
+                   ]
+                  ],
+                  "out": [
+                   "B",
+                   "T",
+                   3072
+                  ],
+                  "children": [],
+                  "total": 0,
+                  "repeat": 1,
+                  "label": "GELU, tanh approximation"
                  }
                 ],
-                "returned_by": 53,
-                "in": [
-                 [
-                  "B",
-                  "T",
-                  3072
-                 ],
-                 [
-                  "B",
-                  "T",
-                  3072
-                 ]
-                ],
-                "out": [
-                 "B",
-                 "T",
-                 3072
-                ],
-                "children": [],
                 "total": 0,
                 "repeat": 1,
-                "label": "GELU, tanh approximation"
+                "returned_by": 53
                }
               ],
               "class": "llm_training.model.gpt2.layers.GELU",
@@ -7894,140 +9217,196 @@ window.ARCHITECTURE = {
         "label": "Variance over channels"
        },
        {
-        "op": "torch.Tensor.sub",
-        "id": 706,
-        "line": 20,
-        "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
-        "uses": [],
+        "group": true,
+        "label": "Normalize",
+        "id": 721,
+        "in": [
+         [
+          "B",
+          "T",
+          768
+         ],
+         [
+          "B",
+          "T",
+          1
+         ],
+         [
+          "B",
+          "T",
+          1
+         ]
+        ],
+        "out": [
+         "B",
+         "T",
+         768
+        ],
         "inputs": [
          {
           "from": 6
          },
          {
           "from": 704
-         }
-        ],
-        "in": [
-         [
-          "B",
-          "T",
-          768
-         ],
-         [
-          "B",
-          "T",
-          1
-         ]
-        ],
-        "out": [
-         "B",
-         "T",
-         768
-        ],
-        "children": [],
-        "total": 0,
-        "repeat": 1,
-        "label": "Normalize"
-       },
-       {
-        "op": "torch.Tensor.add",
-        "id": 707,
-        "line": 20,
-        "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
-        "uses": [],
-        "inputs": [
+         },
          {
           "from": 705
          }
         ],
-        "in": [
-         [
-          "B",
-          "T",
-          1
-         ]
-        ],
-        "out": [
-         "B",
-         "T",
-         1
-        ],
-        "children": [],
-        "total": 0,
-        "repeat": 1,
-        "label": "Normalize"
-       },
-       {
-        "op": "torch.sqrt",
-        "id": 708,
-        "line": 20,
-        "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
-        "uses": [],
-        "inputs": [
+        "children": [
          {
-          "from": 707
-         }
-        ],
-        "in": [
-         [
-          "B",
-          "T",
-          1
-         ]
-        ],
-        "out": [
-         "B",
-         "T",
-         1
-        ],
-        "children": [],
-        "total": 0,
-        "repeat": 1,
-        "label": "Normalize"
-       },
-       {
-        "op": "torch.Tensor.div",
-        "id": 709,
-        "line": 20,
-        "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
-        "uses": [],
-        "inputs": [
-         {
-          "from": 706
+          "op": "torch.Tensor.sub",
+          "id": 706,
+          "line": 20,
+          "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
+          "uses": [],
+          "inputs": [
+           {
+            "from": 6
+           },
+           {
+            "from": 704
+           }
+          ],
+          "in": [
+           [
+            "B",
+            "T",
+            768
+           ],
+           [
+            "B",
+            "T",
+            1
+           ]
+          ],
+          "out": [
+           "B",
+           "T",
+           768
+          ],
+          "children": [],
+          "total": 0,
+          "repeat": 1,
+          "label": "Normalize"
          },
          {
-          "from": 708
+          "op": "torch.Tensor.add",
+          "id": 707,
+          "line": 20,
+          "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
+          "uses": [],
+          "inputs": [
+           {
+            "from": 705
+           }
+          ],
+          "in": [
+           [
+            "B",
+            "T",
+            1
+           ]
+          ],
+          "out": [
+           "B",
+           "T",
+           1
+          ],
+          "children": [],
+          "total": 0,
+          "repeat": 1,
+          "label": "Normalize"
+         },
+         {
+          "op": "torch.sqrt",
+          "id": 708,
+          "line": 20,
+          "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
+          "uses": [],
+          "inputs": [
+           {
+            "from": 707
+           }
+          ],
+          "in": [
+           [
+            "B",
+            "T",
+            1
+           ]
+          ],
+          "out": [
+           "B",
+           "T",
+           1
+          ],
+          "children": [],
+          "total": 0,
+          "repeat": 1,
+          "label": "Normalize"
+         },
+         {
+          "op": "torch.Tensor.div",
+          "id": 709,
+          "line": 20,
+          "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
+          "uses": [],
+          "inputs": [
+           {
+            "from": 706
+           },
+           {
+            "from": 708
+           }
+          ],
+          "in": [
+           [
+            "B",
+            "T",
+            768
+           ],
+           [
+            "B",
+            "T",
+            1
+           ]
+          ],
+          "out": [
+           "B",
+           "T",
+           768
+          ],
+          "children": [],
+          "total": 0,
+          "repeat": 1,
+          "label": "Normalize"
          }
         ],
+        "total": 0,
+        "repeat": 1
+       },
+       {
+        "group": true,
+        "label": "Learned scale and shift",
+        "id": 722,
         "in": [
+         [
+          768
+         ],
          [
           "B",
           "T",
           768
          ],
          [
-          "B",
-          "T",
-          1
+          768
          ]
         ],
         "out": [
          "B",
          "T",
          768
-        ],
-        "children": [],
-        "total": 0,
-        "repeat": 1,
-        "label": "Normalize"
-       },
-       {
-        "op": "torch.Tensor.mul",
-        "id": 710,
-        "line": 21,
-        "code": "return self.scale * norm_x + self.shift",
-        "uses": [
-         "scale"
         ],
         "inputs": [
          {
@@ -8035,64 +9414,89 @@ window.ARCHITECTURE = {
          },
          {
           "from": 709
-         }
-        ],
-        "in": [
-         [
-          768
-         ],
-         [
-          "B",
-          "T",
-          768
-         ]
-        ],
-        "out": [
-         "B",
-         "T",
-         768
-        ],
-        "children": [],
-        "total": 0,
-        "repeat": 1,
-        "label": "Learned scale and shift"
-       },
-       {
-        "op": "torch.Tensor.add",
-        "id": 711,
-        "line": 21,
-        "code": "return self.scale * norm_x + self.shift",
-        "uses": [
-         "shift"
-        ],
-        "inputs": [
-         {
-          "from": 710
          },
          {
           "tensor": "final_norm.shift"
          }
         ],
-        "returned_by": 703,
-        "in": [
-         [
-          "B",
-          "T",
-          768
-         ],
-         [
-          768
-         ]
+        "children": [
+         {
+          "op": "torch.Tensor.mul",
+          "id": 710,
+          "line": 21,
+          "code": "return self.scale * norm_x + self.shift",
+          "uses": [
+           "scale"
+          ],
+          "inputs": [
+           {
+            "tensor": "final_norm.scale"
+           },
+           {
+            "from": 709
+           }
+          ],
+          "in": [
+           [
+            768
+           ],
+           [
+            "B",
+            "T",
+            768
+           ]
+          ],
+          "out": [
+           "B",
+           "T",
+           768
+          ],
+          "children": [],
+          "total": 0,
+          "repeat": 1,
+          "label": "Learned scale and shift"
+         },
+         {
+          "op": "torch.Tensor.add",
+          "id": 711,
+          "line": 21,
+          "code": "return self.scale * norm_x + self.shift",
+          "uses": [
+           "shift"
+          ],
+          "inputs": [
+           {
+            "from": 710
+           },
+           {
+            "tensor": "final_norm.shift"
+           }
+          ],
+          "returned_by": 703,
+          "in": [
+           [
+            "B",
+            "T",
+            768
+           ],
+           [
+            768
+           ]
+          ],
+          "out": [
+           "B",
+           "T",
+           768
+          ],
+          "children": [],
+          "total": 0,
+          "repeat": 1,
+          "label": "Learned scale and shift"
+         }
         ],
-        "out": [
-         "B",
-         "T",
-         768
-        ],
-        "children": [],
         "total": 0,
         "repeat": 1,
-        "label": "Learned scale and shift"
+        "returned_by": 703
        }
       ],
       "class": "llm_training.model.gpt2.layers.LayerNorm",
@@ -8468,11 +9872,31 @@ window.ARCHITECTURE = {
             "label": "Variance over channels"
            },
            {
-            "op": "torch.Tensor.sub",
-            "id": 11,
-            "line": 20,
-            "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
-            "uses": [],
+            "group": true,
+            "label": "Normalize",
+            "id": 417,
+            "in": [
+             [
+              "B",
+              "T",
+              512
+             ],
+             [
+              "B",
+              "T",
+              1
+             ],
+             [
+              "B",
+              "T",
+              1
+             ]
+            ],
+            "out": [
+             "B",
+             "T",
+             512
+            ],
             "inputs": [
              {
               "from": 5,
@@ -8480,129 +9904,166 @@ window.ARCHITECTURE = {
              },
              {
               "from": 9
-             }
-            ],
-            "in": [
-             [
-              "B",
-              "T",
-              512
-             ],
-             [
-              "B",
-              "T",
-              1
-             ]
-            ],
-            "out": [
-             "B",
-             "T",
-             512
-            ],
-            "children": [],
-            "total": 0,
-            "repeat": 1,
-            "label": "Normalize"
-           },
-           {
-            "op": "torch.Tensor.add",
-            "id": 12,
-            "line": 20,
-            "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
-            "uses": [],
-            "inputs": [
+             },
              {
               "from": 10
              }
             ],
-            "in": [
-             [
-              "B",
-              "T",
-              1
-             ]
-            ],
-            "out": [
-             "B",
-             "T",
-             1
-            ],
-            "children": [],
-            "total": 0,
-            "repeat": 1,
-            "label": "Normalize"
-           },
-           {
-            "op": "torch.sqrt",
-            "id": 13,
-            "line": 20,
-            "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
-            "uses": [],
-            "inputs": [
+            "children": [
              {
-              "from": 12
-             }
-            ],
-            "in": [
-             [
-              "B",
-              "T",
-              1
-             ]
-            ],
-            "out": [
-             "B",
-             "T",
-             1
-            ],
-            "children": [],
-            "total": 0,
-            "repeat": 1,
-            "label": "Normalize"
-           },
-           {
-            "op": "torch.Tensor.div",
-            "id": 14,
-            "line": 20,
-            "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
-            "uses": [],
-            "inputs": [
-             {
-              "from": 11
+              "op": "torch.Tensor.sub",
+              "id": 11,
+              "line": 20,
+              "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
+              "uses": [],
+              "inputs": [
+               {
+                "from": 5,
+                "first_copy": true
+               },
+               {
+                "from": 9
+               }
+              ],
+              "in": [
+               [
+                "B",
+                "T",
+                512
+               ],
+               [
+                "B",
+                "T",
+                1
+               ]
+              ],
+              "out": [
+               "B",
+               "T",
+               512
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Normalize"
              },
              {
-              "from": 13
+              "op": "torch.Tensor.add",
+              "id": 12,
+              "line": 20,
+              "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
+              "uses": [],
+              "inputs": [
+               {
+                "from": 10
+               }
+              ],
+              "in": [
+               [
+                "B",
+                "T",
+                1
+               ]
+              ],
+              "out": [
+               "B",
+               "T",
+               1
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Normalize"
+             },
+             {
+              "op": "torch.sqrt",
+              "id": 13,
+              "line": 20,
+              "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
+              "uses": [],
+              "inputs": [
+               {
+                "from": 12
+               }
+              ],
+              "in": [
+               [
+                "B",
+                "T",
+                1
+               ]
+              ],
+              "out": [
+               "B",
+               "T",
+               1
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Normalize"
+             },
+             {
+              "op": "torch.Tensor.div",
+              "id": 14,
+              "line": 20,
+              "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
+              "uses": [],
+              "inputs": [
+               {
+                "from": 11
+               },
+               {
+                "from": 13
+               }
+              ],
+              "in": [
+               [
+                "B",
+                "T",
+                512
+               ],
+               [
+                "B",
+                "T",
+                1
+               ]
+              ],
+              "out": [
+               "B",
+               "T",
+               512
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Normalize"
              }
             ],
+            "total": 0,
+            "repeat": 1
+           },
+           {
+            "group": true,
+            "label": "Learned scale and shift",
+            "id": 418,
             "in": [
+             [
+              512
+             ],
              [
               "B",
               "T",
               512
              ],
              [
-              "B",
-              "T",
-              1
+              512
              ]
             ],
             "out": [
              "B",
              "T",
              512
-            ],
-            "children": [],
-            "total": 0,
-            "repeat": 1,
-            "label": "Normalize"
-           },
-           {
-            "op": "torch.Tensor.mul",
-            "id": 15,
-            "line": 21,
-            "code": "return self.scale * norm_x + self.shift",
-            "uses": [
-             "scale"
             ],
             "inputs": [
              {
@@ -8610,64 +10071,89 @@ window.ARCHITECTURE = {
              },
              {
               "from": 14
-             }
-            ],
-            "in": [
-             [
-              512
-             ],
-             [
-              "B",
-              "T",
-              512
-             ]
-            ],
-            "out": [
-             "B",
-             "T",
-             512
-            ],
-            "children": [],
-            "total": 0,
-            "repeat": 1,
-            "label": "Learned scale and shift"
-           },
-           {
-            "op": "torch.Tensor.add",
-            "id": 16,
-            "line": 21,
-            "code": "return self.scale * norm_x + self.shift",
-            "uses": [
-             "shift"
-            ],
-            "inputs": [
-             {
-              "from": 15
              },
              {
               "tensor": "trf_blocks.0.norm1.shift"
              }
             ],
-            "returned_by": 8,
-            "in": [
-             [
-              "B",
-              "T",
-              512
-             ],
-             [
-              512
-             ]
+            "children": [
+             {
+              "op": "torch.Tensor.mul",
+              "id": 15,
+              "line": 21,
+              "code": "return self.scale * norm_x + self.shift",
+              "uses": [
+               "scale"
+              ],
+              "inputs": [
+               {
+                "tensor": "trf_blocks.0.norm1.scale"
+               },
+               {
+                "from": 14
+               }
+              ],
+              "in": [
+               [
+                512
+               ],
+               [
+                "B",
+                "T",
+                512
+               ]
+              ],
+              "out": [
+               "B",
+               "T",
+               512
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Learned scale and shift"
+             },
+             {
+              "op": "torch.Tensor.add",
+              "id": 16,
+              "line": 21,
+              "code": "return self.scale * norm_x + self.shift",
+              "uses": [
+               "shift"
+              ],
+              "inputs": [
+               {
+                "from": 15
+               },
+               {
+                "tensor": "trf_blocks.0.norm1.shift"
+               }
+              ],
+              "returned_by": 8,
+              "in": [
+               [
+                "B",
+                "T",
+                512
+               ],
+               [
+                512
+               ]
+              ],
+              "out": [
+               "B",
+               "T",
+               512
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Learned scale and shift"
+             }
             ],
-            "out": [
-             "B",
-             "T",
-             512
-            ],
-            "children": [],
             "total": 0,
             "repeat": 1,
-            "label": "Learned scale and shift"
+            "returned_by": 8
            }
           ],
           "class": "llm_training.model.gpt2.layers.LayerNorm",
@@ -9067,51 +10553,14 @@ window.ARCHITECTURE = {
             "label": "Causal attention, fused"
            },
            {
-            "op": "torch.Tensor.transpose",
-            "id": 28,
-            "line": 58,
-            "code": ").transpose(1, 2)",
-            "uses": [],
-            "inputs": [
-             {
-              "from": 27
-             }
-            ],
+            "group": true,
+            "label": "Merge heads",
+            "id": 419,
             "in": [
              [
               "B",
               8,
               "T",
-              64
-             ]
-            ],
-            "out": [
-             "B",
-             "T",
-             8,
-             64
-            ],
-            "children": [],
-            "total": 0,
-            "repeat": 1,
-            "label": "Merge heads"
-           },
-           {
-            "op": "torch.Tensor.reshape",
-            "id": 29,
-            "line": 76,
-            "code": "context_vec = context_vec.reshape(b, num_tokens, self.d_out)",
-            "uses": [],
-            "inputs": [
-             {
-              "from": 28
-             }
-            ],
-            "in": [
-             [
-              "B",
-              "T",
-              8,
               64
              ]
             ],
@@ -9120,10 +10569,74 @@ window.ARCHITECTURE = {
              "T",
              512
             ],
-            "children": [],
+            "inputs": [
+             {
+              "from": 27
+             }
+            ],
+            "children": [
+             {
+              "op": "torch.Tensor.transpose",
+              "id": 28,
+              "line": 58,
+              "code": ").transpose(1, 2)",
+              "uses": [],
+              "inputs": [
+               {
+                "from": 27
+               }
+              ],
+              "in": [
+               [
+                "B",
+                8,
+                "T",
+                64
+               ]
+              ],
+              "out": [
+               "B",
+               "T",
+               8,
+               64
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Merge heads"
+             },
+             {
+              "op": "torch.Tensor.reshape",
+              "id": 29,
+              "line": 76,
+              "code": "context_vec = context_vec.reshape(b, num_tokens, self.d_out)",
+              "uses": [],
+              "inputs": [
+               {
+                "from": 28
+               }
+              ],
+              "in": [
+               [
+                "B",
+                "T",
+                8,
+                64
+               ]
+              ],
+              "out": [
+               "B",
+               "T",
+               512
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Merge heads"
+             }
+            ],
             "total": 0,
-            "repeat": 1,
-            "label": "Merge heads"
+            "repeat": 1
            },
            {
             "module": "trf_blocks.0.att.out_proj",
@@ -9327,140 +10840,196 @@ window.ARCHITECTURE = {
             "label": "Variance over channels"
            },
            {
-            "op": "torch.Tensor.sub",
-            "id": 36,
-            "line": 20,
-            "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
-            "uses": [],
+            "group": true,
+            "label": "Normalize",
+            "id": 420,
+            "in": [
+             [
+              "B",
+              "T",
+              512
+             ],
+             [
+              "B",
+              "T",
+              1
+             ],
+             [
+              "B",
+              "T",
+              1
+             ]
+            ],
+            "out": [
+             "B",
+             "T",
+             512
+            ],
             "inputs": [
              {
               "from": 32
              },
              {
               "from": 34
-             }
-            ],
-            "in": [
-             [
-              "B",
-              "T",
-              512
-             ],
-             [
-              "B",
-              "T",
-              1
-             ]
-            ],
-            "out": [
-             "B",
-             "T",
-             512
-            ],
-            "children": [],
-            "total": 0,
-            "repeat": 1,
-            "label": "Normalize"
-           },
-           {
-            "op": "torch.Tensor.add",
-            "id": 37,
-            "line": 20,
-            "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
-            "uses": [],
-            "inputs": [
+             },
              {
               "from": 35
              }
             ],
-            "in": [
-             [
-              "B",
-              "T",
-              1
-             ]
-            ],
-            "out": [
-             "B",
-             "T",
-             1
-            ],
-            "children": [],
-            "total": 0,
-            "repeat": 1,
-            "label": "Normalize"
-           },
-           {
-            "op": "torch.sqrt",
-            "id": 38,
-            "line": 20,
-            "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
-            "uses": [],
-            "inputs": [
+            "children": [
              {
-              "from": 37
-             }
-            ],
-            "in": [
-             [
-              "B",
-              "T",
-              1
-             ]
-            ],
-            "out": [
-             "B",
-             "T",
-             1
-            ],
-            "children": [],
-            "total": 0,
-            "repeat": 1,
-            "label": "Normalize"
-           },
-           {
-            "op": "torch.Tensor.div",
-            "id": 39,
-            "line": 20,
-            "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
-            "uses": [],
-            "inputs": [
-             {
-              "from": 36
+              "op": "torch.Tensor.sub",
+              "id": 36,
+              "line": 20,
+              "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
+              "uses": [],
+              "inputs": [
+               {
+                "from": 32
+               },
+               {
+                "from": 34
+               }
+              ],
+              "in": [
+               [
+                "B",
+                "T",
+                512
+               ],
+               [
+                "B",
+                "T",
+                1
+               ]
+              ],
+              "out": [
+               "B",
+               "T",
+               512
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Normalize"
              },
              {
-              "from": 38
+              "op": "torch.Tensor.add",
+              "id": 37,
+              "line": 20,
+              "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
+              "uses": [],
+              "inputs": [
+               {
+                "from": 35
+               }
+              ],
+              "in": [
+               [
+                "B",
+                "T",
+                1
+               ]
+              ],
+              "out": [
+               "B",
+               "T",
+               1
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Normalize"
+             },
+             {
+              "op": "torch.sqrt",
+              "id": 38,
+              "line": 20,
+              "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
+              "uses": [],
+              "inputs": [
+               {
+                "from": 37
+               }
+              ],
+              "in": [
+               [
+                "B",
+                "T",
+                1
+               ]
+              ],
+              "out": [
+               "B",
+               "T",
+               1
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Normalize"
+             },
+             {
+              "op": "torch.Tensor.div",
+              "id": 39,
+              "line": 20,
+              "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
+              "uses": [],
+              "inputs": [
+               {
+                "from": 36
+               },
+               {
+                "from": 38
+               }
+              ],
+              "in": [
+               [
+                "B",
+                "T",
+                512
+               ],
+               [
+                "B",
+                "T",
+                1
+               ]
+              ],
+              "out": [
+               "B",
+               "T",
+               512
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Normalize"
              }
             ],
+            "total": 0,
+            "repeat": 1
+           },
+           {
+            "group": true,
+            "label": "Learned scale and shift",
+            "id": 421,
             "in": [
+             [
+              512
+             ],
              [
               "B",
               "T",
               512
              ],
              [
-              "B",
-              "T",
-              1
+              512
              ]
             ],
             "out": [
              "B",
              "T",
              512
-            ],
-            "children": [],
-            "total": 0,
-            "repeat": 1,
-            "label": "Normalize"
-           },
-           {
-            "op": "torch.Tensor.mul",
-            "id": 40,
-            "line": 21,
-            "code": "return self.scale * norm_x + self.shift",
-            "uses": [
-             "scale"
             ],
             "inputs": [
              {
@@ -9468,64 +11037,89 @@ window.ARCHITECTURE = {
              },
              {
               "from": 39
-             }
-            ],
-            "in": [
-             [
-              512
-             ],
-             [
-              "B",
-              "T",
-              512
-             ]
-            ],
-            "out": [
-             "B",
-             "T",
-             512
-            ],
-            "children": [],
-            "total": 0,
-            "repeat": 1,
-            "label": "Learned scale and shift"
-           },
-           {
-            "op": "torch.Tensor.add",
-            "id": 41,
-            "line": 21,
-            "code": "return self.scale * norm_x + self.shift",
-            "uses": [
-             "shift"
-            ],
-            "inputs": [
-             {
-              "from": 40
              },
              {
               "tensor": "trf_blocks.0.norm2.shift"
              }
             ],
-            "returned_by": 33,
-            "in": [
-             [
-              "B",
-              "T",
-              512
-             ],
-             [
-              512
-             ]
+            "children": [
+             {
+              "op": "torch.Tensor.mul",
+              "id": 40,
+              "line": 21,
+              "code": "return self.scale * norm_x + self.shift",
+              "uses": [
+               "scale"
+              ],
+              "inputs": [
+               {
+                "tensor": "trf_blocks.0.norm2.scale"
+               },
+               {
+                "from": 39
+               }
+              ],
+              "in": [
+               [
+                512
+               ],
+               [
+                "B",
+                "T",
+                512
+               ]
+              ],
+              "out": [
+               "B",
+               "T",
+               512
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Learned scale and shift"
+             },
+             {
+              "op": "torch.Tensor.add",
+              "id": 41,
+              "line": 21,
+              "code": "return self.scale * norm_x + self.shift",
+              "uses": [
+               "shift"
+              ],
+              "inputs": [
+               {
+                "from": 40
+               },
+               {
+                "tensor": "trf_blocks.0.norm2.shift"
+               }
+              ],
+              "returned_by": 33,
+              "in": [
+               [
+                "B",
+                "T",
+                512
+               ],
+               [
+                512
+               ]
+              ],
+              "out": [
+               "B",
+               "T",
+               512
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Learned scale and shift"
+             }
             ],
-            "out": [
-             "B",
-             "T",
-             512
-            ],
-            "children": [],
             "total": 0,
             "repeat": 1,
-            "label": "Learned scale and shift"
+            "returned_by": 33
            }
           ],
           "class": "llm_training.model.gpt2.layers.LayerNorm",
@@ -9655,251 +11249,282 @@ window.ARCHITECTURE = {
               ],
               "children": [
                {
-                "op": "torch.Tensor.mul",
-                "id": 46,
-                "line": 34,
-                "code": "return 0.5 * x * (1 + torch.tanh(self._sqrt_two_over_pi * (x + 0.044715 * torch.pow(x, 3))))",
-                "uses": [],
-                "inputs": [
-                 {
-                  "from": 44
-                 }
-                ],
-                "in": [
-                 [
-                  "B",
-                  "T",
-                  2048
-                 ]
-                ],
-                "out": [
-                 "B",
-                 "T",
-                 2048
-                ],
-                "children": [],
-                "total": 0,
-                "repeat": 1,
-                "label": "GELU, tanh approximation"
-               },
-               {
-                "op": "torch.pow",
-                "id": 47,
-                "line": 34,
-                "code": "return 0.5 * x * (1 + torch.tanh(self._sqrt_two_over_pi * (x + 0.044715 * torch.pow(x, 3))))",
-                "uses": [],
-                "inputs": [
-                 {
-                  "from": 44
-                 }
-                ],
-                "in": [
-                 [
-                  "B",
-                  "T",
-                  2048
-                 ]
-                ],
-                "out": [
-                 "B",
-                 "T",
-                 2048
-                ],
-                "children": [],
-                "total": 0,
-                "repeat": 1,
-                "label": "GELU, tanh approximation"
-               },
-               {
-                "op": "torch.Tensor.mul",
-                "id": 48,
-                "line": 34,
-                "code": "return 0.5 * x * (1 + torch.tanh(self._sqrt_two_over_pi * (x + 0.044715 * torch.pow(x, 3))))",
-                "uses": [],
-                "inputs": [
-                 {
-                  "from": 47
-                 }
-                ],
-                "in": [
-                 [
-                  "B",
-                  "T",
-                  2048
-                 ]
-                ],
-                "out": [
-                 "B",
-                 "T",
-                 2048
-                ],
-                "children": [],
-                "total": 0,
-                "repeat": 1,
-                "label": "GELU, tanh approximation"
-               },
-               {
-                "op": "torch.Tensor.add",
-                "id": 49,
-                "line": 34,
-                "code": "return 0.5 * x * (1 + torch.tanh(self._sqrt_two_over_pi * (x + 0.044715 * torch.pow(x, 3))))",
-                "uses": [],
-                "inputs": [
-                 {
-                  "from": 44
-                 },
-                 {
-                  "from": 48
-                 }
-                ],
+                "group": true,
+                "label": "GELU, tanh approximation",
+                "id": 422,
                 "in": [
                  [
                   "B",
                   "T",
                   2048
                  ],
-                 [
-                  "B",
-                  "T",
-                  2048
-                 ]
+                 []
                 ],
                 "out": [
                  "B",
                  "T",
                  2048
                 ],
-                "children": [],
-                "total": 0,
-                "repeat": 1,
-                "label": "GELU, tanh approximation"
-               },
-               {
-                "op": "torch.Tensor.mul",
-                "id": 50,
-                "line": 34,
-                "code": "return 0.5 * x * (1 + torch.tanh(self._sqrt_two_over_pi * (x + 0.044715 * torch.pow(x, 3))))",
-                "uses": [
-                 "_sqrt_two_over_pi"
-                ],
                 "inputs": [
+                 {
+                  "from": 44
+                 },
                  {
                   "tensor": "trf_blocks.0.ff.layers.1._sqrt_two_over_pi"
+                 }
+                ],
+                "children": [
+                 {
+                  "op": "torch.Tensor.mul",
+                  "id": 46,
+                  "line": 34,
+                  "code": "return 0.5 * x * (1 + torch.tanh(self._sqrt_two_over_pi * (x + 0.044715 * torch.pow(x, 3))))",
+                  "uses": [],
+                  "inputs": [
+                   {
+                    "from": 44
+                   }
+                  ],
+                  "in": [
+                   [
+                    "B",
+                    "T",
+                    2048
+                   ]
+                  ],
+                  "out": [
+                   "B",
+                   "T",
+                   2048
+                  ],
+                  "children": [],
+                  "total": 0,
+                  "repeat": 1,
+                  "label": "GELU, tanh approximation"
                  },
                  {
-                  "from": 49
-                 }
-                ],
-                "in": [
-                 [],
-                 [
-                  "B",
-                  "T",
-                  2048
-                 ]
-                ],
-                "out": [
-                 "B",
-                 "T",
-                 2048
-                ],
-                "children": [],
-                "total": 0,
-                "repeat": 1,
-                "label": "GELU, tanh approximation"
-               },
-               {
-                "op": "torch.tanh",
-                "id": 51,
-                "line": 34,
-                "code": "return 0.5 * x * (1 + torch.tanh(self._sqrt_two_over_pi * (x + 0.044715 * torch.pow(x, 3))))",
-                "uses": [],
-                "inputs": [
-                 {
-                  "from": 50
-                 }
-                ],
-                "in": [
-                 [
-                  "B",
-                  "T",
-                  2048
-                 ]
-                ],
-                "out": [
-                 "B",
-                 "T",
-                 2048
-                ],
-                "children": [],
-                "total": 0,
-                "repeat": 1,
-                "label": "GELU, tanh approximation"
-               },
-               {
-                "op": "torch.Tensor.add",
-                "id": 52,
-                "line": 34,
-                "code": "return 0.5 * x * (1 + torch.tanh(self._sqrt_two_over_pi * (x + 0.044715 * torch.pow(x, 3))))",
-                "uses": [],
-                "inputs": [
-                 {
-                  "from": 51
-                 }
-                ],
-                "in": [
-                 [
-                  "B",
-                  "T",
-                  2048
-                 ]
-                ],
-                "out": [
-                 "B",
-                 "T",
-                 2048
-                ],
-                "children": [],
-                "total": 0,
-                "repeat": 1,
-                "label": "GELU, tanh approximation"
-               },
-               {
-                "op": "torch.Tensor.mul",
-                "id": 53,
-                "line": 34,
-                "code": "return 0.5 * x * (1 + torch.tanh(self._sqrt_two_over_pi * (x + 0.044715 * torch.pow(x, 3))))",
-                "uses": [],
-                "inputs": [
-                 {
-                  "from": 46
+                  "op": "torch.pow",
+                  "id": 47,
+                  "line": 34,
+                  "code": "return 0.5 * x * (1 + torch.tanh(self._sqrt_two_over_pi * (x + 0.044715 * torch.pow(x, 3))))",
+                  "uses": [],
+                  "inputs": [
+                   {
+                    "from": 44
+                   }
+                  ],
+                  "in": [
+                   [
+                    "B",
+                    "T",
+                    2048
+                   ]
+                  ],
+                  "out": [
+                   "B",
+                   "T",
+                   2048
+                  ],
+                  "children": [],
+                  "total": 0,
+                  "repeat": 1,
+                  "label": "GELU, tanh approximation"
                  },
                  {
-                  "from": 52
+                  "op": "torch.Tensor.mul",
+                  "id": 48,
+                  "line": 34,
+                  "code": "return 0.5 * x * (1 + torch.tanh(self._sqrt_two_over_pi * (x + 0.044715 * torch.pow(x, 3))))",
+                  "uses": [],
+                  "inputs": [
+                   {
+                    "from": 47
+                   }
+                  ],
+                  "in": [
+                   [
+                    "B",
+                    "T",
+                    2048
+                   ]
+                  ],
+                  "out": [
+                   "B",
+                   "T",
+                   2048
+                  ],
+                  "children": [],
+                  "total": 0,
+                  "repeat": 1,
+                  "label": "GELU, tanh approximation"
+                 },
+                 {
+                  "op": "torch.Tensor.add",
+                  "id": 49,
+                  "line": 34,
+                  "code": "return 0.5 * x * (1 + torch.tanh(self._sqrt_two_over_pi * (x + 0.044715 * torch.pow(x, 3))))",
+                  "uses": [],
+                  "inputs": [
+                   {
+                    "from": 44
+                   },
+                   {
+                    "from": 48
+                   }
+                  ],
+                  "in": [
+                   [
+                    "B",
+                    "T",
+                    2048
+                   ],
+                   [
+                    "B",
+                    "T",
+                    2048
+                   ]
+                  ],
+                  "out": [
+                   "B",
+                   "T",
+                   2048
+                  ],
+                  "children": [],
+                  "total": 0,
+                  "repeat": 1,
+                  "label": "GELU, tanh approximation"
+                 },
+                 {
+                  "op": "torch.Tensor.mul",
+                  "id": 50,
+                  "line": 34,
+                  "code": "return 0.5 * x * (1 + torch.tanh(self._sqrt_two_over_pi * (x + 0.044715 * torch.pow(x, 3))))",
+                  "uses": [
+                   "_sqrt_two_over_pi"
+                  ],
+                  "inputs": [
+                   {
+                    "tensor": "trf_blocks.0.ff.layers.1._sqrt_two_over_pi"
+                   },
+                   {
+                    "from": 49
+                   }
+                  ],
+                  "in": [
+                   [],
+                   [
+                    "B",
+                    "T",
+                    2048
+                   ]
+                  ],
+                  "out": [
+                   "B",
+                   "T",
+                   2048
+                  ],
+                  "children": [],
+                  "total": 0,
+                  "repeat": 1,
+                  "label": "GELU, tanh approximation"
+                 },
+                 {
+                  "op": "torch.tanh",
+                  "id": 51,
+                  "line": 34,
+                  "code": "return 0.5 * x * (1 + torch.tanh(self._sqrt_two_over_pi * (x + 0.044715 * torch.pow(x, 3))))",
+                  "uses": [],
+                  "inputs": [
+                   {
+                    "from": 50
+                   }
+                  ],
+                  "in": [
+                   [
+                    "B",
+                    "T",
+                    2048
+                   ]
+                  ],
+                  "out": [
+                   "B",
+                   "T",
+                   2048
+                  ],
+                  "children": [],
+                  "total": 0,
+                  "repeat": 1,
+                  "label": "GELU, tanh approximation"
+                 },
+                 {
+                  "op": "torch.Tensor.add",
+                  "id": 52,
+                  "line": 34,
+                  "code": "return 0.5 * x * (1 + torch.tanh(self._sqrt_two_over_pi * (x + 0.044715 * torch.pow(x, 3))))",
+                  "uses": [],
+                  "inputs": [
+                   {
+                    "from": 51
+                   }
+                  ],
+                  "in": [
+                   [
+                    "B",
+                    "T",
+                    2048
+                   ]
+                  ],
+                  "out": [
+                   "B",
+                   "T",
+                   2048
+                  ],
+                  "children": [],
+                  "total": 0,
+                  "repeat": 1,
+                  "label": "GELU, tanh approximation"
+                 },
+                 {
+                  "op": "torch.Tensor.mul",
+                  "id": 53,
+                  "line": 34,
+                  "code": "return 0.5 * x * (1 + torch.tanh(self._sqrt_two_over_pi * (x + 0.044715 * torch.pow(x, 3))))",
+                  "uses": [],
+                  "inputs": [
+                   {
+                    "from": 46
+                   },
+                   {
+                    "from": 52
+                   }
+                  ],
+                  "returned_by": 45,
+                  "in": [
+                   [
+                    "B",
+                    "T",
+                    2048
+                   ],
+                   [
+                    "B",
+                    "T",
+                    2048
+                   ]
+                  ],
+                  "out": [
+                   "B",
+                   "T",
+                   2048
+                  ],
+                  "children": [],
+                  "total": 0,
+                  "repeat": 1,
+                  "label": "GELU, tanh approximation"
                  }
                 ],
-                "returned_by": 45,
-                "in": [
-                 [
-                  "B",
-                  "T",
-                  2048
-                 ],
-                 [
-                  "B",
-                  "T",
-                  2048
-                 ]
-                ],
-                "out": [
-                 "B",
-                 "T",
-                 2048
-                ],
-                "children": [],
                 "total": 0,
                 "repeat": 1,
-                "label": "GELU, tanh approximation"
+                "returned_by": 45
                }
               ],
               "class": "llm_training.model.gpt2.layers.GELU",
@@ -10134,140 +11759,196 @@ window.ARCHITECTURE = {
         "label": "Variance over channels"
        },
        {
-        "op": "torch.Tensor.sub",
-        "id": 410,
-        "line": 20,
-        "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
-        "uses": [],
+        "group": true,
+        "label": "Normalize",
+        "id": 423,
+        "in": [
+         [
+          "B",
+          "T",
+          512
+         ],
+         [
+          "B",
+          "T",
+          1
+         ],
+         [
+          "B",
+          "T",
+          1
+         ]
+        ],
+        "out": [
+         "B",
+         "T",
+         512
+        ],
         "inputs": [
          {
           "from": 6
          },
          {
           "from": 408
-         }
-        ],
-        "in": [
-         [
-          "B",
-          "T",
-          512
-         ],
-         [
-          "B",
-          "T",
-          1
-         ]
-        ],
-        "out": [
-         "B",
-         "T",
-         512
-        ],
-        "children": [],
-        "total": 0,
-        "repeat": 1,
-        "label": "Normalize"
-       },
-       {
-        "op": "torch.Tensor.add",
-        "id": 411,
-        "line": 20,
-        "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
-        "uses": [],
-        "inputs": [
+         },
          {
           "from": 409
          }
         ],
-        "in": [
-         [
-          "B",
-          "T",
-          1
-         ]
-        ],
-        "out": [
-         "B",
-         "T",
-         1
-        ],
-        "children": [],
-        "total": 0,
-        "repeat": 1,
-        "label": "Normalize"
-       },
-       {
-        "op": "torch.sqrt",
-        "id": 412,
-        "line": 20,
-        "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
-        "uses": [],
-        "inputs": [
+        "children": [
          {
-          "from": 411
-         }
-        ],
-        "in": [
-         [
-          "B",
-          "T",
-          1
-         ]
-        ],
-        "out": [
-         "B",
-         "T",
-         1
-        ],
-        "children": [],
-        "total": 0,
-        "repeat": 1,
-        "label": "Normalize"
-       },
-       {
-        "op": "torch.Tensor.div",
-        "id": 413,
-        "line": 20,
-        "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
-        "uses": [],
-        "inputs": [
-         {
-          "from": 410
+          "op": "torch.Tensor.sub",
+          "id": 410,
+          "line": 20,
+          "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
+          "uses": [],
+          "inputs": [
+           {
+            "from": 6
+           },
+           {
+            "from": 408
+           }
+          ],
+          "in": [
+           [
+            "B",
+            "T",
+            512
+           ],
+           [
+            "B",
+            "T",
+            1
+           ]
+          ],
+          "out": [
+           "B",
+           "T",
+           512
+          ],
+          "children": [],
+          "total": 0,
+          "repeat": 1,
+          "label": "Normalize"
          },
          {
-          "from": 412
+          "op": "torch.Tensor.add",
+          "id": 411,
+          "line": 20,
+          "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
+          "uses": [],
+          "inputs": [
+           {
+            "from": 409
+           }
+          ],
+          "in": [
+           [
+            "B",
+            "T",
+            1
+           ]
+          ],
+          "out": [
+           "B",
+           "T",
+           1
+          ],
+          "children": [],
+          "total": 0,
+          "repeat": 1,
+          "label": "Normalize"
+         },
+         {
+          "op": "torch.sqrt",
+          "id": 412,
+          "line": 20,
+          "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
+          "uses": [],
+          "inputs": [
+           {
+            "from": 411
+           }
+          ],
+          "in": [
+           [
+            "B",
+            "T",
+            1
+           ]
+          ],
+          "out": [
+           "B",
+           "T",
+           1
+          ],
+          "children": [],
+          "total": 0,
+          "repeat": 1,
+          "label": "Normalize"
+         },
+         {
+          "op": "torch.Tensor.div",
+          "id": 413,
+          "line": 20,
+          "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
+          "uses": [],
+          "inputs": [
+           {
+            "from": 410
+           },
+           {
+            "from": 412
+           }
+          ],
+          "in": [
+           [
+            "B",
+            "T",
+            512
+           ],
+           [
+            "B",
+            "T",
+            1
+           ]
+          ],
+          "out": [
+           "B",
+           "T",
+           512
+          ],
+          "children": [],
+          "total": 0,
+          "repeat": 1,
+          "label": "Normalize"
          }
         ],
+        "total": 0,
+        "repeat": 1
+       },
+       {
+        "group": true,
+        "label": "Learned scale and shift",
+        "id": 424,
         "in": [
+         [
+          512
+         ],
          [
           "B",
           "T",
           512
          ],
          [
-          "B",
-          "T",
-          1
+          512
          ]
         ],
         "out": [
          "B",
          "T",
          512
-        ],
-        "children": [],
-        "total": 0,
-        "repeat": 1,
-        "label": "Normalize"
-       },
-       {
-        "op": "torch.Tensor.mul",
-        "id": 414,
-        "line": 21,
-        "code": "return self.scale * norm_x + self.shift",
-        "uses": [
-         "scale"
         ],
         "inputs": [
          {
@@ -10275,64 +11956,89 @@ window.ARCHITECTURE = {
          },
          {
           "from": 413
-         }
-        ],
-        "in": [
-         [
-          512
-         ],
-         [
-          "B",
-          "T",
-          512
-         ]
-        ],
-        "out": [
-         "B",
-         "T",
-         512
-        ],
-        "children": [],
-        "total": 0,
-        "repeat": 1,
-        "label": "Learned scale and shift"
-       },
-       {
-        "op": "torch.Tensor.add",
-        "id": 415,
-        "line": 21,
-        "code": "return self.scale * norm_x + self.shift",
-        "uses": [
-         "shift"
-        ],
-        "inputs": [
-         {
-          "from": 414
          },
          {
           "tensor": "final_norm.shift"
          }
         ],
-        "returned_by": 407,
-        "in": [
-         [
-          "B",
-          "T",
-          512
-         ],
-         [
-          512
-         ]
+        "children": [
+         {
+          "op": "torch.Tensor.mul",
+          "id": 414,
+          "line": 21,
+          "code": "return self.scale * norm_x + self.shift",
+          "uses": [
+           "scale"
+          ],
+          "inputs": [
+           {
+            "tensor": "final_norm.scale"
+           },
+           {
+            "from": 413
+           }
+          ],
+          "in": [
+           [
+            512
+           ],
+           [
+            "B",
+            "T",
+            512
+           ]
+          ],
+          "out": [
+           "B",
+           "T",
+           512
+          ],
+          "children": [],
+          "total": 0,
+          "repeat": 1,
+          "label": "Learned scale and shift"
+         },
+         {
+          "op": "torch.Tensor.add",
+          "id": 415,
+          "line": 21,
+          "code": "return self.scale * norm_x + self.shift",
+          "uses": [
+           "shift"
+          ],
+          "inputs": [
+           {
+            "from": 414
+           },
+           {
+            "tensor": "final_norm.shift"
+           }
+          ],
+          "returned_by": 407,
+          "in": [
+           [
+            "B",
+            "T",
+            512
+           ],
+           [
+            512
+           ]
+          ],
+          "out": [
+           "B",
+           "T",
+           512
+          ],
+          "children": [],
+          "total": 0,
+          "repeat": 1,
+          "label": "Learned scale and shift"
+         }
         ],
-        "out": [
-         "B",
-         "T",
-         512
-        ],
-        "children": [],
         "total": 0,
         "repeat": 1,
-        "label": "Learned scale and shift"
+        "returned_by": 407
        }
       ],
       "class": "llm_training.model.gpt2.layers.LayerNorm",
@@ -10709,11 +12415,31 @@ window.ARCHITECTURE = {
             "label": "Variance over channels"
            },
            {
-            "op": "torch.Tensor.sub",
-            "id": 11,
-            "line": 20,
-            "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
-            "uses": [],
+            "group": true,
+            "label": "Normalize",
+            "id": 1217,
+            "in": [
+             [
+              "B",
+              "T",
+              1024
+             ],
+             [
+              "B",
+              "T",
+              1
+             ],
+             [
+              "B",
+              "T",
+              1
+             ]
+            ],
+            "out": [
+             "B",
+             "T",
+             1024
+            ],
             "inputs": [
              {
               "from": 5,
@@ -10721,129 +12447,166 @@ window.ARCHITECTURE = {
              },
              {
               "from": 9
-             }
-            ],
-            "in": [
-             [
-              "B",
-              "T",
-              1024
-             ],
-             [
-              "B",
-              "T",
-              1
-             ]
-            ],
-            "out": [
-             "B",
-             "T",
-             1024
-            ],
-            "children": [],
-            "total": 0,
-            "repeat": 1,
-            "label": "Normalize"
-           },
-           {
-            "op": "torch.Tensor.add",
-            "id": 12,
-            "line": 20,
-            "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
-            "uses": [],
-            "inputs": [
+             },
              {
               "from": 10
              }
             ],
-            "in": [
-             [
-              "B",
-              "T",
-              1
-             ]
-            ],
-            "out": [
-             "B",
-             "T",
-             1
-            ],
-            "children": [],
-            "total": 0,
-            "repeat": 1,
-            "label": "Normalize"
-           },
-           {
-            "op": "torch.sqrt",
-            "id": 13,
-            "line": 20,
-            "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
-            "uses": [],
-            "inputs": [
+            "children": [
              {
-              "from": 12
-             }
-            ],
-            "in": [
-             [
-              "B",
-              "T",
-              1
-             ]
-            ],
-            "out": [
-             "B",
-             "T",
-             1
-            ],
-            "children": [],
-            "total": 0,
-            "repeat": 1,
-            "label": "Normalize"
-           },
-           {
-            "op": "torch.Tensor.div",
-            "id": 14,
-            "line": 20,
-            "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
-            "uses": [],
-            "inputs": [
-             {
-              "from": 11
+              "op": "torch.Tensor.sub",
+              "id": 11,
+              "line": 20,
+              "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
+              "uses": [],
+              "inputs": [
+               {
+                "from": 5,
+                "first_copy": true
+               },
+               {
+                "from": 9
+               }
+              ],
+              "in": [
+               [
+                "B",
+                "T",
+                1024
+               ],
+               [
+                "B",
+                "T",
+                1
+               ]
+              ],
+              "out": [
+               "B",
+               "T",
+               1024
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Normalize"
              },
              {
-              "from": 13
+              "op": "torch.Tensor.add",
+              "id": 12,
+              "line": 20,
+              "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
+              "uses": [],
+              "inputs": [
+               {
+                "from": 10
+               }
+              ],
+              "in": [
+               [
+                "B",
+                "T",
+                1
+               ]
+              ],
+              "out": [
+               "B",
+               "T",
+               1
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Normalize"
+             },
+             {
+              "op": "torch.sqrt",
+              "id": 13,
+              "line": 20,
+              "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
+              "uses": [],
+              "inputs": [
+               {
+                "from": 12
+               }
+              ],
+              "in": [
+               [
+                "B",
+                "T",
+                1
+               ]
+              ],
+              "out": [
+               "B",
+               "T",
+               1
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Normalize"
+             },
+             {
+              "op": "torch.Tensor.div",
+              "id": 14,
+              "line": 20,
+              "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
+              "uses": [],
+              "inputs": [
+               {
+                "from": 11
+               },
+               {
+                "from": 13
+               }
+              ],
+              "in": [
+               [
+                "B",
+                "T",
+                1024
+               ],
+               [
+                "B",
+                "T",
+                1
+               ]
+              ],
+              "out": [
+               "B",
+               "T",
+               1024
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Normalize"
              }
             ],
+            "total": 0,
+            "repeat": 1
+           },
+           {
+            "group": true,
+            "label": "Learned scale and shift",
+            "id": 1218,
             "in": [
+             [
+              1024
+             ],
              [
               "B",
               "T",
               1024
              ],
              [
-              "B",
-              "T",
-              1
+              1024
              ]
             ],
             "out": [
              "B",
              "T",
              1024
-            ],
-            "children": [],
-            "total": 0,
-            "repeat": 1,
-            "label": "Normalize"
-           },
-           {
-            "op": "torch.Tensor.mul",
-            "id": 15,
-            "line": 21,
-            "code": "return self.scale * norm_x + self.shift",
-            "uses": [
-             "scale"
             ],
             "inputs": [
              {
@@ -10851,64 +12614,89 @@ window.ARCHITECTURE = {
              },
              {
               "from": 14
-             }
-            ],
-            "in": [
-             [
-              1024
-             ],
-             [
-              "B",
-              "T",
-              1024
-             ]
-            ],
-            "out": [
-             "B",
-             "T",
-             1024
-            ],
-            "children": [],
-            "total": 0,
-            "repeat": 1,
-            "label": "Learned scale and shift"
-           },
-           {
-            "op": "torch.Tensor.add",
-            "id": 16,
-            "line": 21,
-            "code": "return self.scale * norm_x + self.shift",
-            "uses": [
-             "shift"
-            ],
-            "inputs": [
-             {
-              "from": 15
              },
              {
               "tensor": "trf_blocks.0.norm1.shift"
              }
             ],
-            "returned_by": 8,
-            "in": [
-             [
-              "B",
-              "T",
-              1024
-             ],
-             [
-              1024
-             ]
+            "children": [
+             {
+              "op": "torch.Tensor.mul",
+              "id": 15,
+              "line": 21,
+              "code": "return self.scale * norm_x + self.shift",
+              "uses": [
+               "scale"
+              ],
+              "inputs": [
+               {
+                "tensor": "trf_blocks.0.norm1.scale"
+               },
+               {
+                "from": 14
+               }
+              ],
+              "in": [
+               [
+                1024
+               ],
+               [
+                "B",
+                "T",
+                1024
+               ]
+              ],
+              "out": [
+               "B",
+               "T",
+               1024
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Learned scale and shift"
+             },
+             {
+              "op": "torch.Tensor.add",
+              "id": 16,
+              "line": 21,
+              "code": "return self.scale * norm_x + self.shift",
+              "uses": [
+               "shift"
+              ],
+              "inputs": [
+               {
+                "from": 15
+               },
+               {
+                "tensor": "trf_blocks.0.norm1.shift"
+               }
+              ],
+              "returned_by": 8,
+              "in": [
+               [
+                "B",
+                "T",
+                1024
+               ],
+               [
+                1024
+               ]
+              ],
+              "out": [
+               "B",
+               "T",
+               1024
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Learned scale and shift"
+             }
             ],
-            "out": [
-             "B",
-             "T",
-             1024
-            ],
-            "children": [],
             "total": 0,
             "repeat": 1,
-            "label": "Learned scale and shift"
+            "returned_by": 8
            }
           ],
           "class": "llm_training.model.gpt2.layers.LayerNorm",
@@ -11308,51 +13096,14 @@ window.ARCHITECTURE = {
             "label": "Causal attention, fused"
            },
            {
-            "op": "torch.Tensor.transpose",
-            "id": 28,
-            "line": 58,
-            "code": ").transpose(1, 2)",
-            "uses": [],
-            "inputs": [
-             {
-              "from": 27
-             }
-            ],
+            "group": true,
+            "label": "Merge heads",
+            "id": 1219,
             "in": [
              [
               "B",
               16,
               "T",
-              64
-             ]
-            ],
-            "out": [
-             "B",
-             "T",
-             16,
-             64
-            ],
-            "children": [],
-            "total": 0,
-            "repeat": 1,
-            "label": "Merge heads"
-           },
-           {
-            "op": "torch.Tensor.reshape",
-            "id": 29,
-            "line": 76,
-            "code": "context_vec = context_vec.reshape(b, num_tokens, self.d_out)",
-            "uses": [],
-            "inputs": [
-             {
-              "from": 28
-             }
-            ],
-            "in": [
-             [
-              "B",
-              "T",
-              16,
               64
              ]
             ],
@@ -11361,10 +13112,74 @@ window.ARCHITECTURE = {
              "T",
              1024
             ],
-            "children": [],
+            "inputs": [
+             {
+              "from": 27
+             }
+            ],
+            "children": [
+             {
+              "op": "torch.Tensor.transpose",
+              "id": 28,
+              "line": 58,
+              "code": ").transpose(1, 2)",
+              "uses": [],
+              "inputs": [
+               {
+                "from": 27
+               }
+              ],
+              "in": [
+               [
+                "B",
+                16,
+                "T",
+                64
+               ]
+              ],
+              "out": [
+               "B",
+               "T",
+               16,
+               64
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Merge heads"
+             },
+             {
+              "op": "torch.Tensor.reshape",
+              "id": 29,
+              "line": 76,
+              "code": "context_vec = context_vec.reshape(b, num_tokens, self.d_out)",
+              "uses": [],
+              "inputs": [
+               {
+                "from": 28
+               }
+              ],
+              "in": [
+               [
+                "B",
+                "T",
+                16,
+                64
+               ]
+              ],
+              "out": [
+               "B",
+               "T",
+               1024
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Merge heads"
+             }
+            ],
             "total": 0,
-            "repeat": 1,
-            "label": "Merge heads"
+            "repeat": 1
            },
            {
             "module": "trf_blocks.0.att.out_proj",
@@ -11568,140 +13383,196 @@ window.ARCHITECTURE = {
             "label": "Variance over channels"
            },
            {
-            "op": "torch.Tensor.sub",
-            "id": 36,
-            "line": 20,
-            "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
-            "uses": [],
+            "group": true,
+            "label": "Normalize",
+            "id": 1220,
+            "in": [
+             [
+              "B",
+              "T",
+              1024
+             ],
+             [
+              "B",
+              "T",
+              1
+             ],
+             [
+              "B",
+              "T",
+              1
+             ]
+            ],
+            "out": [
+             "B",
+             "T",
+             1024
+            ],
             "inputs": [
              {
               "from": 32
              },
              {
               "from": 34
-             }
-            ],
-            "in": [
-             [
-              "B",
-              "T",
-              1024
-             ],
-             [
-              "B",
-              "T",
-              1
-             ]
-            ],
-            "out": [
-             "B",
-             "T",
-             1024
-            ],
-            "children": [],
-            "total": 0,
-            "repeat": 1,
-            "label": "Normalize"
-           },
-           {
-            "op": "torch.Tensor.add",
-            "id": 37,
-            "line": 20,
-            "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
-            "uses": [],
-            "inputs": [
+             },
              {
               "from": 35
              }
             ],
-            "in": [
-             [
-              "B",
-              "T",
-              1
-             ]
-            ],
-            "out": [
-             "B",
-             "T",
-             1
-            ],
-            "children": [],
-            "total": 0,
-            "repeat": 1,
-            "label": "Normalize"
-           },
-           {
-            "op": "torch.sqrt",
-            "id": 38,
-            "line": 20,
-            "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
-            "uses": [],
-            "inputs": [
+            "children": [
              {
-              "from": 37
-             }
-            ],
-            "in": [
-             [
-              "B",
-              "T",
-              1
-             ]
-            ],
-            "out": [
-             "B",
-             "T",
-             1
-            ],
-            "children": [],
-            "total": 0,
-            "repeat": 1,
-            "label": "Normalize"
-           },
-           {
-            "op": "torch.Tensor.div",
-            "id": 39,
-            "line": 20,
-            "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
-            "uses": [],
-            "inputs": [
-             {
-              "from": 36
+              "op": "torch.Tensor.sub",
+              "id": 36,
+              "line": 20,
+              "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
+              "uses": [],
+              "inputs": [
+               {
+                "from": 32
+               },
+               {
+                "from": 34
+               }
+              ],
+              "in": [
+               [
+                "B",
+                "T",
+                1024
+               ],
+               [
+                "B",
+                "T",
+                1
+               ]
+              ],
+              "out": [
+               "B",
+               "T",
+               1024
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Normalize"
              },
              {
-              "from": 38
+              "op": "torch.Tensor.add",
+              "id": 37,
+              "line": 20,
+              "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
+              "uses": [],
+              "inputs": [
+               {
+                "from": 35
+               }
+              ],
+              "in": [
+               [
+                "B",
+                "T",
+                1
+               ]
+              ],
+              "out": [
+               "B",
+               "T",
+               1
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Normalize"
+             },
+             {
+              "op": "torch.sqrt",
+              "id": 38,
+              "line": 20,
+              "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
+              "uses": [],
+              "inputs": [
+               {
+                "from": 37
+               }
+              ],
+              "in": [
+               [
+                "B",
+                "T",
+                1
+               ]
+              ],
+              "out": [
+               "B",
+               "T",
+               1
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Normalize"
+             },
+             {
+              "op": "torch.Tensor.div",
+              "id": 39,
+              "line": 20,
+              "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
+              "uses": [],
+              "inputs": [
+               {
+                "from": 36
+               },
+               {
+                "from": 38
+               }
+              ],
+              "in": [
+               [
+                "B",
+                "T",
+                1024
+               ],
+               [
+                "B",
+                "T",
+                1
+               ]
+              ],
+              "out": [
+               "B",
+               "T",
+               1024
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Normalize"
              }
             ],
+            "total": 0,
+            "repeat": 1
+           },
+           {
+            "group": true,
+            "label": "Learned scale and shift",
+            "id": 1221,
             "in": [
+             [
+              1024
+             ],
              [
               "B",
               "T",
               1024
              ],
              [
-              "B",
-              "T",
-              1
+              1024
              ]
             ],
             "out": [
              "B",
              "T",
              1024
-            ],
-            "children": [],
-            "total": 0,
-            "repeat": 1,
-            "label": "Normalize"
-           },
-           {
-            "op": "torch.Tensor.mul",
-            "id": 40,
-            "line": 21,
-            "code": "return self.scale * norm_x + self.shift",
-            "uses": [
-             "scale"
             ],
             "inputs": [
              {
@@ -11709,64 +13580,89 @@ window.ARCHITECTURE = {
              },
              {
               "from": 39
-             }
-            ],
-            "in": [
-             [
-              1024
-             ],
-             [
-              "B",
-              "T",
-              1024
-             ]
-            ],
-            "out": [
-             "B",
-             "T",
-             1024
-            ],
-            "children": [],
-            "total": 0,
-            "repeat": 1,
-            "label": "Learned scale and shift"
-           },
-           {
-            "op": "torch.Tensor.add",
-            "id": 41,
-            "line": 21,
-            "code": "return self.scale * norm_x + self.shift",
-            "uses": [
-             "shift"
-            ],
-            "inputs": [
-             {
-              "from": 40
              },
              {
               "tensor": "trf_blocks.0.norm2.shift"
              }
             ],
-            "returned_by": 33,
-            "in": [
-             [
-              "B",
-              "T",
-              1024
-             ],
-             [
-              1024
-             ]
+            "children": [
+             {
+              "op": "torch.Tensor.mul",
+              "id": 40,
+              "line": 21,
+              "code": "return self.scale * norm_x + self.shift",
+              "uses": [
+               "scale"
+              ],
+              "inputs": [
+               {
+                "tensor": "trf_blocks.0.norm2.scale"
+               },
+               {
+                "from": 39
+               }
+              ],
+              "in": [
+               [
+                1024
+               ],
+               [
+                "B",
+                "T",
+                1024
+               ]
+              ],
+              "out": [
+               "B",
+               "T",
+               1024
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Learned scale and shift"
+             },
+             {
+              "op": "torch.Tensor.add",
+              "id": 41,
+              "line": 21,
+              "code": "return self.scale * norm_x + self.shift",
+              "uses": [
+               "shift"
+              ],
+              "inputs": [
+               {
+                "from": 40
+               },
+               {
+                "tensor": "trf_blocks.0.norm2.shift"
+               }
+              ],
+              "returned_by": 33,
+              "in": [
+               [
+                "B",
+                "T",
+                1024
+               ],
+               [
+                1024
+               ]
+              ],
+              "out": [
+               "B",
+               "T",
+               1024
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Learned scale and shift"
+             }
             ],
-            "out": [
-             "B",
-             "T",
-             1024
-            ],
-            "children": [],
             "total": 0,
             "repeat": 1,
-            "label": "Learned scale and shift"
+            "returned_by": 33
            }
           ],
           "class": "llm_training.model.gpt2.layers.LayerNorm",
@@ -11896,251 +13792,282 @@ window.ARCHITECTURE = {
               ],
               "children": [
                {
-                "op": "torch.Tensor.mul",
-                "id": 46,
-                "line": 34,
-                "code": "return 0.5 * x * (1 + torch.tanh(self._sqrt_two_over_pi * (x + 0.044715 * torch.pow(x, 3))))",
-                "uses": [],
-                "inputs": [
-                 {
-                  "from": 44
-                 }
-                ],
-                "in": [
-                 [
-                  "B",
-                  "T",
-                  4096
-                 ]
-                ],
-                "out": [
-                 "B",
-                 "T",
-                 4096
-                ],
-                "children": [],
-                "total": 0,
-                "repeat": 1,
-                "label": "GELU, tanh approximation"
-               },
-               {
-                "op": "torch.pow",
-                "id": 47,
-                "line": 34,
-                "code": "return 0.5 * x * (1 + torch.tanh(self._sqrt_two_over_pi * (x + 0.044715 * torch.pow(x, 3))))",
-                "uses": [],
-                "inputs": [
-                 {
-                  "from": 44
-                 }
-                ],
-                "in": [
-                 [
-                  "B",
-                  "T",
-                  4096
-                 ]
-                ],
-                "out": [
-                 "B",
-                 "T",
-                 4096
-                ],
-                "children": [],
-                "total": 0,
-                "repeat": 1,
-                "label": "GELU, tanh approximation"
-               },
-               {
-                "op": "torch.Tensor.mul",
-                "id": 48,
-                "line": 34,
-                "code": "return 0.5 * x * (1 + torch.tanh(self._sqrt_two_over_pi * (x + 0.044715 * torch.pow(x, 3))))",
-                "uses": [],
-                "inputs": [
-                 {
-                  "from": 47
-                 }
-                ],
-                "in": [
-                 [
-                  "B",
-                  "T",
-                  4096
-                 ]
-                ],
-                "out": [
-                 "B",
-                 "T",
-                 4096
-                ],
-                "children": [],
-                "total": 0,
-                "repeat": 1,
-                "label": "GELU, tanh approximation"
-               },
-               {
-                "op": "torch.Tensor.add",
-                "id": 49,
-                "line": 34,
-                "code": "return 0.5 * x * (1 + torch.tanh(self._sqrt_two_over_pi * (x + 0.044715 * torch.pow(x, 3))))",
-                "uses": [],
-                "inputs": [
-                 {
-                  "from": 44
-                 },
-                 {
-                  "from": 48
-                 }
-                ],
+                "group": true,
+                "label": "GELU, tanh approximation",
+                "id": 1222,
                 "in": [
                  [
                   "B",
                   "T",
                   4096
                  ],
-                 [
-                  "B",
-                  "T",
-                  4096
-                 ]
+                 []
                 ],
                 "out": [
                  "B",
                  "T",
                  4096
                 ],
-                "children": [],
-                "total": 0,
-                "repeat": 1,
-                "label": "GELU, tanh approximation"
-               },
-               {
-                "op": "torch.Tensor.mul",
-                "id": 50,
-                "line": 34,
-                "code": "return 0.5 * x * (1 + torch.tanh(self._sqrt_two_over_pi * (x + 0.044715 * torch.pow(x, 3))))",
-                "uses": [
-                 "_sqrt_two_over_pi"
-                ],
                 "inputs": [
+                 {
+                  "from": 44
+                 },
                  {
                   "tensor": "trf_blocks.0.ff.layers.1._sqrt_two_over_pi"
+                 }
+                ],
+                "children": [
+                 {
+                  "op": "torch.Tensor.mul",
+                  "id": 46,
+                  "line": 34,
+                  "code": "return 0.5 * x * (1 + torch.tanh(self._sqrt_two_over_pi * (x + 0.044715 * torch.pow(x, 3))))",
+                  "uses": [],
+                  "inputs": [
+                   {
+                    "from": 44
+                   }
+                  ],
+                  "in": [
+                   [
+                    "B",
+                    "T",
+                    4096
+                   ]
+                  ],
+                  "out": [
+                   "B",
+                   "T",
+                   4096
+                  ],
+                  "children": [],
+                  "total": 0,
+                  "repeat": 1,
+                  "label": "GELU, tanh approximation"
                  },
                  {
-                  "from": 49
-                 }
-                ],
-                "in": [
-                 [],
-                 [
-                  "B",
-                  "T",
-                  4096
-                 ]
-                ],
-                "out": [
-                 "B",
-                 "T",
-                 4096
-                ],
-                "children": [],
-                "total": 0,
-                "repeat": 1,
-                "label": "GELU, tanh approximation"
-               },
-               {
-                "op": "torch.tanh",
-                "id": 51,
-                "line": 34,
-                "code": "return 0.5 * x * (1 + torch.tanh(self._sqrt_two_over_pi * (x + 0.044715 * torch.pow(x, 3))))",
-                "uses": [],
-                "inputs": [
-                 {
-                  "from": 50
-                 }
-                ],
-                "in": [
-                 [
-                  "B",
-                  "T",
-                  4096
-                 ]
-                ],
-                "out": [
-                 "B",
-                 "T",
-                 4096
-                ],
-                "children": [],
-                "total": 0,
-                "repeat": 1,
-                "label": "GELU, tanh approximation"
-               },
-               {
-                "op": "torch.Tensor.add",
-                "id": 52,
-                "line": 34,
-                "code": "return 0.5 * x * (1 + torch.tanh(self._sqrt_two_over_pi * (x + 0.044715 * torch.pow(x, 3))))",
-                "uses": [],
-                "inputs": [
-                 {
-                  "from": 51
-                 }
-                ],
-                "in": [
-                 [
-                  "B",
-                  "T",
-                  4096
-                 ]
-                ],
-                "out": [
-                 "B",
-                 "T",
-                 4096
-                ],
-                "children": [],
-                "total": 0,
-                "repeat": 1,
-                "label": "GELU, tanh approximation"
-               },
-               {
-                "op": "torch.Tensor.mul",
-                "id": 53,
-                "line": 34,
-                "code": "return 0.5 * x * (1 + torch.tanh(self._sqrt_two_over_pi * (x + 0.044715 * torch.pow(x, 3))))",
-                "uses": [],
-                "inputs": [
-                 {
-                  "from": 46
+                  "op": "torch.pow",
+                  "id": 47,
+                  "line": 34,
+                  "code": "return 0.5 * x * (1 + torch.tanh(self._sqrt_two_over_pi * (x + 0.044715 * torch.pow(x, 3))))",
+                  "uses": [],
+                  "inputs": [
+                   {
+                    "from": 44
+                   }
+                  ],
+                  "in": [
+                   [
+                    "B",
+                    "T",
+                    4096
+                   ]
+                  ],
+                  "out": [
+                   "B",
+                   "T",
+                   4096
+                  ],
+                  "children": [],
+                  "total": 0,
+                  "repeat": 1,
+                  "label": "GELU, tanh approximation"
                  },
                  {
-                  "from": 52
+                  "op": "torch.Tensor.mul",
+                  "id": 48,
+                  "line": 34,
+                  "code": "return 0.5 * x * (1 + torch.tanh(self._sqrt_two_over_pi * (x + 0.044715 * torch.pow(x, 3))))",
+                  "uses": [],
+                  "inputs": [
+                   {
+                    "from": 47
+                   }
+                  ],
+                  "in": [
+                   [
+                    "B",
+                    "T",
+                    4096
+                   ]
+                  ],
+                  "out": [
+                   "B",
+                   "T",
+                   4096
+                  ],
+                  "children": [],
+                  "total": 0,
+                  "repeat": 1,
+                  "label": "GELU, tanh approximation"
+                 },
+                 {
+                  "op": "torch.Tensor.add",
+                  "id": 49,
+                  "line": 34,
+                  "code": "return 0.5 * x * (1 + torch.tanh(self._sqrt_two_over_pi * (x + 0.044715 * torch.pow(x, 3))))",
+                  "uses": [],
+                  "inputs": [
+                   {
+                    "from": 44
+                   },
+                   {
+                    "from": 48
+                   }
+                  ],
+                  "in": [
+                   [
+                    "B",
+                    "T",
+                    4096
+                   ],
+                   [
+                    "B",
+                    "T",
+                    4096
+                   ]
+                  ],
+                  "out": [
+                   "B",
+                   "T",
+                   4096
+                  ],
+                  "children": [],
+                  "total": 0,
+                  "repeat": 1,
+                  "label": "GELU, tanh approximation"
+                 },
+                 {
+                  "op": "torch.Tensor.mul",
+                  "id": 50,
+                  "line": 34,
+                  "code": "return 0.5 * x * (1 + torch.tanh(self._sqrt_two_over_pi * (x + 0.044715 * torch.pow(x, 3))))",
+                  "uses": [
+                   "_sqrt_two_over_pi"
+                  ],
+                  "inputs": [
+                   {
+                    "tensor": "trf_blocks.0.ff.layers.1._sqrt_two_over_pi"
+                   },
+                   {
+                    "from": 49
+                   }
+                  ],
+                  "in": [
+                   [],
+                   [
+                    "B",
+                    "T",
+                    4096
+                   ]
+                  ],
+                  "out": [
+                   "B",
+                   "T",
+                   4096
+                  ],
+                  "children": [],
+                  "total": 0,
+                  "repeat": 1,
+                  "label": "GELU, tanh approximation"
+                 },
+                 {
+                  "op": "torch.tanh",
+                  "id": 51,
+                  "line": 34,
+                  "code": "return 0.5 * x * (1 + torch.tanh(self._sqrt_two_over_pi * (x + 0.044715 * torch.pow(x, 3))))",
+                  "uses": [],
+                  "inputs": [
+                   {
+                    "from": 50
+                   }
+                  ],
+                  "in": [
+                   [
+                    "B",
+                    "T",
+                    4096
+                   ]
+                  ],
+                  "out": [
+                   "B",
+                   "T",
+                   4096
+                  ],
+                  "children": [],
+                  "total": 0,
+                  "repeat": 1,
+                  "label": "GELU, tanh approximation"
+                 },
+                 {
+                  "op": "torch.Tensor.add",
+                  "id": 52,
+                  "line": 34,
+                  "code": "return 0.5 * x * (1 + torch.tanh(self._sqrt_two_over_pi * (x + 0.044715 * torch.pow(x, 3))))",
+                  "uses": [],
+                  "inputs": [
+                   {
+                    "from": 51
+                   }
+                  ],
+                  "in": [
+                   [
+                    "B",
+                    "T",
+                    4096
+                   ]
+                  ],
+                  "out": [
+                   "B",
+                   "T",
+                   4096
+                  ],
+                  "children": [],
+                  "total": 0,
+                  "repeat": 1,
+                  "label": "GELU, tanh approximation"
+                 },
+                 {
+                  "op": "torch.Tensor.mul",
+                  "id": 53,
+                  "line": 34,
+                  "code": "return 0.5 * x * (1 + torch.tanh(self._sqrt_two_over_pi * (x + 0.044715 * torch.pow(x, 3))))",
+                  "uses": [],
+                  "inputs": [
+                   {
+                    "from": 46
+                   },
+                   {
+                    "from": 52
+                   }
+                  ],
+                  "returned_by": 45,
+                  "in": [
+                   [
+                    "B",
+                    "T",
+                    4096
+                   ],
+                   [
+                    "B",
+                    "T",
+                    4096
+                   ]
+                  ],
+                  "out": [
+                   "B",
+                   "T",
+                   4096
+                  ],
+                  "children": [],
+                  "total": 0,
+                  "repeat": 1,
+                  "label": "GELU, tanh approximation"
                  }
                 ],
-                "returned_by": 45,
-                "in": [
-                 [
-                  "B",
-                  "T",
-                  4096
-                 ],
-                 [
-                  "B",
-                  "T",
-                  4096
-                 ]
-                ],
-                "out": [
-                 "B",
-                 "T",
-                 4096
-                ],
-                "children": [],
                 "total": 0,
                 "repeat": 1,
-                "label": "GELU, tanh approximation"
+                "returned_by": 45
                }
               ],
               "class": "llm_training.model.gpt2.layers.GELU",
@@ -12375,140 +14302,196 @@ window.ARCHITECTURE = {
         "label": "Variance over channels"
        },
        {
-        "op": "torch.Tensor.sub",
-        "id": 1210,
-        "line": 20,
-        "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
-        "uses": [],
+        "group": true,
+        "label": "Normalize",
+        "id": 1223,
+        "in": [
+         [
+          "B",
+          "T",
+          1024
+         ],
+         [
+          "B",
+          "T",
+          1
+         ],
+         [
+          "B",
+          "T",
+          1
+         ]
+        ],
+        "out": [
+         "B",
+         "T",
+         1024
+        ],
         "inputs": [
          {
           "from": 6
          },
          {
           "from": 1208
-         }
-        ],
-        "in": [
-         [
-          "B",
-          "T",
-          1024
-         ],
-         [
-          "B",
-          "T",
-          1
-         ]
-        ],
-        "out": [
-         "B",
-         "T",
-         1024
-        ],
-        "children": [],
-        "total": 0,
-        "repeat": 1,
-        "label": "Normalize"
-       },
-       {
-        "op": "torch.Tensor.add",
-        "id": 1211,
-        "line": 20,
-        "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
-        "uses": [],
-        "inputs": [
+         },
          {
           "from": 1209
          }
         ],
-        "in": [
-         [
-          "B",
-          "T",
-          1
-         ]
-        ],
-        "out": [
-         "B",
-         "T",
-         1
-        ],
-        "children": [],
-        "total": 0,
-        "repeat": 1,
-        "label": "Normalize"
-       },
-       {
-        "op": "torch.sqrt",
-        "id": 1212,
-        "line": 20,
-        "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
-        "uses": [],
-        "inputs": [
+        "children": [
          {
-          "from": 1211
-         }
-        ],
-        "in": [
-         [
-          "B",
-          "T",
-          1
-         ]
-        ],
-        "out": [
-         "B",
-         "T",
-         1
-        ],
-        "children": [],
-        "total": 0,
-        "repeat": 1,
-        "label": "Normalize"
-       },
-       {
-        "op": "torch.Tensor.div",
-        "id": 1213,
-        "line": 20,
-        "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
-        "uses": [],
-        "inputs": [
-         {
-          "from": 1210
+          "op": "torch.Tensor.sub",
+          "id": 1210,
+          "line": 20,
+          "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
+          "uses": [],
+          "inputs": [
+           {
+            "from": 6
+           },
+           {
+            "from": 1208
+           }
+          ],
+          "in": [
+           [
+            "B",
+            "T",
+            1024
+           ],
+           [
+            "B",
+            "T",
+            1
+           ]
+          ],
+          "out": [
+           "B",
+           "T",
+           1024
+          ],
+          "children": [],
+          "total": 0,
+          "repeat": 1,
+          "label": "Normalize"
          },
          {
-          "from": 1212
+          "op": "torch.Tensor.add",
+          "id": 1211,
+          "line": 20,
+          "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
+          "uses": [],
+          "inputs": [
+           {
+            "from": 1209
+           }
+          ],
+          "in": [
+           [
+            "B",
+            "T",
+            1
+           ]
+          ],
+          "out": [
+           "B",
+           "T",
+           1
+          ],
+          "children": [],
+          "total": 0,
+          "repeat": 1,
+          "label": "Normalize"
+         },
+         {
+          "op": "torch.sqrt",
+          "id": 1212,
+          "line": 20,
+          "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
+          "uses": [],
+          "inputs": [
+           {
+            "from": 1211
+           }
+          ],
+          "in": [
+           [
+            "B",
+            "T",
+            1
+           ]
+          ],
+          "out": [
+           "B",
+           "T",
+           1
+          ],
+          "children": [],
+          "total": 0,
+          "repeat": 1,
+          "label": "Normalize"
+         },
+         {
+          "op": "torch.Tensor.div",
+          "id": 1213,
+          "line": 20,
+          "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
+          "uses": [],
+          "inputs": [
+           {
+            "from": 1210
+           },
+           {
+            "from": 1212
+           }
+          ],
+          "in": [
+           [
+            "B",
+            "T",
+            1024
+           ],
+           [
+            "B",
+            "T",
+            1
+           ]
+          ],
+          "out": [
+           "B",
+           "T",
+           1024
+          ],
+          "children": [],
+          "total": 0,
+          "repeat": 1,
+          "label": "Normalize"
          }
         ],
+        "total": 0,
+        "repeat": 1
+       },
+       {
+        "group": true,
+        "label": "Learned scale and shift",
+        "id": 1224,
         "in": [
+         [
+          1024
+         ],
          [
           "B",
           "T",
           1024
          ],
          [
-          "B",
-          "T",
-          1
+          1024
          ]
         ],
         "out": [
          "B",
          "T",
          1024
-        ],
-        "children": [],
-        "total": 0,
-        "repeat": 1,
-        "label": "Normalize"
-       },
-       {
-        "op": "torch.Tensor.mul",
-        "id": 1214,
-        "line": 21,
-        "code": "return self.scale * norm_x + self.shift",
-        "uses": [
-         "scale"
         ],
         "inputs": [
          {
@@ -12516,64 +14499,89 @@ window.ARCHITECTURE = {
          },
          {
           "from": 1213
-         }
-        ],
-        "in": [
-         [
-          1024
-         ],
-         [
-          "B",
-          "T",
-          1024
-         ]
-        ],
-        "out": [
-         "B",
-         "T",
-         1024
-        ],
-        "children": [],
-        "total": 0,
-        "repeat": 1,
-        "label": "Learned scale and shift"
-       },
-       {
-        "op": "torch.Tensor.add",
-        "id": 1215,
-        "line": 21,
-        "code": "return self.scale * norm_x + self.shift",
-        "uses": [
-         "shift"
-        ],
-        "inputs": [
-         {
-          "from": 1214
          },
          {
           "tensor": "final_norm.shift"
          }
         ],
-        "returned_by": 1207,
-        "in": [
-         [
-          "B",
-          "T",
-          1024
-         ],
-         [
-          1024
-         ]
+        "children": [
+         {
+          "op": "torch.Tensor.mul",
+          "id": 1214,
+          "line": 21,
+          "code": "return self.scale * norm_x + self.shift",
+          "uses": [
+           "scale"
+          ],
+          "inputs": [
+           {
+            "tensor": "final_norm.scale"
+           },
+           {
+            "from": 1213
+           }
+          ],
+          "in": [
+           [
+            1024
+           ],
+           [
+            "B",
+            "T",
+            1024
+           ]
+          ],
+          "out": [
+           "B",
+           "T",
+           1024
+          ],
+          "children": [],
+          "total": 0,
+          "repeat": 1,
+          "label": "Learned scale and shift"
+         },
+         {
+          "op": "torch.Tensor.add",
+          "id": 1215,
+          "line": 21,
+          "code": "return self.scale * norm_x + self.shift",
+          "uses": [
+           "shift"
+          ],
+          "inputs": [
+           {
+            "from": 1214
+           },
+           {
+            "tensor": "final_norm.shift"
+           }
+          ],
+          "returned_by": 1207,
+          "in": [
+           [
+            "B",
+            "T",
+            1024
+           ],
+           [
+            1024
+           ]
+          ],
+          "out": [
+           "B",
+           "T",
+           1024
+          ],
+          "children": [],
+          "total": 0,
+          "repeat": 1,
+          "label": "Learned scale and shift"
+         }
         ],
-        "out": [
-         "B",
-         "T",
-         1024
-        ],
-        "children": [],
         "total": 0,
         "repeat": 1,
-        "label": "Learned scale and shift"
+        "returned_by": 1207
        }
       ],
       "class": "llm_training.model.gpt2.layers.LayerNorm",
@@ -12723,75 +14731,92 @@ window.ARCHITECTURE = {
       "role": "llm_training.model.qwen3.model.Qwen3Model.tok_emb"
      },
      {
-      "op": "torch.ones",
-      "id": 2,
-      "line": 81,
-      "code": "torch.ones(num_tokens, num_tokens, device=x.device, dtype=torch.bool), diagonal=1",
-      "uses": [],
-      "inputs": [],
+      "group": true,
+      "label": "Causal mask",
+      "id": 2703,
       "in": [],
       "out": [
-       "T",
-       "T"
-      ],
-      "children": [],
-      "total": 0,
-      "repeat": 1,
-      "label": "Causal mask"
-     },
-     {
-      "op": "torch.triu",
-      "id": 3,
-      "line": 80,
-      "code": "mask = torch.triu(",
-      "uses": [],
-      "inputs": [
-       {
-        "from": 2
-       }
-      ],
-      "in": [
-       [
-        "T",
-        "T"
-       ]
-      ],
-      "out": [
-       "T",
-       "T"
-      ],
-      "children": [],
-      "total": 0,
-      "repeat": 1,
-      "label": "Causal mask"
-     },
-     {
-      "op": "torch.Tensor.__getitem__",
-      "id": 4,
-      "line": 92,
-      "code": "mask = mask[None, None, :, :]  # broadcast mask",
-      "uses": [],
-      "inputs": [
-       {
-        "from": 3
-       }
-      ],
-      "in": [
-       [
-        "T",
-        "T"
-       ]
-      ],
-      "out": [
        1,
        1,
        "T",
        "T"
       ],
-      "children": [],
+      "inputs": [],
+      "children": [
+       {
+        "op": "torch.ones",
+        "id": 2,
+        "line": 81,
+        "code": "torch.ones(num_tokens, num_tokens, device=x.device, dtype=torch.bool), diagonal=1",
+        "uses": [],
+        "inputs": [],
+        "in": [],
+        "out": [
+         "T",
+         "T"
+        ],
+        "children": [],
+        "total": 0,
+        "repeat": 1,
+        "label": "Causal mask"
+       },
+       {
+        "op": "torch.triu",
+        "id": 3,
+        "line": 80,
+        "code": "mask = torch.triu(",
+        "uses": [],
+        "inputs": [
+         {
+          "from": 2
+         }
+        ],
+        "in": [
+         [
+          "T",
+          "T"
+         ]
+        ],
+        "out": [
+         "T",
+         "T"
+        ],
+        "children": [],
+        "total": 0,
+        "repeat": 1,
+        "label": "Causal mask"
+       },
+       {
+        "op": "torch.Tensor.__getitem__",
+        "id": 4,
+        "line": 92,
+        "code": "mask = mask[None, None, :, :]  # broadcast mask",
+        "uses": [],
+        "inputs": [
+         {
+          "from": 3
+         }
+        ],
+        "in": [
+         [
+          "T",
+          "T"
+         ]
+        ],
+        "out": [
+         1,
+         1,
+         "T",
+         "T"
+        ],
+        "children": [],
+        "total": 0,
+        "repeat": 1,
+        "label": "Causal mask"
+       }
+      ],
       "total": 0,
-      "repeat": 1,
-      "label": "Causal mask"
+      "repeat": 1
      },
      {
       "module": "trf_blocks.0",
@@ -12878,45 +14903,9 @@ window.ARCHITECTURE = {
           "label": "Compute in float32"
          },
          {
-          "op": "torch.Tensor.pow",
-          "id": 8,
-          "line": 38,
-          "code": "variance = x.pow(2).mean(dim=-1, keepdim=True)",
-          "uses": [],
-          "inputs": [
-           {
-            "from": 1,
-            "first_copy": true
-           }
-          ],
-          "in": [
-           [
-            "B",
-            "T",
-            1024
-           ]
-          ],
-          "out": [
-           "B",
-           "T",
-           1024
-          ],
-          "children": [],
-          "total": 0,
-          "repeat": 1,
-          "label": "Mean square over channels"
-         },
-         {
-          "op": "torch.Tensor.mean",
-          "id": 9,
-          "line": 38,
-          "code": "variance = x.pow(2).mean(dim=-1, keepdim=True)",
-          "uses": [],
-          "inputs": [
-           {
-            "from": 8
-           }
-          ],
+          "group": true,
+          "label": "Mean square over channels",
+          "id": 2704,
           "in": [
            [
             "B",
@@ -12929,92 +14918,88 @@ window.ARCHITECTURE = {
            "T",
            1
           ],
-          "children": [],
-          "total": 0,
-          "repeat": 1,
-          "label": "Mean square over channels"
-         },
-         {
-          "op": "torch.Tensor.add",
-          "id": 10,
-          "line": 39,
-          "code": "norm_x = x * torch.rsqrt(variance + self.eps)",
-          "uses": [],
-          "inputs": [
-           {
-            "from": 9
-           }
-          ],
-          "in": [
-           [
-            "B",
-            "T",
-            1
-           ]
-          ],
-          "out": [
-           "B",
-           "T",
-           1
-          ],
-          "children": [],
-          "total": 0,
-          "repeat": 1,
-          "label": "Divide by the root mean square"
-         },
-         {
-          "op": "torch.rsqrt",
-          "id": 11,
-          "line": 39,
-          "code": "norm_x = x * torch.rsqrt(variance + self.eps)",
-          "uses": [],
-          "inputs": [
-           {
-            "from": 10
-           }
-          ],
-          "in": [
-           [
-            "B",
-            "T",
-            1
-           ]
-          ],
-          "out": [
-           "B",
-           "T",
-           1
-          ],
-          "children": [],
-          "total": 0,
-          "repeat": 1,
-          "label": "Divide by the root mean square"
-         },
-         {
-          "op": "torch.Tensor.mul",
-          "id": 12,
-          "line": 39,
-          "code": "norm_x = x * torch.rsqrt(variance + self.eps)",
-          "uses": [],
           "inputs": [
            {
             "from": 1,
             "first_copy": true
+           }
+          ],
+          "children": [
+           {
+            "op": "torch.Tensor.pow",
+            "id": 8,
+            "line": 38,
+            "code": "variance = x.pow(2).mean(dim=-1, keepdim=True)",
+            "uses": [],
+            "inputs": [
+             {
+              "from": 1,
+              "first_copy": true
+             }
+            ],
+            "in": [
+             [
+              "B",
+              "T",
+              1024
+             ]
+            ],
+            "out": [
+             "B",
+             "T",
+             1024
+            ],
+            "children": [],
+            "total": 0,
+            "repeat": 1,
+            "label": "Mean square over channels"
            },
            {
-            "from": 11
+            "op": "torch.Tensor.mean",
+            "id": 9,
+            "line": 38,
+            "code": "variance = x.pow(2).mean(dim=-1, keepdim=True)",
+            "uses": [],
+            "inputs": [
+             {
+              "from": 8
+             }
+            ],
+            "in": [
+             [
+              "B",
+              "T",
+              1024
+             ]
+            ],
+            "out": [
+             "B",
+             "T",
+             1
+            ],
+            "children": [],
+            "total": 0,
+            "repeat": 1,
+            "label": "Mean square over channels"
            }
           ],
+          "total": 0,
+          "repeat": 1
+         },
+         {
+          "group": true,
+          "label": "Divide by the root mean square",
+          "id": 2705,
           "in": [
            [
             "B",
             "T",
-            1024
+            1
            ],
            [
             "B",
             "T",
-            1
+            1024
            ]
           ],
           "out": [
@@ -13022,10 +15007,112 @@ window.ARCHITECTURE = {
            "T",
            1024
           ],
-          "children": [],
+          "inputs": [
+           {
+            "from": 9
+           },
+           {
+            "from": 1,
+            "first_copy": true
+           }
+          ],
+          "children": [
+           {
+            "op": "torch.Tensor.add",
+            "id": 10,
+            "line": 39,
+            "code": "norm_x = x * torch.rsqrt(variance + self.eps)",
+            "uses": [],
+            "inputs": [
+             {
+              "from": 9
+             }
+            ],
+            "in": [
+             [
+              "B",
+              "T",
+              1
+             ]
+            ],
+            "out": [
+             "B",
+             "T",
+             1
+            ],
+            "children": [],
+            "total": 0,
+            "repeat": 1,
+            "label": "Divide by the root mean square"
+           },
+           {
+            "op": "torch.rsqrt",
+            "id": 11,
+            "line": 39,
+            "code": "norm_x = x * torch.rsqrt(variance + self.eps)",
+            "uses": [],
+            "inputs": [
+             {
+              "from": 10
+             }
+            ],
+            "in": [
+             [
+              "B",
+              "T",
+              1
+             ]
+            ],
+            "out": [
+             "B",
+             "T",
+             1
+            ],
+            "children": [],
+            "total": 0,
+            "repeat": 1,
+            "label": "Divide by the root mean square"
+           },
+           {
+            "op": "torch.Tensor.mul",
+            "id": 12,
+            "line": 39,
+            "code": "norm_x = x * torch.rsqrt(variance + self.eps)",
+            "uses": [],
+            "inputs": [
+             {
+              "from": 1,
+              "first_copy": true
+             },
+             {
+              "from": 11
+             }
+            ],
+            "in": [
+             [
+              "B",
+              "T",
+              1024
+             ],
+             [
+              "B",
+              "T",
+              1
+             ]
+            ],
+            "out": [
+             "B",
+             "T",
+             1024
+            ],
+            "children": [],
+            "total": 0,
+            "repeat": 1,
+            "label": "Divide by the root mean square"
+           }
+          ],
           "total": 0,
-          "repeat": 1,
-          "label": "Divide by the root mean square"
+          "repeat": 1
          },
          {
           "op": "torch.Tensor.mul",
@@ -13251,16 +15338,9 @@ window.ARCHITECTURE = {
           "role": "llm_training.model.qwen3.attention.GroupedQueryAttention.W_value"
          },
          {
-          "op": "torch.Tensor.view",
-          "id": 19,
-          "line": 56,
-          "code": "queries = queries.view(b, num_tokens, self.num_heads, self.head_dim).transpose(1, 2)",
-          "uses": [],
-          "inputs": [
-           {
-            "from": 16
-           }
-          ],
+          "group": true,
+          "label": "Split queries into heads",
+          "id": 2706,
           "in": [
            [
             "B",
@@ -13270,56 +15350,169 @@ window.ARCHITECTURE = {
           ],
           "out": [
            "B",
-           "T",
            16,
+           "T",
            128
           ],
-          "children": [],
-          "total": 0,
-          "repeat": 1,
-          "label": "Split queries into heads"
-         },
-         {
-          "op": "torch.Tensor.transpose",
-          "id": 20,
-          "line": 56,
-          "code": "queries = queries.view(b, num_tokens, self.num_heads, self.head_dim).transpose(1, 2)",
-          "uses": [],
           "inputs": [
            {
-            "from": 19
+            "from": 16
            }
           ],
+          "children": [
+           {
+            "op": "torch.Tensor.view",
+            "id": 19,
+            "line": 56,
+            "code": "queries = queries.view(b, num_tokens, self.num_heads, self.head_dim).transpose(1, 2)",
+            "uses": [],
+            "inputs": [
+             {
+              "from": 16
+             }
+            ],
+            "in": [
+             [
+              "B",
+              "T",
+              2048
+             ]
+            ],
+            "out": [
+             "B",
+             "T",
+             16,
+             128
+            ],
+            "children": [],
+            "total": 0,
+            "repeat": 1,
+            "label": "Split queries into heads"
+           },
+           {
+            "op": "torch.Tensor.transpose",
+            "id": 20,
+            "line": 56,
+            "code": "queries = queries.view(b, num_tokens, self.num_heads, self.head_dim).transpose(1, 2)",
+            "uses": [],
+            "inputs": [
+             {
+              "from": 19
+             }
+            ],
+            "in": [
+             [
+              "B",
+              "T",
+              16,
+              128
+             ]
+            ],
+            "out": [
+             "B",
+             16,
+             "T",
+             128
+            ],
+            "children": [],
+            "total": 0,
+            "repeat": 1,
+            "label": "Split queries into heads"
+           }
+          ],
+          "total": 0,
+          "repeat": 1
+         },
+         {
+          "group": true,
+          "label": "Split keys into heads",
+          "id": 2707,
           "in": [
            [
             "B",
             "T",
-            16,
-            128
+            1024
            ]
           ],
           "out": [
            "B",
-           16,
+           8,
            "T",
            128
           ],
-          "children": [],
-          "total": 0,
-          "repeat": 1,
-          "label": "Split queries into heads"
-         },
-         {
-          "op": "torch.Tensor.view",
-          "id": 21,
-          "line": 57,
-          "code": "keys_new = keys.view(b, num_tokens, self.num_kv_groups, self.head_dim).transpose(1, 2)",
-          "uses": [],
           "inputs": [
            {
             "from": 17
            }
           ],
+          "children": [
+           {
+            "op": "torch.Tensor.view",
+            "id": 21,
+            "line": 57,
+            "code": "keys_new = keys.view(b, num_tokens, self.num_kv_groups, self.head_dim).transpose(1, 2)",
+            "uses": [],
+            "inputs": [
+             {
+              "from": 17
+             }
+            ],
+            "in": [
+             [
+              "B",
+              "T",
+              1024
+             ]
+            ],
+            "out": [
+             "B",
+             "T",
+             8,
+             128
+            ],
+            "children": [],
+            "total": 0,
+            "repeat": 1,
+            "label": "Split keys into heads"
+           },
+           {
+            "op": "torch.Tensor.transpose",
+            "id": 22,
+            "line": 57,
+            "code": "keys_new = keys.view(b, num_tokens, self.num_kv_groups, self.head_dim).transpose(1, 2)",
+            "uses": [],
+            "inputs": [
+             {
+              "from": 21
+             }
+            ],
+            "in": [
+             [
+              "B",
+              "T",
+              8,
+              128
+             ]
+            ],
+            "out": [
+             "B",
+             8,
+             "T",
+             128
+            ],
+            "children": [],
+            "total": 0,
+            "repeat": 1,
+            "label": "Split keys into heads"
+           }
+          ],
+          "total": 0,
+          "repeat": 1
+         },
+         {
+          "group": true,
+          "label": "Split values into heads",
+          "id": 2708,
           "in": [
            [
             "B",
@@ -13329,104 +15522,80 @@ window.ARCHITECTURE = {
           ],
           "out": [
            "B",
-           "T",
-           8,
-           128
-          ],
-          "children": [],
-          "total": 0,
-          "repeat": 1,
-          "label": "Split keys into heads"
-         },
-         {
-          "op": "torch.Tensor.transpose",
-          "id": 22,
-          "line": 57,
-          "code": "keys_new = keys.view(b, num_tokens, self.num_kv_groups, self.head_dim).transpose(1, 2)",
-          "uses": [],
-          "inputs": [
-           {
-            "from": 21
-           }
-          ],
-          "in": [
-           [
-            "B",
-            "T",
-            8,
-            128
-           ]
-          ],
-          "out": [
-           "B",
            8,
            "T",
            128
           ],
-          "children": [],
-          "total": 0,
-          "repeat": 1,
-          "label": "Split keys into heads"
-         },
-         {
-          "op": "torch.Tensor.view",
-          "id": 23,
-          "line": 58,
-          "code": "values_new = values.view(b, num_tokens, self.num_kv_groups, self.head_dim).transpose(1, 2)",
-          "uses": [],
           "inputs": [
            {
             "from": 18
            }
           ],
-          "in": [
-           [
-            "B",
-            "T",
-            1024
-           ]
-          ],
-          "out": [
-           "B",
-           "T",
-           8,
-           128
-          ],
-          "children": [],
-          "total": 0,
-          "repeat": 1,
-          "label": "Split values into heads"
-         },
-         {
-          "op": "torch.Tensor.transpose",
-          "id": 24,
-          "line": 58,
-          "code": "values_new = values.view(b, num_tokens, self.num_kv_groups, self.head_dim).transpose(1, 2)",
-          "uses": [],
-          "inputs": [
+          "children": [
            {
-            "from": 23
+            "op": "torch.Tensor.view",
+            "id": 23,
+            "line": 58,
+            "code": "values_new = values.view(b, num_tokens, self.num_kv_groups, self.head_dim).transpose(1, 2)",
+            "uses": [],
+            "inputs": [
+             {
+              "from": 18
+             }
+            ],
+            "in": [
+             [
+              "B",
+              "T",
+              1024
+             ]
+            ],
+            "out": [
+             "B",
+             "T",
+             8,
+             128
+            ],
+            "children": [],
+            "total": 0,
+            "repeat": 1,
+            "label": "Split values into heads"
+           },
+           {
+            "op": "torch.Tensor.transpose",
+            "id": 24,
+            "line": 58,
+            "code": "values_new = values.view(b, num_tokens, self.num_kv_groups, self.head_dim).transpose(1, 2)",
+            "uses": [],
+            "inputs": [
+             {
+              "from": 23
+             }
+            ],
+            "returned_by": 15,
+            "in": [
+             [
+              "B",
+              "T",
+              8,
+              128
+             ]
+            ],
+            "out": [
+             "B",
+             8,
+             "T",
+             128
+            ],
+            "children": [],
+            "total": 0,
+            "repeat": 1,
+            "label": "Split values into heads"
            }
           ],
-          "returned_by": 15,
-          "in": [
-           [
-            "B",
-            "T",
-            8,
-            128
-           ]
-          ],
-          "out": [
-           "B",
-           8,
-           "T",
-           128
-          ],
-          "children": [],
           "total": 0,
           "repeat": 1,
-          "label": "Split values into heads"
+          "returned_by": 15
          },
          {
           "module": "trf_blocks.0.att.q_norm",
@@ -13482,46 +15651,9 @@ window.ARCHITECTURE = {
             "label": "Compute in float32"
            },
            {
-            "op": "torch.Tensor.pow",
-            "id": 27,
-            "line": 38,
-            "code": "variance = x.pow(2).mean(dim=-1, keepdim=True)",
-            "uses": [],
-            "inputs": [
-             {
-              "from": 20
-             }
-            ],
-            "in": [
-             [
-              "B",
-              16,
-              "T",
-              128
-             ]
-            ],
-            "out": [
-             "B",
-             16,
-             "T",
-             128
-            ],
-            "children": [],
-            "total": 0,
-            "repeat": 1,
-            "label": "Mean square over channels"
-           },
-           {
-            "op": "torch.Tensor.mean",
-            "id": 28,
-            "line": 38,
-            "code": "variance = x.pow(2).mean(dim=-1, keepdim=True)",
-            "uses": [],
-            "inputs": [
-             {
-              "from": 27
-             }
-            ],
+            "group": true,
+            "label": "Mean square over channels",
+            "id": 2711,
             "in": [
              [
               "B",
@@ -13536,97 +15668,92 @@ window.ARCHITECTURE = {
              "T",
              1
             ],
-            "children": [],
-            "total": 0,
-            "repeat": 1,
-            "label": "Mean square over channels"
-           },
-           {
-            "op": "torch.Tensor.add",
-            "id": 29,
-            "line": 39,
-            "code": "norm_x = x * torch.rsqrt(variance + self.eps)",
-            "uses": [],
-            "inputs": [
-             {
-              "from": 28
-             }
-            ],
-            "in": [
-             [
-              "B",
-              16,
-              "T",
-              1
-             ]
-            ],
-            "out": [
-             "B",
-             16,
-             "T",
-             1
-            ],
-            "children": [],
-            "total": 0,
-            "repeat": 1,
-            "label": "Divide by the root mean square"
-           },
-           {
-            "op": "torch.rsqrt",
-            "id": 30,
-            "line": 39,
-            "code": "norm_x = x * torch.rsqrt(variance + self.eps)",
-            "uses": [],
-            "inputs": [
-             {
-              "from": 29
-             }
-            ],
-            "in": [
-             [
-              "B",
-              16,
-              "T",
-              1
-             ]
-            ],
-            "out": [
-             "B",
-             16,
-             "T",
-             1
-            ],
-            "children": [],
-            "total": 0,
-            "repeat": 1,
-            "label": "Divide by the root mean square"
-           },
-           {
-            "op": "torch.Tensor.mul",
-            "id": 31,
-            "line": 39,
-            "code": "norm_x = x * torch.rsqrt(variance + self.eps)",
-            "uses": [],
             "inputs": [
              {
               "from": 20
+             }
+            ],
+            "children": [
+             {
+              "op": "torch.Tensor.pow",
+              "id": 27,
+              "line": 38,
+              "code": "variance = x.pow(2).mean(dim=-1, keepdim=True)",
+              "uses": [],
+              "inputs": [
+               {
+                "from": 20
+               }
+              ],
+              "in": [
+               [
+                "B",
+                16,
+                "T",
+                128
+               ]
+              ],
+              "out": [
+               "B",
+               16,
+               "T",
+               128
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Mean square over channels"
              },
              {
-              "from": 30
+              "op": "torch.Tensor.mean",
+              "id": 28,
+              "line": 38,
+              "code": "variance = x.pow(2).mean(dim=-1, keepdim=True)",
+              "uses": [],
+              "inputs": [
+               {
+                "from": 27
+               }
+              ],
+              "in": [
+               [
+                "B",
+                16,
+                "T",
+                128
+               ]
+              ],
+              "out": [
+               "B",
+               16,
+               "T",
+               1
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Mean square over channels"
              }
             ],
+            "total": 0,
+            "repeat": 1
+           },
+           {
+            "group": true,
+            "label": "Divide by the root mean square",
+            "id": 2712,
             "in": [
              [
               "B",
               16,
               "T",
-              128
+              1
              ],
              [
               "B",
               16,
               "T",
-              1
+              128
              ]
             ],
             "out": [
@@ -13635,10 +15762,117 @@ window.ARCHITECTURE = {
              "T",
              128
             ],
-            "children": [],
+            "inputs": [
+             {
+              "from": 28
+             },
+             {
+              "from": 20
+             }
+            ],
+            "children": [
+             {
+              "op": "torch.Tensor.add",
+              "id": 29,
+              "line": 39,
+              "code": "norm_x = x * torch.rsqrt(variance + self.eps)",
+              "uses": [],
+              "inputs": [
+               {
+                "from": 28
+               }
+              ],
+              "in": [
+               [
+                "B",
+                16,
+                "T",
+                1
+               ]
+              ],
+              "out": [
+               "B",
+               16,
+               "T",
+               1
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Divide by the root mean square"
+             },
+             {
+              "op": "torch.rsqrt",
+              "id": 30,
+              "line": 39,
+              "code": "norm_x = x * torch.rsqrt(variance + self.eps)",
+              "uses": [],
+              "inputs": [
+               {
+                "from": 29
+               }
+              ],
+              "in": [
+               [
+                "B",
+                16,
+                "T",
+                1
+               ]
+              ],
+              "out": [
+               "B",
+               16,
+               "T",
+               1
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Divide by the root mean square"
+             },
+             {
+              "op": "torch.Tensor.mul",
+              "id": 31,
+              "line": 39,
+              "code": "norm_x = x * torch.rsqrt(variance + self.eps)",
+              "uses": [],
+              "inputs": [
+               {
+                "from": 20
+               },
+               {
+                "from": 30
+               }
+              ],
+              "in": [
+               [
+                "B",
+                16,
+                "T",
+                128
+               ],
+               [
+                "B",
+                16,
+                "T",
+                1
+               ]
+              ],
+              "out": [
+               "B",
+               16,
+               "T",
+               128
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Divide by the root mean square"
+             }
+            ],
             "total": 0,
-            "repeat": 1,
-            "label": "Divide by the root mean square"
+            "repeat": 1
            },
            {
             "op": "torch.Tensor.mul",
@@ -13780,46 +16014,9 @@ window.ARCHITECTURE = {
             "label": "Compute in float32"
            },
            {
-            "op": "torch.Tensor.pow",
-            "id": 36,
-            "line": 38,
-            "code": "variance = x.pow(2).mean(dim=-1, keepdim=True)",
-            "uses": [],
-            "inputs": [
-             {
-              "from": 22
-             }
-            ],
-            "in": [
-             [
-              "B",
-              8,
-              "T",
-              128
-             ]
-            ],
-            "out": [
-             "B",
-             8,
-             "T",
-             128
-            ],
-            "children": [],
-            "total": 0,
-            "repeat": 1,
-            "label": "Mean square over channels"
-           },
-           {
-            "op": "torch.Tensor.mean",
-            "id": 37,
-            "line": 38,
-            "code": "variance = x.pow(2).mean(dim=-1, keepdim=True)",
-            "uses": [],
-            "inputs": [
-             {
-              "from": 36
-             }
-            ],
+            "group": true,
+            "label": "Mean square over channels",
+            "id": 2713,
             "in": [
              [
               "B",
@@ -13834,97 +16031,92 @@ window.ARCHITECTURE = {
              "T",
              1
             ],
-            "children": [],
-            "total": 0,
-            "repeat": 1,
-            "label": "Mean square over channels"
-           },
-           {
-            "op": "torch.Tensor.add",
-            "id": 38,
-            "line": 39,
-            "code": "norm_x = x * torch.rsqrt(variance + self.eps)",
-            "uses": [],
-            "inputs": [
-             {
-              "from": 37
-             }
-            ],
-            "in": [
-             [
-              "B",
-              8,
-              "T",
-              1
-             ]
-            ],
-            "out": [
-             "B",
-             8,
-             "T",
-             1
-            ],
-            "children": [],
-            "total": 0,
-            "repeat": 1,
-            "label": "Divide by the root mean square"
-           },
-           {
-            "op": "torch.rsqrt",
-            "id": 39,
-            "line": 39,
-            "code": "norm_x = x * torch.rsqrt(variance + self.eps)",
-            "uses": [],
-            "inputs": [
-             {
-              "from": 38
-             }
-            ],
-            "in": [
-             [
-              "B",
-              8,
-              "T",
-              1
-             ]
-            ],
-            "out": [
-             "B",
-             8,
-             "T",
-             1
-            ],
-            "children": [],
-            "total": 0,
-            "repeat": 1,
-            "label": "Divide by the root mean square"
-           },
-           {
-            "op": "torch.Tensor.mul",
-            "id": 40,
-            "line": 39,
-            "code": "norm_x = x * torch.rsqrt(variance + self.eps)",
-            "uses": [],
             "inputs": [
              {
               "from": 22
+             }
+            ],
+            "children": [
+             {
+              "op": "torch.Tensor.pow",
+              "id": 36,
+              "line": 38,
+              "code": "variance = x.pow(2).mean(dim=-1, keepdim=True)",
+              "uses": [],
+              "inputs": [
+               {
+                "from": 22
+               }
+              ],
+              "in": [
+               [
+                "B",
+                8,
+                "T",
+                128
+               ]
+              ],
+              "out": [
+               "B",
+               8,
+               "T",
+               128
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Mean square over channels"
              },
              {
-              "from": 39
+              "op": "torch.Tensor.mean",
+              "id": 37,
+              "line": 38,
+              "code": "variance = x.pow(2).mean(dim=-1, keepdim=True)",
+              "uses": [],
+              "inputs": [
+               {
+                "from": 36
+               }
+              ],
+              "in": [
+               [
+                "B",
+                8,
+                "T",
+                128
+               ]
+              ],
+              "out": [
+               "B",
+               8,
+               "T",
+               1
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Mean square over channels"
              }
             ],
+            "total": 0,
+            "repeat": 1
+           },
+           {
+            "group": true,
+            "label": "Divide by the root mean square",
+            "id": 2714,
             "in": [
              [
               "B",
               8,
               "T",
-              128
+              1
              ],
              [
               "B",
               8,
               "T",
-              1
+              128
              ]
             ],
             "out": [
@@ -13933,10 +16125,117 @@ window.ARCHITECTURE = {
              "T",
              128
             ],
-            "children": [],
+            "inputs": [
+             {
+              "from": 37
+             },
+             {
+              "from": 22
+             }
+            ],
+            "children": [
+             {
+              "op": "torch.Tensor.add",
+              "id": 38,
+              "line": 39,
+              "code": "norm_x = x * torch.rsqrt(variance + self.eps)",
+              "uses": [],
+              "inputs": [
+               {
+                "from": 37
+               }
+              ],
+              "in": [
+               [
+                "B",
+                8,
+                "T",
+                1
+               ]
+              ],
+              "out": [
+               "B",
+               8,
+               "T",
+               1
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Divide by the root mean square"
+             },
+             {
+              "op": "torch.rsqrt",
+              "id": 39,
+              "line": 39,
+              "code": "norm_x = x * torch.rsqrt(variance + self.eps)",
+              "uses": [],
+              "inputs": [
+               {
+                "from": 38
+               }
+              ],
+              "in": [
+               [
+                "B",
+                8,
+                "T",
+                1
+               ]
+              ],
+              "out": [
+               "B",
+               8,
+               "T",
+               1
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Divide by the root mean square"
+             },
+             {
+              "op": "torch.Tensor.mul",
+              "id": 40,
+              "line": 39,
+              "code": "norm_x = x * torch.rsqrt(variance + self.eps)",
+              "uses": [],
+              "inputs": [
+               {
+                "from": 22
+               },
+               {
+                "from": 39
+               }
+              ],
+              "in": [
+               [
+                "B",
+                8,
+                "T",
+                128
+               ],
+               [
+                "B",
+                8,
+                "T",
+                1
+               ]
+              ],
+              "out": [
+               "B",
+               8,
+               "T",
+               128
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Divide by the root mean square"
+             }
+            ],
             "total": 0,
-            "repeat": 1,
-            "label": "Divide by the root mean square"
+            "repeat": 1
            },
            {
             "op": "torch.Tensor.mul",
@@ -14116,18 +16415,119 @@ window.ARCHITECTURE = {
             "label": "Second half of each head"
            },
            {
-            "op": "torch.Tensor.__getitem__",
-            "id": 46,
-            "line": 97,
-            "code": "cos[offset : offset + seq_len, :].unsqueeze(0).unsqueeze(0)",
-            "uses": [
-             "cos"
+            "group": true,
+            "label": "Cosines for positions 0 … T−1",
+            "id": 2715,
+            "in": [
+             [
+              40960,
+              128
+             ]
+            ],
+            "out": [
+             1,
+             1,
+             "T",
+             128
             ],
             "inputs": [
              {
               "tensor": "cos"
              }
             ],
+            "children": [
+             {
+              "op": "torch.Tensor.__getitem__",
+              "id": 46,
+              "line": 97,
+              "code": "cos[offset : offset + seq_len, :].unsqueeze(0).unsqueeze(0)",
+              "uses": [
+               "cos"
+              ],
+              "inputs": [
+               {
+                "tensor": "cos"
+               }
+              ],
+              "in": [
+               [
+                40960,
+                128
+               ]
+              ],
+              "out": [
+               "T",
+               128
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Cosines for positions 0 … T−1"
+             },
+             {
+              "op": "torch.Tensor.unsqueeze",
+              "id": 47,
+              "line": 97,
+              "code": "cos[offset : offset + seq_len, :].unsqueeze(0).unsqueeze(0)",
+              "uses": [],
+              "inputs": [
+               {
+                "from": 46
+               }
+              ],
+              "in": [
+               [
+                "T",
+                128
+               ]
+              ],
+              "out": [
+               1,
+               "T",
+               128
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Cosines for positions 0 … T−1"
+             },
+             {
+              "op": "torch.Tensor.unsqueeze",
+              "id": 48,
+              "line": 97,
+              "code": "cos[offset : offset + seq_len, :].unsqueeze(0).unsqueeze(0)",
+              "uses": [],
+              "inputs": [
+               {
+                "from": 47
+               }
+              ],
+              "in": [
+               [
+                1,
+                "T",
+                128
+               ]
+              ],
+              "out": [
+               1,
+               1,
+               "T",
+               128
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Cosines for positions 0 … T−1"
+             }
+            ],
+            "total": 0,
+            "repeat": 1
+           },
+           {
+            "group": true,
+            "label": "Sines for positions 0 … T−1",
+            "id": 2716,
             "in": [
              [
               40960,
@@ -14135,198 +16535,109 @@ window.ARCHITECTURE = {
              ]
             ],
             "out": [
-             "T",
-             128
-            ],
-            "children": [],
-            "total": 0,
-            "repeat": 1,
-            "label": "Cosines for positions 0 … T−1"
-           },
-           {
-            "op": "torch.Tensor.unsqueeze",
-            "id": 47,
-            "line": 97,
-            "code": "cos[offset : offset + seq_len, :].unsqueeze(0).unsqueeze(0)",
-            "uses": [],
-            "inputs": [
-             {
-              "from": 46
-             }
-            ],
-            "in": [
-             [
-              "T",
-              128
-             ]
-            ],
-            "out": [
-             1,
-             "T",
-             128
-            ],
-            "children": [],
-            "total": 0,
-            "repeat": 1,
-            "label": "Cosines for positions 0 … T−1"
-           },
-           {
-            "op": "torch.Tensor.unsqueeze",
-            "id": 48,
-            "line": 97,
-            "code": "cos[offset : offset + seq_len, :].unsqueeze(0).unsqueeze(0)",
-            "uses": [],
-            "inputs": [
-             {
-              "from": 47
-             }
-            ],
-            "in": [
-             [
-              1,
-              "T",
-              128
-             ]
-            ],
-            "out": [
              1,
              1,
              "T",
              128
-            ],
-            "children": [],
-            "total": 0,
-            "repeat": 1,
-            "label": "Cosines for positions 0 … T−1"
-           },
-           {
-            "op": "torch.Tensor.__getitem__",
-            "id": 49,
-            "line": 99,
-            "code": "sin = sin[offset : offset + seq_len, :].unsqueeze(0).unsqueeze(0)",
-            "uses": [
-             "sin"
             ],
             "inputs": [
              {
               "tensor": "sin"
              }
             ],
-            "in": [
-             [
-              40960,
-              128
-             ]
-            ],
-            "out": [
-             "T",
-             128
-            ],
-            "children": [],
-            "total": 0,
-            "repeat": 1,
-            "label": "Sines for positions 0 … T−1"
-           },
-           {
-            "op": "torch.Tensor.unsqueeze",
-            "id": 50,
-            "line": 99,
-            "code": "sin = sin[offset : offset + seq_len, :].unsqueeze(0).unsqueeze(0)",
-            "uses": [],
-            "inputs": [
+            "children": [
              {
-              "from": 49
-             }
-            ],
-            "in": [
-             [
-              "T",
-              128
-             ]
-            ],
-            "out": [
-             1,
-             "T",
-             128
-            ],
-            "children": [],
-            "total": 0,
-            "repeat": 1,
-            "label": "Sines for positions 0 … T−1"
-           },
-           {
-            "op": "torch.Tensor.unsqueeze",
-            "id": 51,
-            "line": 99,
-            "code": "sin = sin[offset : offset + seq_len, :].unsqueeze(0).unsqueeze(0)",
-            "uses": [],
-            "inputs": [
-             {
-              "from": 50
-             }
-            ],
-            "in": [
-             [
-              1,
-              "T",
-              128
-             ]
-            ],
-            "out": [
-             1,
-             1,
-             "T",
-             128
-            ],
-            "children": [],
-            "total": 0,
-            "repeat": 1,
-            "label": "Sines for positions 0 … T−1"
-           },
-           {
-            "op": "torch.Tensor.neg",
-            "id": 52,
-            "line": 102,
-            "code": "rotated = torch.cat((-x2, x1), dim=-1)",
-            "uses": [],
-            "inputs": [
-             {
-              "from": 45
-             }
-            ],
-            "in": [
-             [
-              "B",
-              16,
-              "T",
-              64
-             ]
-            ],
-            "out": [
-             "B",
-             16,
-             "T",
-             64
-            ],
-            "children": [],
-            "total": 0,
-            "repeat": 1,
-            "label": "Swap halves: (−x₂, x₁)"
-           },
-           {
-            "op": "torch.cat",
-            "id": 53,
-            "line": 102,
-            "code": "rotated = torch.cat((-x2, x1), dim=-1)",
-            "uses": [],
-            "inputs": [
-             {
-              "from": 52
+              "op": "torch.Tensor.__getitem__",
+              "id": 49,
+              "line": 99,
+              "code": "sin = sin[offset : offset + seq_len, :].unsqueeze(0).unsqueeze(0)",
+              "uses": [
+               "sin"
+              ],
+              "inputs": [
+               {
+                "tensor": "sin"
+               }
+              ],
+              "in": [
+               [
+                40960,
+                128
+               ]
+              ],
+              "out": [
+               "T",
+               128
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Sines for positions 0 … T−1"
              },
              {
-              "from": 44
+              "op": "torch.Tensor.unsqueeze",
+              "id": 50,
+              "line": 99,
+              "code": "sin = sin[offset : offset + seq_len, :].unsqueeze(0).unsqueeze(0)",
+              "uses": [],
+              "inputs": [
+               {
+                "from": 49
+               }
+              ],
+              "in": [
+               [
+                "T",
+                128
+               ]
+              ],
+              "out": [
+               1,
+               "T",
+               128
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Sines for positions 0 … T−1"
+             },
+             {
+              "op": "torch.Tensor.unsqueeze",
+              "id": 51,
+              "line": 99,
+              "code": "sin = sin[offset : offset + seq_len, :].unsqueeze(0).unsqueeze(0)",
+              "uses": [],
+              "inputs": [
+               {
+                "from": 50
+               }
+              ],
+              "in": [
+               [
+                1,
+                "T",
+                128
+               ]
+              ],
+              "out": [
+               1,
+               1,
+               "T",
+               128
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Sines for positions 0 … T−1"
              }
             ],
+            "total": 0,
+            "repeat": 1
+           },
+           {
+            "group": true,
+            "label": "Swap halves: (−x₂, x₁)",
+            "id": 2717,
             "in": [
              [
               "B",
@@ -14347,57 +16658,131 @@ window.ARCHITECTURE = {
              "T",
              128
             ],
-            "children": [],
+            "inputs": [
+             {
+              "from": 45
+             },
+             {
+              "from": 44
+             }
+            ],
+            "children": [
+             {
+              "op": "torch.Tensor.neg",
+              "id": 52,
+              "line": 102,
+              "code": "rotated = torch.cat((-x2, x1), dim=-1)",
+              "uses": [],
+              "inputs": [
+               {
+                "from": 45
+               }
+              ],
+              "in": [
+               [
+                "B",
+                16,
+                "T",
+                64
+               ]
+              ],
+              "out": [
+               "B",
+               16,
+               "T",
+               64
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Swap halves: (−x₂, x₁)"
+             },
+             {
+              "op": "torch.cat",
+              "id": 53,
+              "line": 102,
+              "code": "rotated = torch.cat((-x2, x1), dim=-1)",
+              "uses": [],
+              "inputs": [
+               {
+                "from": 52
+               },
+               {
+                "from": 44
+               }
+              ],
+              "in": [
+               [
+                "B",
+                16,
+                "T",
+                64
+               ],
+               [
+                "B",
+                16,
+                "T",
+                64
+               ]
+              ],
+              "out": [
+               "B",
+               16,
+               "T",
+               128
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Swap halves: (−x₂, x₁)"
+             }
+            ],
             "total": 0,
-            "repeat": 1,
-            "label": "Swap halves: (−x₂, x₁)"
+            "repeat": 1
            },
            {
-            "op": "torch.Tensor.mul",
-            "id": 54,
-            "line": 103,
-            "code": "x_rotated = (x * cos) + (rotated * sin)",
-            "uses": [],
+            "group": true,
+            "label": "Rotate each channel pair",
+            "id": 2718,
+            "in": [
+             [
+              "B",
+              16,
+              "T",
+              128
+             ],
+             [
+              1,
+              1,
+              "T",
+              128
+             ],
+             [
+              "B",
+              16,
+              "T",
+              128
+             ],
+             [
+              1,
+              1,
+              "T",
+              128
+             ]
+            ],
+            "out": [
+             "B",
+             16,
+             "T",
+             128
+            ],
             "inputs": [
              {
               "from": 25
              },
              {
               "from": 48
-             }
-            ],
-            "in": [
-             [
-              "B",
-              16,
-              "T",
-              128
-             ],
-             [
-              1,
-              1,
-              "T",
-              128
-             ]
-            ],
-            "out": [
-             "B",
-             16,
-             "T",
-             128
-            ],
-            "children": [],
-            "total": 0,
-            "repeat": 1,
-            "label": "Rotate each channel pair"
-           },
-           {
-            "op": "torch.Tensor.mul",
-            "id": 55,
-            "line": 103,
-            "code": "x_rotated = (x * cos) + (rotated * sin)",
-            "uses": [],
-            "inputs": [
+             },
              {
               "from": 53
              },
@@ -14405,70 +16790,129 @@ window.ARCHITECTURE = {
               "from": 51
              }
             ],
-            "in": [
-             [
-              "B",
-              16,
-              "T",
-              128
-             ],
-             [
-              1,
-              1,
-              "T",
-              128
-             ]
-            ],
-            "out": [
-             "B",
-             16,
-             "T",
-             128
-            ],
-            "children": [],
-            "total": 0,
-            "repeat": 1,
-            "label": "Rotate each channel pair"
-           },
-           {
-            "op": "torch.Tensor.add",
-            "id": 56,
-            "line": 103,
-            "code": "x_rotated = (x * cos) + (rotated * sin)",
-            "uses": [],
-            "inputs": [
+            "children": [
              {
-              "from": 54
+              "op": "torch.Tensor.mul",
+              "id": 54,
+              "line": 103,
+              "code": "x_rotated = (x * cos) + (rotated * sin)",
+              "uses": [],
+              "inputs": [
+               {
+                "from": 25
+               },
+               {
+                "from": 48
+               }
+              ],
+              "in": [
+               [
+                "B",
+                16,
+                "T",
+                128
+               ],
+               [
+                1,
+                1,
+                "T",
+                128
+               ]
+              ],
+              "out": [
+               "B",
+               16,
+               "T",
+               128
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Rotate each channel pair"
              },
              {
-              "from": 55
+              "op": "torch.Tensor.mul",
+              "id": 55,
+              "line": 103,
+              "code": "x_rotated = (x * cos) + (rotated * sin)",
+              "uses": [],
+              "inputs": [
+               {
+                "from": 53
+               },
+               {
+                "from": 51
+               }
+              ],
+              "in": [
+               [
+                "B",
+                16,
+                "T",
+                128
+               ],
+               [
+                1,
+                1,
+                "T",
+                128
+               ]
+              ],
+              "out": [
+               "B",
+               16,
+               "T",
+               128
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Rotate each channel pair"
+             },
+             {
+              "op": "torch.Tensor.add",
+              "id": 56,
+              "line": 103,
+              "code": "x_rotated = (x * cos) + (rotated * sin)",
+              "uses": [],
+              "inputs": [
+               {
+                "from": 54
+               },
+               {
+                "from": 55
+               }
+              ],
+              "returned_by": 43,
+              "in": [
+               [
+                "B",
+                16,
+                "T",
+                128
+               ],
+               [
+                "B",
+                16,
+                "T",
+                128
+               ]
+              ],
+              "out": [
+               "B",
+               16,
+               "T",
+               128
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Rotate each channel pair"
              }
             ],
-            "returned_by": 43,
-            "in": [
-             [
-              "B",
-              16,
-              "T",
-              128
-             ],
-             [
-              "B",
-              16,
-              "T",
-              128
-             ]
-            ],
-            "out": [
-             "B",
-             16,
-             "T",
-             128
-            ],
-            "children": [],
             "total": 0,
             "repeat": 1,
-            "label": "Rotate each channel pair"
+            "returned_by": 43
            },
            {
             "op": "torch.Tensor.to",
@@ -14598,18 +17042,119 @@ window.ARCHITECTURE = {
             "label": "Second half of each head"
            },
            {
-            "op": "torch.Tensor.__getitem__",
-            "id": 61,
-            "line": 97,
-            "code": "cos[offset : offset + seq_len, :].unsqueeze(0).unsqueeze(0)",
-            "uses": [
-             "cos"
+            "group": true,
+            "label": "Cosines for positions 0 … T−1",
+            "id": 2719,
+            "in": [
+             [
+              40960,
+              128
+             ]
+            ],
+            "out": [
+             1,
+             1,
+             "T",
+             128
             ],
             "inputs": [
              {
               "tensor": "cos"
              }
             ],
+            "children": [
+             {
+              "op": "torch.Tensor.__getitem__",
+              "id": 61,
+              "line": 97,
+              "code": "cos[offset : offset + seq_len, :].unsqueeze(0).unsqueeze(0)",
+              "uses": [
+               "cos"
+              ],
+              "inputs": [
+               {
+                "tensor": "cos"
+               }
+              ],
+              "in": [
+               [
+                40960,
+                128
+               ]
+              ],
+              "out": [
+               "T",
+               128
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Cosines for positions 0 … T−1"
+             },
+             {
+              "op": "torch.Tensor.unsqueeze",
+              "id": 62,
+              "line": 97,
+              "code": "cos[offset : offset + seq_len, :].unsqueeze(0).unsqueeze(0)",
+              "uses": [],
+              "inputs": [
+               {
+                "from": 61
+               }
+              ],
+              "in": [
+               [
+                "T",
+                128
+               ]
+              ],
+              "out": [
+               1,
+               "T",
+               128
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Cosines for positions 0 … T−1"
+             },
+             {
+              "op": "torch.Tensor.unsqueeze",
+              "id": 63,
+              "line": 97,
+              "code": "cos[offset : offset + seq_len, :].unsqueeze(0).unsqueeze(0)",
+              "uses": [],
+              "inputs": [
+               {
+                "from": 62
+               }
+              ],
+              "in": [
+               [
+                1,
+                "T",
+                128
+               ]
+              ],
+              "out": [
+               1,
+               1,
+               "T",
+               128
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Cosines for positions 0 … T−1"
+             }
+            ],
+            "total": 0,
+            "repeat": 1
+           },
+           {
+            "group": true,
+            "label": "Sines for positions 0 … T−1",
+            "id": 2720,
             "in": [
              [
               40960,
@@ -14617,198 +17162,109 @@ window.ARCHITECTURE = {
              ]
             ],
             "out": [
-             "T",
-             128
-            ],
-            "children": [],
-            "total": 0,
-            "repeat": 1,
-            "label": "Cosines for positions 0 … T−1"
-           },
-           {
-            "op": "torch.Tensor.unsqueeze",
-            "id": 62,
-            "line": 97,
-            "code": "cos[offset : offset + seq_len, :].unsqueeze(0).unsqueeze(0)",
-            "uses": [],
-            "inputs": [
-             {
-              "from": 61
-             }
-            ],
-            "in": [
-             [
-              "T",
-              128
-             ]
-            ],
-            "out": [
-             1,
-             "T",
-             128
-            ],
-            "children": [],
-            "total": 0,
-            "repeat": 1,
-            "label": "Cosines for positions 0 … T−1"
-           },
-           {
-            "op": "torch.Tensor.unsqueeze",
-            "id": 63,
-            "line": 97,
-            "code": "cos[offset : offset + seq_len, :].unsqueeze(0).unsqueeze(0)",
-            "uses": [],
-            "inputs": [
-             {
-              "from": 62
-             }
-            ],
-            "in": [
-             [
-              1,
-              "T",
-              128
-             ]
-            ],
-            "out": [
              1,
              1,
              "T",
              128
-            ],
-            "children": [],
-            "total": 0,
-            "repeat": 1,
-            "label": "Cosines for positions 0 … T−1"
-           },
-           {
-            "op": "torch.Tensor.__getitem__",
-            "id": 64,
-            "line": 99,
-            "code": "sin = sin[offset : offset + seq_len, :].unsqueeze(0).unsqueeze(0)",
-            "uses": [
-             "sin"
             ],
             "inputs": [
              {
               "tensor": "sin"
              }
             ],
-            "in": [
-             [
-              40960,
-              128
-             ]
-            ],
-            "out": [
-             "T",
-             128
-            ],
-            "children": [],
-            "total": 0,
-            "repeat": 1,
-            "label": "Sines for positions 0 … T−1"
-           },
-           {
-            "op": "torch.Tensor.unsqueeze",
-            "id": 65,
-            "line": 99,
-            "code": "sin = sin[offset : offset + seq_len, :].unsqueeze(0).unsqueeze(0)",
-            "uses": [],
-            "inputs": [
+            "children": [
              {
-              "from": 64
-             }
-            ],
-            "in": [
-             [
-              "T",
-              128
-             ]
-            ],
-            "out": [
-             1,
-             "T",
-             128
-            ],
-            "children": [],
-            "total": 0,
-            "repeat": 1,
-            "label": "Sines for positions 0 … T−1"
-           },
-           {
-            "op": "torch.Tensor.unsqueeze",
-            "id": 66,
-            "line": 99,
-            "code": "sin = sin[offset : offset + seq_len, :].unsqueeze(0).unsqueeze(0)",
-            "uses": [],
-            "inputs": [
-             {
-              "from": 65
-             }
-            ],
-            "in": [
-             [
-              1,
-              "T",
-              128
-             ]
-            ],
-            "out": [
-             1,
-             1,
-             "T",
-             128
-            ],
-            "children": [],
-            "total": 0,
-            "repeat": 1,
-            "label": "Sines for positions 0 … T−1"
-           },
-           {
-            "op": "torch.Tensor.neg",
-            "id": 67,
-            "line": 102,
-            "code": "rotated = torch.cat((-x2, x1), dim=-1)",
-            "uses": [],
-            "inputs": [
-             {
-              "from": 60
-             }
-            ],
-            "in": [
-             [
-              "B",
-              8,
-              "T",
-              64
-             ]
-            ],
-            "out": [
-             "B",
-             8,
-             "T",
-             64
-            ],
-            "children": [],
-            "total": 0,
-            "repeat": 1,
-            "label": "Swap halves: (−x₂, x₁)"
-           },
-           {
-            "op": "torch.cat",
-            "id": 68,
-            "line": 102,
-            "code": "rotated = torch.cat((-x2, x1), dim=-1)",
-            "uses": [],
-            "inputs": [
-             {
-              "from": 67
+              "op": "torch.Tensor.__getitem__",
+              "id": 64,
+              "line": 99,
+              "code": "sin = sin[offset : offset + seq_len, :].unsqueeze(0).unsqueeze(0)",
+              "uses": [
+               "sin"
+              ],
+              "inputs": [
+               {
+                "tensor": "sin"
+               }
+              ],
+              "in": [
+               [
+                40960,
+                128
+               ]
+              ],
+              "out": [
+               "T",
+               128
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Sines for positions 0 … T−1"
              },
              {
-              "from": 59
+              "op": "torch.Tensor.unsqueeze",
+              "id": 65,
+              "line": 99,
+              "code": "sin = sin[offset : offset + seq_len, :].unsqueeze(0).unsqueeze(0)",
+              "uses": [],
+              "inputs": [
+               {
+                "from": 64
+               }
+              ],
+              "in": [
+               [
+                "T",
+                128
+               ]
+              ],
+              "out": [
+               1,
+               "T",
+               128
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Sines for positions 0 … T−1"
+             },
+             {
+              "op": "torch.Tensor.unsqueeze",
+              "id": 66,
+              "line": 99,
+              "code": "sin = sin[offset : offset + seq_len, :].unsqueeze(0).unsqueeze(0)",
+              "uses": [],
+              "inputs": [
+               {
+                "from": 65
+               }
+              ],
+              "in": [
+               [
+                1,
+                "T",
+                128
+               ]
+              ],
+              "out": [
+               1,
+               1,
+               "T",
+               128
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Sines for positions 0 … T−1"
              }
             ],
+            "total": 0,
+            "repeat": 1
+           },
+           {
+            "group": true,
+            "label": "Swap halves: (−x₂, x₁)",
+            "id": 2721,
             "in": [
              [
               "B",
@@ -14829,57 +17285,131 @@ window.ARCHITECTURE = {
              "T",
              128
             ],
-            "children": [],
+            "inputs": [
+             {
+              "from": 60
+             },
+             {
+              "from": 59
+             }
+            ],
+            "children": [
+             {
+              "op": "torch.Tensor.neg",
+              "id": 67,
+              "line": 102,
+              "code": "rotated = torch.cat((-x2, x1), dim=-1)",
+              "uses": [],
+              "inputs": [
+               {
+                "from": 60
+               }
+              ],
+              "in": [
+               [
+                "B",
+                8,
+                "T",
+                64
+               ]
+              ],
+              "out": [
+               "B",
+               8,
+               "T",
+               64
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Swap halves: (−x₂, x₁)"
+             },
+             {
+              "op": "torch.cat",
+              "id": 68,
+              "line": 102,
+              "code": "rotated = torch.cat((-x2, x1), dim=-1)",
+              "uses": [],
+              "inputs": [
+               {
+                "from": 67
+               },
+               {
+                "from": 59
+               }
+              ],
+              "in": [
+               [
+                "B",
+                8,
+                "T",
+                64
+               ],
+               [
+                "B",
+                8,
+                "T",
+                64
+               ]
+              ],
+              "out": [
+               "B",
+               8,
+               "T",
+               128
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Swap halves: (−x₂, x₁)"
+             }
+            ],
             "total": 0,
-            "repeat": 1,
-            "label": "Swap halves: (−x₂, x₁)"
+            "repeat": 1
            },
            {
-            "op": "torch.Tensor.mul",
-            "id": 69,
-            "line": 103,
-            "code": "x_rotated = (x * cos) + (rotated * sin)",
-            "uses": [],
+            "group": true,
+            "label": "Rotate each channel pair",
+            "id": 2722,
+            "in": [
+             [
+              "B",
+              8,
+              "T",
+              128
+             ],
+             [
+              1,
+              1,
+              "T",
+              128
+             ],
+             [
+              "B",
+              8,
+              "T",
+              128
+             ],
+             [
+              1,
+              1,
+              "T",
+              128
+             ]
+            ],
+            "out": [
+             "B",
+             8,
+             "T",
+             128
+            ],
             "inputs": [
              {
               "from": 34
              },
              {
               "from": 63
-             }
-            ],
-            "in": [
-             [
-              "B",
-              8,
-              "T",
-              128
-             ],
-             [
-              1,
-              1,
-              "T",
-              128
-             ]
-            ],
-            "out": [
-             "B",
-             8,
-             "T",
-             128
-            ],
-            "children": [],
-            "total": 0,
-            "repeat": 1,
-            "label": "Rotate each channel pair"
-           },
-           {
-            "op": "torch.Tensor.mul",
-            "id": 70,
-            "line": 103,
-            "code": "x_rotated = (x * cos) + (rotated * sin)",
-            "uses": [],
-            "inputs": [
+             },
              {
               "from": 68
              },
@@ -14887,70 +17417,129 @@ window.ARCHITECTURE = {
               "from": 66
              }
             ],
-            "in": [
-             [
-              "B",
-              8,
-              "T",
-              128
-             ],
-             [
-              1,
-              1,
-              "T",
-              128
-             ]
-            ],
-            "out": [
-             "B",
-             8,
-             "T",
-             128
-            ],
-            "children": [],
-            "total": 0,
-            "repeat": 1,
-            "label": "Rotate each channel pair"
-           },
-           {
-            "op": "torch.Tensor.add",
-            "id": 71,
-            "line": 103,
-            "code": "x_rotated = (x * cos) + (rotated * sin)",
-            "uses": [],
-            "inputs": [
+            "children": [
              {
-              "from": 69
+              "op": "torch.Tensor.mul",
+              "id": 69,
+              "line": 103,
+              "code": "x_rotated = (x * cos) + (rotated * sin)",
+              "uses": [],
+              "inputs": [
+               {
+                "from": 34
+               },
+               {
+                "from": 63
+               }
+              ],
+              "in": [
+               [
+                "B",
+                8,
+                "T",
+                128
+               ],
+               [
+                1,
+                1,
+                "T",
+                128
+               ]
+              ],
+              "out": [
+               "B",
+               8,
+               "T",
+               128
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Rotate each channel pair"
              },
              {
-              "from": 70
+              "op": "torch.Tensor.mul",
+              "id": 70,
+              "line": 103,
+              "code": "x_rotated = (x * cos) + (rotated * sin)",
+              "uses": [],
+              "inputs": [
+               {
+                "from": 68
+               },
+               {
+                "from": 66
+               }
+              ],
+              "in": [
+               [
+                "B",
+                8,
+                "T",
+                128
+               ],
+               [
+                1,
+                1,
+                "T",
+                128
+               ]
+              ],
+              "out": [
+               "B",
+               8,
+               "T",
+               128
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Rotate each channel pair"
+             },
+             {
+              "op": "torch.Tensor.add",
+              "id": 71,
+              "line": 103,
+              "code": "x_rotated = (x * cos) + (rotated * sin)",
+              "uses": [],
+              "inputs": [
+               {
+                "from": 69
+               },
+               {
+                "from": 70
+               }
+              ],
+              "returned_by": 58,
+              "in": [
+               [
+                "B",
+                8,
+                "T",
+                128
+               ],
+               [
+                "B",
+                8,
+                "T",
+                128
+               ]
+              ],
+              "out": [
+               "B",
+               8,
+               "T",
+               128
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Rotate each channel pair"
              }
             ],
-            "returned_by": 58,
-            "in": [
-             [
-              "B",
-              8,
-              "T",
-              128
-             ],
-             [
-              "B",
-              8,
-              "T",
-              128
-             ]
-            ],
-            "out": [
-             "B",
-             8,
-             "T",
-             128
-            ],
-            "children": [],
             "total": 0,
             "repeat": 1,
-            "label": "Rotate each channel pair"
+            "returned_by": 58
            },
            {
             "op": "torch.Tensor.to",
@@ -15048,49 +17637,9 @@ window.ARCHITECTURE = {
           "label": "Share each value head with its query group"
          },
          {
-          "op": "torch.Tensor.transpose",
-          "id": 75,
-          "line": 99,
-          "code": "attn_scores = queries @ keys.transpose(2, 3)",
-          "uses": [],
-          "inputs": [
-           {
-            "from": 73
-           }
-          ],
-          "in": [
-           [
-            "B",
-            16,
-            "T",
-            128
-           ]
-          ],
-          "out": [
-           "B",
-           16,
-           128,
-           "T"
-          ],
-          "children": [],
-          "total": 0,
-          "repeat": 1,
-          "label": "Attention scores Q·Kᵀ"
-         },
-         {
-          "op": "torch.Tensor.matmul",
-          "id": 76,
-          "line": 99,
-          "code": "attn_scores = queries @ keys.transpose(2, 3)",
-          "uses": [],
-          "inputs": [
-           {
-            "from": 43
-           },
-           {
-            "from": 75
-           }
-          ],
+          "group": true,
+          "label": "Attention scores Q·Kᵀ",
+          "id": 2709,
           "in": [
            [
             "B",
@@ -15101,8 +17650,8 @@ window.ARCHITECTURE = {
            [
             "B",
             16,
-            128,
-            "T"
+            "T",
+            128
            ]
           ],
           "out": [
@@ -15111,10 +17660,87 @@ window.ARCHITECTURE = {
            "T",
            "T"
           ],
-          "children": [],
+          "inputs": [
+           {
+            "from": 73
+           },
+           {
+            "from": 43
+           }
+          ],
+          "children": [
+           {
+            "op": "torch.Tensor.transpose",
+            "id": 75,
+            "line": 99,
+            "code": "attn_scores = queries @ keys.transpose(2, 3)",
+            "uses": [],
+            "inputs": [
+             {
+              "from": 73
+             }
+            ],
+            "in": [
+             [
+              "B",
+              16,
+              "T",
+              128
+             ]
+            ],
+            "out": [
+             "B",
+             16,
+             128,
+             "T"
+            ],
+            "children": [],
+            "total": 0,
+            "repeat": 1,
+            "label": "Attention scores Q·Kᵀ"
+           },
+           {
+            "op": "torch.Tensor.matmul",
+            "id": 76,
+            "line": 99,
+            "code": "attn_scores = queries @ keys.transpose(2, 3)",
+            "uses": [],
+            "inputs": [
+             {
+              "from": 43
+             },
+             {
+              "from": 75
+             }
+            ],
+            "in": [
+             [
+              "B",
+              16,
+              "T",
+              128
+             ],
+             [
+              "B",
+              16,
+              128,
+              "T"
+             ]
+            ],
+            "out": [
+             "B",
+             16,
+             "T",
+             "T"
+            ],
+            "children": [],
+            "total": 0,
+            "repeat": 1,
+            "label": "Attention scores Q·Kᵀ"
+           }
+          ],
           "total": 0,
-          "repeat": 1,
-          "label": "Attention scores Q·Kᵀ"
+          "repeat": 1
          },
          {
           "op": "torch.Tensor.masked_fill",
@@ -15255,51 +17881,14 @@ window.ARCHITECTURE = {
           "label": "Weighted sum of values"
          },
          {
-          "op": "torch.Tensor.transpose",
-          "id": 81,
-          "line": 103,
-          "code": "context = (attn_weights @ values).transpose(1, 2).reshape(b, num_tokens, self.d_out)",
-          "uses": [],
-          "inputs": [
-           {
-            "from": 80
-           }
-          ],
+          "group": true,
+          "label": "Merge heads",
+          "id": 2710,
           "in": [
            [
             "B",
             16,
             "T",
-            128
-           ]
-          ],
-          "out": [
-           "B",
-           "T",
-           16,
-           128
-          ],
-          "children": [],
-          "total": 0,
-          "repeat": 1,
-          "label": "Merge heads"
-         },
-         {
-          "op": "torch.Tensor.reshape",
-          "id": 82,
-          "line": 103,
-          "code": "context = (attn_weights @ values).transpose(1, 2).reshape(b, num_tokens, self.d_out)",
-          "uses": [],
-          "inputs": [
-           {
-            "from": 81
-           }
-          ],
-          "in": [
-           [
-            "B",
-            "T",
-            16,
             128
            ]
           ],
@@ -15308,10 +17897,74 @@ window.ARCHITECTURE = {
            "T",
            2048
           ],
-          "children": [],
+          "inputs": [
+           {
+            "from": 80
+           }
+          ],
+          "children": [
+           {
+            "op": "torch.Tensor.transpose",
+            "id": 81,
+            "line": 103,
+            "code": "context = (attn_weights @ values).transpose(1, 2).reshape(b, num_tokens, self.d_out)",
+            "uses": [],
+            "inputs": [
+             {
+              "from": 80
+             }
+            ],
+            "in": [
+             [
+              "B",
+              16,
+              "T",
+              128
+             ]
+            ],
+            "out": [
+             "B",
+             "T",
+             16,
+             128
+            ],
+            "children": [],
+            "total": 0,
+            "repeat": 1,
+            "label": "Merge heads"
+           },
+           {
+            "op": "torch.Tensor.reshape",
+            "id": 82,
+            "line": 103,
+            "code": "context = (attn_weights @ values).transpose(1, 2).reshape(b, num_tokens, self.d_out)",
+            "uses": [],
+            "inputs": [
+             {
+              "from": 81
+             }
+            ],
+            "in": [
+             [
+              "B",
+              "T",
+              16,
+              128
+             ]
+            ],
+            "out": [
+             "B",
+             "T",
+             2048
+            ],
+            "children": [],
+            "total": 0,
+            "repeat": 1,
+            "label": "Merge heads"
+           }
+          ],
           "total": 0,
-          "repeat": 1,
-          "label": "Merge heads"
+          "repeat": 1
          },
          {
           "module": "trf_blocks.0.att.out_proj",
@@ -15445,44 +18098,9 @@ window.ARCHITECTURE = {
           "label": "Compute in float32"
          },
          {
-          "op": "torch.Tensor.pow",
-          "id": 87,
-          "line": 38,
-          "code": "variance = x.pow(2).mean(dim=-1, keepdim=True)",
-          "uses": [],
-          "inputs": [
-           {
-            "from": 84
-           }
-          ],
-          "in": [
-           [
-            "B",
-            "T",
-            1024
-           ]
-          ],
-          "out": [
-           "B",
-           "T",
-           1024
-          ],
-          "children": [],
-          "total": 0,
-          "repeat": 1,
-          "label": "Mean square over channels"
-         },
-         {
-          "op": "torch.Tensor.mean",
-          "id": 88,
-          "line": 38,
-          "code": "variance = x.pow(2).mean(dim=-1, keepdim=True)",
-          "uses": [],
-          "inputs": [
-           {
-            "from": 87
-           }
-          ],
+          "group": true,
+          "label": "Mean square over channels",
+          "id": 2723,
           "in": [
            [
             "B",
@@ -15495,91 +18113,86 @@ window.ARCHITECTURE = {
            "T",
            1
           ],
-          "children": [],
-          "total": 0,
-          "repeat": 1,
-          "label": "Mean square over channels"
-         },
-         {
-          "op": "torch.Tensor.add",
-          "id": 89,
-          "line": 39,
-          "code": "norm_x = x * torch.rsqrt(variance + self.eps)",
-          "uses": [],
-          "inputs": [
-           {
-            "from": 88
-           }
-          ],
-          "in": [
-           [
-            "B",
-            "T",
-            1
-           ]
-          ],
-          "out": [
-           "B",
-           "T",
-           1
-          ],
-          "children": [],
-          "total": 0,
-          "repeat": 1,
-          "label": "Divide by the root mean square"
-         },
-         {
-          "op": "torch.rsqrt",
-          "id": 90,
-          "line": 39,
-          "code": "norm_x = x * torch.rsqrt(variance + self.eps)",
-          "uses": [],
-          "inputs": [
-           {
-            "from": 89
-           }
-          ],
-          "in": [
-           [
-            "B",
-            "T",
-            1
-           ]
-          ],
-          "out": [
-           "B",
-           "T",
-           1
-          ],
-          "children": [],
-          "total": 0,
-          "repeat": 1,
-          "label": "Divide by the root mean square"
-         },
-         {
-          "op": "torch.Tensor.mul",
-          "id": 91,
-          "line": 39,
-          "code": "norm_x = x * torch.rsqrt(variance + self.eps)",
-          "uses": [],
           "inputs": [
            {
             "from": 84
+           }
+          ],
+          "children": [
+           {
+            "op": "torch.Tensor.pow",
+            "id": 87,
+            "line": 38,
+            "code": "variance = x.pow(2).mean(dim=-1, keepdim=True)",
+            "uses": [],
+            "inputs": [
+             {
+              "from": 84
+             }
+            ],
+            "in": [
+             [
+              "B",
+              "T",
+              1024
+             ]
+            ],
+            "out": [
+             "B",
+             "T",
+             1024
+            ],
+            "children": [],
+            "total": 0,
+            "repeat": 1,
+            "label": "Mean square over channels"
            },
            {
-            "from": 90
+            "op": "torch.Tensor.mean",
+            "id": 88,
+            "line": 38,
+            "code": "variance = x.pow(2).mean(dim=-1, keepdim=True)",
+            "uses": [],
+            "inputs": [
+             {
+              "from": 87
+             }
+            ],
+            "in": [
+             [
+              "B",
+              "T",
+              1024
+             ]
+            ],
+            "out": [
+             "B",
+             "T",
+             1
+            ],
+            "children": [],
+            "total": 0,
+            "repeat": 1,
+            "label": "Mean square over channels"
            }
           ],
+          "total": 0,
+          "repeat": 1
+         },
+         {
+          "group": true,
+          "label": "Divide by the root mean square",
+          "id": 2724,
           "in": [
            [
             "B",
             "T",
-            1024
+            1
            ],
            [
             "B",
             "T",
-            1
+            1024
            ]
           ],
           "out": [
@@ -15587,10 +18200,110 @@ window.ARCHITECTURE = {
            "T",
            1024
           ],
-          "children": [],
+          "inputs": [
+           {
+            "from": 88
+           },
+           {
+            "from": 84
+           }
+          ],
+          "children": [
+           {
+            "op": "torch.Tensor.add",
+            "id": 89,
+            "line": 39,
+            "code": "norm_x = x * torch.rsqrt(variance + self.eps)",
+            "uses": [],
+            "inputs": [
+             {
+              "from": 88
+             }
+            ],
+            "in": [
+             [
+              "B",
+              "T",
+              1
+             ]
+            ],
+            "out": [
+             "B",
+             "T",
+             1
+            ],
+            "children": [],
+            "total": 0,
+            "repeat": 1,
+            "label": "Divide by the root mean square"
+           },
+           {
+            "op": "torch.rsqrt",
+            "id": 90,
+            "line": 39,
+            "code": "norm_x = x * torch.rsqrt(variance + self.eps)",
+            "uses": [],
+            "inputs": [
+             {
+              "from": 89
+             }
+            ],
+            "in": [
+             [
+              "B",
+              "T",
+              1
+             ]
+            ],
+            "out": [
+             "B",
+             "T",
+             1
+            ],
+            "children": [],
+            "total": 0,
+            "repeat": 1,
+            "label": "Divide by the root mean square"
+           },
+           {
+            "op": "torch.Tensor.mul",
+            "id": 91,
+            "line": 39,
+            "code": "norm_x = x * torch.rsqrt(variance + self.eps)",
+            "uses": [],
+            "inputs": [
+             {
+              "from": 84
+             },
+             {
+              "from": 90
+             }
+            ],
+            "in": [
+             [
+              "B",
+              "T",
+              1024
+             ],
+             [
+              "B",
+              "T",
+              1
+             ]
+            ],
+            "out": [
+             "B",
+             "T",
+             1024
+            ],
+            "children": [],
+            "total": 0,
+            "repeat": 1,
+            "label": "Divide by the root mean square"
+           }
+          ],
           "total": 0,
-          "repeat": 1,
-          "label": "Divide by the root mean square"
+          "repeat": 1
          },
          {
           "op": "torch.Tensor.mul",
@@ -15971,44 +18684,9 @@ window.ARCHITECTURE = {
         "label": "Compute in float32"
        },
        {
-        "op": "torch.Tensor.pow",
-        "id": 2695,
-        "line": 38,
-        "code": "variance = x.pow(2).mean(dim=-1, keepdim=True)",
-        "uses": [],
-        "inputs": [
-         {
-          "from": 5
-         }
-        ],
-        "in": [
-         [
-          "B",
-          "T",
-          1024
-         ]
-        ],
-        "out": [
-         "B",
-         "T",
-         1024
-        ],
-        "children": [],
-        "total": 0,
-        "repeat": 1,
-        "label": "Mean square over channels"
-       },
-       {
-        "op": "torch.Tensor.mean",
-        "id": 2696,
-        "line": 38,
-        "code": "variance = x.pow(2).mean(dim=-1, keepdim=True)",
-        "uses": [],
-        "inputs": [
-         {
-          "from": 2695
-         }
-        ],
+        "group": true,
+        "label": "Mean square over channels",
+        "id": 2725,
         "in": [
          [
           "B",
@@ -16021,91 +18699,86 @@ window.ARCHITECTURE = {
          "T",
          1
         ],
-        "children": [],
-        "total": 0,
-        "repeat": 1,
-        "label": "Mean square over channels"
-       },
-       {
-        "op": "torch.Tensor.add",
-        "id": 2697,
-        "line": 39,
-        "code": "norm_x = x * torch.rsqrt(variance + self.eps)",
-        "uses": [],
-        "inputs": [
-         {
-          "from": 2696
-         }
-        ],
-        "in": [
-         [
-          "B",
-          "T",
-          1
-         ]
-        ],
-        "out": [
-         "B",
-         "T",
-         1
-        ],
-        "children": [],
-        "total": 0,
-        "repeat": 1,
-        "label": "Divide by the root mean square"
-       },
-       {
-        "op": "torch.rsqrt",
-        "id": 2698,
-        "line": 39,
-        "code": "norm_x = x * torch.rsqrt(variance + self.eps)",
-        "uses": [],
-        "inputs": [
-         {
-          "from": 2697
-         }
-        ],
-        "in": [
-         [
-          "B",
-          "T",
-          1
-         ]
-        ],
-        "out": [
-         "B",
-         "T",
-         1
-        ],
-        "children": [],
-        "total": 0,
-        "repeat": 1,
-        "label": "Divide by the root mean square"
-       },
-       {
-        "op": "torch.Tensor.mul",
-        "id": 2699,
-        "line": 39,
-        "code": "norm_x = x * torch.rsqrt(variance + self.eps)",
-        "uses": [],
         "inputs": [
          {
           "from": 5
+         }
+        ],
+        "children": [
+         {
+          "op": "torch.Tensor.pow",
+          "id": 2695,
+          "line": 38,
+          "code": "variance = x.pow(2).mean(dim=-1, keepdim=True)",
+          "uses": [],
+          "inputs": [
+           {
+            "from": 5
+           }
+          ],
+          "in": [
+           [
+            "B",
+            "T",
+            1024
+           ]
+          ],
+          "out": [
+           "B",
+           "T",
+           1024
+          ],
+          "children": [],
+          "total": 0,
+          "repeat": 1,
+          "label": "Mean square over channels"
          },
          {
-          "from": 2698
+          "op": "torch.Tensor.mean",
+          "id": 2696,
+          "line": 38,
+          "code": "variance = x.pow(2).mean(dim=-1, keepdim=True)",
+          "uses": [],
+          "inputs": [
+           {
+            "from": 2695
+           }
+          ],
+          "in": [
+           [
+            "B",
+            "T",
+            1024
+           ]
+          ],
+          "out": [
+           "B",
+           "T",
+           1
+          ],
+          "children": [],
+          "total": 0,
+          "repeat": 1,
+          "label": "Mean square over channels"
          }
         ],
+        "total": 0,
+        "repeat": 1
+       },
+       {
+        "group": true,
+        "label": "Divide by the root mean square",
+        "id": 2726,
         "in": [
          [
           "B",
           "T",
-          1024
+          1
          ],
          [
           "B",
           "T",
-          1
+          1024
          ]
         ],
         "out": [
@@ -16113,10 +18786,110 @@ window.ARCHITECTURE = {
          "T",
          1024
         ],
-        "children": [],
+        "inputs": [
+         {
+          "from": 2696
+         },
+         {
+          "from": 5
+         }
+        ],
+        "children": [
+         {
+          "op": "torch.Tensor.add",
+          "id": 2697,
+          "line": 39,
+          "code": "norm_x = x * torch.rsqrt(variance + self.eps)",
+          "uses": [],
+          "inputs": [
+           {
+            "from": 2696
+           }
+          ],
+          "in": [
+           [
+            "B",
+            "T",
+            1
+           ]
+          ],
+          "out": [
+           "B",
+           "T",
+           1
+          ],
+          "children": [],
+          "total": 0,
+          "repeat": 1,
+          "label": "Divide by the root mean square"
+         },
+         {
+          "op": "torch.rsqrt",
+          "id": 2698,
+          "line": 39,
+          "code": "norm_x = x * torch.rsqrt(variance + self.eps)",
+          "uses": [],
+          "inputs": [
+           {
+            "from": 2697
+           }
+          ],
+          "in": [
+           [
+            "B",
+            "T",
+            1
+           ]
+          ],
+          "out": [
+           "B",
+           "T",
+           1
+          ],
+          "children": [],
+          "total": 0,
+          "repeat": 1,
+          "label": "Divide by the root mean square"
+         },
+         {
+          "op": "torch.Tensor.mul",
+          "id": 2699,
+          "line": 39,
+          "code": "norm_x = x * torch.rsqrt(variance + self.eps)",
+          "uses": [],
+          "inputs": [
+           {
+            "from": 5
+           },
+           {
+            "from": 2698
+           }
+          ],
+          "in": [
+           [
+            "B",
+            "T",
+            1024
+           ],
+           [
+            "B",
+            "T",
+            1
+           ]
+          ],
+          "out": [
+           "B",
+           "T",
+           1024
+          ],
+          "children": [],
+          "total": 0,
+          "repeat": 1,
+          "label": "Divide by the root mean square"
+         }
+        ],
         "total": 0,
-        "repeat": 1,
-        "label": "Divide by the root mean square"
+        "repeat": 1
        },
        {
         "op": "torch.Tensor.mul",
@@ -16339,75 +19112,92 @@ window.ARCHITECTURE = {
       "role": "llm_training.model.qwen3.model.Qwen3Model.tok_emb"
      },
      {
-      "op": "torch.ones",
-      "id": 2,
-      "line": 81,
-      "code": "torch.ones(num_tokens, num_tokens, device=x.device, dtype=torch.bool), diagonal=1",
-      "uses": [],
-      "inputs": [],
+      "group": true,
+      "label": "Causal mask",
+      "id": 2563,
       "in": [],
       "out": [
-       "T",
-       "T"
-      ],
-      "children": [],
-      "total": 0,
-      "repeat": 1,
-      "label": "Causal mask"
-     },
-     {
-      "op": "torch.triu",
-      "id": 3,
-      "line": 80,
-      "code": "mask = torch.triu(",
-      "uses": [],
-      "inputs": [
-       {
-        "from": 2
-       }
-      ],
-      "in": [
-       [
-        "T",
-        "T"
-       ]
-      ],
-      "out": [
-       "T",
-       "T"
-      ],
-      "children": [],
-      "total": 0,
-      "repeat": 1,
-      "label": "Causal mask"
-     },
-     {
-      "op": "torch.Tensor.__getitem__",
-      "id": 4,
-      "line": 92,
-      "code": "mask = mask[None, None, :, :]  # broadcast mask",
-      "uses": [],
-      "inputs": [
-       {
-        "from": 3
-       }
-      ],
-      "in": [
-       [
-        "T",
-        "T"
-       ]
-      ],
-      "out": [
        1,
        1,
        "T",
        "T"
       ],
-      "children": [],
+      "inputs": [],
+      "children": [
+       {
+        "op": "torch.ones",
+        "id": 2,
+        "line": 81,
+        "code": "torch.ones(num_tokens, num_tokens, device=x.device, dtype=torch.bool), diagonal=1",
+        "uses": [],
+        "inputs": [],
+        "in": [],
+        "out": [
+         "T",
+         "T"
+        ],
+        "children": [],
+        "total": 0,
+        "repeat": 1,
+        "label": "Causal mask"
+       },
+       {
+        "op": "torch.triu",
+        "id": 3,
+        "line": 80,
+        "code": "mask = torch.triu(",
+        "uses": [],
+        "inputs": [
+         {
+          "from": 2
+         }
+        ],
+        "in": [
+         [
+          "T",
+          "T"
+         ]
+        ],
+        "out": [
+         "T",
+         "T"
+        ],
+        "children": [],
+        "total": 0,
+        "repeat": 1,
+        "label": "Causal mask"
+       },
+       {
+        "op": "torch.Tensor.__getitem__",
+        "id": 4,
+        "line": 92,
+        "code": "mask = mask[None, None, :, :]  # broadcast mask",
+        "uses": [],
+        "inputs": [
+         {
+          "from": 3
+         }
+        ],
+        "in": [
+         [
+          "T",
+          "T"
+         ]
+        ],
+        "out": [
+         1,
+         1,
+         "T",
+         "T"
+        ],
+        "children": [],
+        "total": 0,
+        "repeat": 1,
+        "label": "Causal mask"
+       }
+      ],
       "total": 0,
-      "repeat": 1,
-      "label": "Causal mask"
+      "repeat": 1
      },
      {
       "module": "trf_blocks.0",
@@ -16494,45 +19284,9 @@ window.ARCHITECTURE = {
           "label": "Compute in float32"
          },
          {
-          "op": "torch.Tensor.pow",
-          "id": 8,
-          "line": 38,
-          "code": "variance = x.pow(2).mean(dim=-1, keepdim=True)",
-          "uses": [],
-          "inputs": [
-           {
-            "from": 1,
-            "first_copy": true
-           }
-          ],
-          "in": [
-           [
-            "B",
-            "T",
-            1024
-           ]
-          ],
-          "out": [
-           "B",
-           "T",
-           1024
-          ],
-          "children": [],
-          "total": 0,
-          "repeat": 1,
-          "label": "Mean square over channels"
-         },
-         {
-          "op": "torch.Tensor.mean",
-          "id": 9,
-          "line": 38,
-          "code": "variance = x.pow(2).mean(dim=-1, keepdim=True)",
-          "uses": [],
-          "inputs": [
-           {
-            "from": 8
-           }
-          ],
+          "group": true,
+          "label": "Mean square over channels",
+          "id": 2564,
           "in": [
            [
             "B",
@@ -16545,92 +19299,88 @@ window.ARCHITECTURE = {
            "T",
            1
           ],
-          "children": [],
-          "total": 0,
-          "repeat": 1,
-          "label": "Mean square over channels"
-         },
-         {
-          "op": "torch.Tensor.add",
-          "id": 10,
-          "line": 39,
-          "code": "norm_x = x * torch.rsqrt(variance + self.eps)",
-          "uses": [],
-          "inputs": [
-           {
-            "from": 9
-           }
-          ],
-          "in": [
-           [
-            "B",
-            "T",
-            1
-           ]
-          ],
-          "out": [
-           "B",
-           "T",
-           1
-          ],
-          "children": [],
-          "total": 0,
-          "repeat": 1,
-          "label": "Divide by the root mean square"
-         },
-         {
-          "op": "torch.rsqrt",
-          "id": 11,
-          "line": 39,
-          "code": "norm_x = x * torch.rsqrt(variance + self.eps)",
-          "uses": [],
-          "inputs": [
-           {
-            "from": 10
-           }
-          ],
-          "in": [
-           [
-            "B",
-            "T",
-            1
-           ]
-          ],
-          "out": [
-           "B",
-           "T",
-           1
-          ],
-          "children": [],
-          "total": 0,
-          "repeat": 1,
-          "label": "Divide by the root mean square"
-         },
-         {
-          "op": "torch.Tensor.mul",
-          "id": 12,
-          "line": 39,
-          "code": "norm_x = x * torch.rsqrt(variance + self.eps)",
-          "uses": [],
           "inputs": [
            {
             "from": 1,
             "first_copy": true
+           }
+          ],
+          "children": [
+           {
+            "op": "torch.Tensor.pow",
+            "id": 8,
+            "line": 38,
+            "code": "variance = x.pow(2).mean(dim=-1, keepdim=True)",
+            "uses": [],
+            "inputs": [
+             {
+              "from": 1,
+              "first_copy": true
+             }
+            ],
+            "in": [
+             [
+              "B",
+              "T",
+              1024
+             ]
+            ],
+            "out": [
+             "B",
+             "T",
+             1024
+            ],
+            "children": [],
+            "total": 0,
+            "repeat": 1,
+            "label": "Mean square over channels"
            },
            {
-            "from": 11
+            "op": "torch.Tensor.mean",
+            "id": 9,
+            "line": 38,
+            "code": "variance = x.pow(2).mean(dim=-1, keepdim=True)",
+            "uses": [],
+            "inputs": [
+             {
+              "from": 8
+             }
+            ],
+            "in": [
+             [
+              "B",
+              "T",
+              1024
+             ]
+            ],
+            "out": [
+             "B",
+             "T",
+             1
+            ],
+            "children": [],
+            "total": 0,
+            "repeat": 1,
+            "label": "Mean square over channels"
            }
           ],
+          "total": 0,
+          "repeat": 1
+         },
+         {
+          "group": true,
+          "label": "Divide by the root mean square",
+          "id": 2565,
           "in": [
            [
             "B",
             "T",
-            1024
+            1
            ],
            [
             "B",
             "T",
-            1
+            1024
            ]
           ],
           "out": [
@@ -16638,10 +19388,112 @@ window.ARCHITECTURE = {
            "T",
            1024
           ],
-          "children": [],
+          "inputs": [
+           {
+            "from": 9
+           },
+           {
+            "from": 1,
+            "first_copy": true
+           }
+          ],
+          "children": [
+           {
+            "op": "torch.Tensor.add",
+            "id": 10,
+            "line": 39,
+            "code": "norm_x = x * torch.rsqrt(variance + self.eps)",
+            "uses": [],
+            "inputs": [
+             {
+              "from": 9
+             }
+            ],
+            "in": [
+             [
+              "B",
+              "T",
+              1
+             ]
+            ],
+            "out": [
+             "B",
+             "T",
+             1
+            ],
+            "children": [],
+            "total": 0,
+            "repeat": 1,
+            "label": "Divide by the root mean square"
+           },
+           {
+            "op": "torch.rsqrt",
+            "id": 11,
+            "line": 39,
+            "code": "norm_x = x * torch.rsqrt(variance + self.eps)",
+            "uses": [],
+            "inputs": [
+             {
+              "from": 10
+             }
+            ],
+            "in": [
+             [
+              "B",
+              "T",
+              1
+             ]
+            ],
+            "out": [
+             "B",
+             "T",
+             1
+            ],
+            "children": [],
+            "total": 0,
+            "repeat": 1,
+            "label": "Divide by the root mean square"
+           },
+           {
+            "op": "torch.Tensor.mul",
+            "id": 12,
+            "line": 39,
+            "code": "norm_x = x * torch.rsqrt(variance + self.eps)",
+            "uses": [],
+            "inputs": [
+             {
+              "from": 1,
+              "first_copy": true
+             },
+             {
+              "from": 11
+             }
+            ],
+            "in": [
+             [
+              "B",
+              "T",
+              1024
+             ],
+             [
+              "B",
+              "T",
+              1
+             ]
+            ],
+            "out": [
+             "B",
+             "T",
+             1024
+            ],
+            "children": [],
+            "total": 0,
+            "repeat": 1,
+            "label": "Divide by the root mean square"
+           }
+          ],
           "total": 0,
-          "repeat": 1,
-          "label": "Divide by the root mean square"
+          "repeat": 1
          },
          {
           "op": "torch.Tensor.mul",
@@ -16867,16 +19719,9 @@ window.ARCHITECTURE = {
           "role": "llm_training.model.qwen3.attention.GroupedQueryAttention.W_value"
          },
          {
-          "op": "torch.Tensor.view",
-          "id": 19,
-          "line": 56,
-          "code": "queries = queries.view(b, num_tokens, self.num_heads, self.head_dim).transpose(1, 2)",
-          "uses": [],
-          "inputs": [
-           {
-            "from": 16
-           }
-          ],
+          "group": true,
+          "label": "Split queries into heads",
+          "id": 2566,
           "in": [
            [
             "B",
@@ -16886,56 +19731,169 @@ window.ARCHITECTURE = {
           ],
           "out": [
            "B",
-           "T",
            16,
+           "T",
            128
           ],
-          "children": [],
-          "total": 0,
-          "repeat": 1,
-          "label": "Split queries into heads"
-         },
-         {
-          "op": "torch.Tensor.transpose",
-          "id": 20,
-          "line": 56,
-          "code": "queries = queries.view(b, num_tokens, self.num_heads, self.head_dim).transpose(1, 2)",
-          "uses": [],
           "inputs": [
            {
-            "from": 19
+            "from": 16
            }
           ],
+          "children": [
+           {
+            "op": "torch.Tensor.view",
+            "id": 19,
+            "line": 56,
+            "code": "queries = queries.view(b, num_tokens, self.num_heads, self.head_dim).transpose(1, 2)",
+            "uses": [],
+            "inputs": [
+             {
+              "from": 16
+             }
+            ],
+            "in": [
+             [
+              "B",
+              "T",
+              2048
+             ]
+            ],
+            "out": [
+             "B",
+             "T",
+             16,
+             128
+            ],
+            "children": [],
+            "total": 0,
+            "repeat": 1,
+            "label": "Split queries into heads"
+           },
+           {
+            "op": "torch.Tensor.transpose",
+            "id": 20,
+            "line": 56,
+            "code": "queries = queries.view(b, num_tokens, self.num_heads, self.head_dim).transpose(1, 2)",
+            "uses": [],
+            "inputs": [
+             {
+              "from": 19
+             }
+            ],
+            "in": [
+             [
+              "B",
+              "T",
+              16,
+              128
+             ]
+            ],
+            "out": [
+             "B",
+             16,
+             "T",
+             128
+            ],
+            "children": [],
+            "total": 0,
+            "repeat": 1,
+            "label": "Split queries into heads"
+           }
+          ],
+          "total": 0,
+          "repeat": 1
+         },
+         {
+          "group": true,
+          "label": "Split keys into heads",
+          "id": 2567,
           "in": [
            [
             "B",
             "T",
-            16,
-            128
+            1024
            ]
           ],
           "out": [
            "B",
-           16,
+           8,
            "T",
            128
           ],
-          "children": [],
-          "total": 0,
-          "repeat": 1,
-          "label": "Split queries into heads"
-         },
-         {
-          "op": "torch.Tensor.view",
-          "id": 21,
-          "line": 57,
-          "code": "keys_new = keys.view(b, num_tokens, self.num_kv_groups, self.head_dim).transpose(1, 2)",
-          "uses": [],
           "inputs": [
            {
             "from": 17
            }
           ],
+          "children": [
+           {
+            "op": "torch.Tensor.view",
+            "id": 21,
+            "line": 57,
+            "code": "keys_new = keys.view(b, num_tokens, self.num_kv_groups, self.head_dim).transpose(1, 2)",
+            "uses": [],
+            "inputs": [
+             {
+              "from": 17
+             }
+            ],
+            "in": [
+             [
+              "B",
+              "T",
+              1024
+             ]
+            ],
+            "out": [
+             "B",
+             "T",
+             8,
+             128
+            ],
+            "children": [],
+            "total": 0,
+            "repeat": 1,
+            "label": "Split keys into heads"
+           },
+           {
+            "op": "torch.Tensor.transpose",
+            "id": 22,
+            "line": 57,
+            "code": "keys_new = keys.view(b, num_tokens, self.num_kv_groups, self.head_dim).transpose(1, 2)",
+            "uses": [],
+            "inputs": [
+             {
+              "from": 21
+             }
+            ],
+            "in": [
+             [
+              "B",
+              "T",
+              8,
+              128
+             ]
+            ],
+            "out": [
+             "B",
+             8,
+             "T",
+             128
+            ],
+            "children": [],
+            "total": 0,
+            "repeat": 1,
+            "label": "Split keys into heads"
+           }
+          ],
+          "total": 0,
+          "repeat": 1
+         },
+         {
+          "group": true,
+          "label": "Split values into heads",
+          "id": 2568,
           "in": [
            [
             "B",
@@ -16945,104 +19903,80 @@ window.ARCHITECTURE = {
           ],
           "out": [
            "B",
-           "T",
-           8,
-           128
-          ],
-          "children": [],
-          "total": 0,
-          "repeat": 1,
-          "label": "Split keys into heads"
-         },
-         {
-          "op": "torch.Tensor.transpose",
-          "id": 22,
-          "line": 57,
-          "code": "keys_new = keys.view(b, num_tokens, self.num_kv_groups, self.head_dim).transpose(1, 2)",
-          "uses": [],
-          "inputs": [
-           {
-            "from": 21
-           }
-          ],
-          "in": [
-           [
-            "B",
-            "T",
-            8,
-            128
-           ]
-          ],
-          "out": [
-           "B",
            8,
            "T",
            128
           ],
-          "children": [],
-          "total": 0,
-          "repeat": 1,
-          "label": "Split keys into heads"
-         },
-         {
-          "op": "torch.Tensor.view",
-          "id": 23,
-          "line": 58,
-          "code": "values_new = values.view(b, num_tokens, self.num_kv_groups, self.head_dim).transpose(1, 2)",
-          "uses": [],
           "inputs": [
            {
             "from": 18
            }
           ],
-          "in": [
-           [
-            "B",
-            "T",
-            1024
-           ]
-          ],
-          "out": [
-           "B",
-           "T",
-           8,
-           128
-          ],
-          "children": [],
-          "total": 0,
-          "repeat": 1,
-          "label": "Split values into heads"
-         },
-         {
-          "op": "torch.Tensor.transpose",
-          "id": 24,
-          "line": 58,
-          "code": "values_new = values.view(b, num_tokens, self.num_kv_groups, self.head_dim).transpose(1, 2)",
-          "uses": [],
-          "inputs": [
+          "children": [
            {
-            "from": 23
+            "op": "torch.Tensor.view",
+            "id": 23,
+            "line": 58,
+            "code": "values_new = values.view(b, num_tokens, self.num_kv_groups, self.head_dim).transpose(1, 2)",
+            "uses": [],
+            "inputs": [
+             {
+              "from": 18
+             }
+            ],
+            "in": [
+             [
+              "B",
+              "T",
+              1024
+             ]
+            ],
+            "out": [
+             "B",
+             "T",
+             8,
+             128
+            ],
+            "children": [],
+            "total": 0,
+            "repeat": 1,
+            "label": "Split values into heads"
+           },
+           {
+            "op": "torch.Tensor.transpose",
+            "id": 24,
+            "line": 58,
+            "code": "values_new = values.view(b, num_tokens, self.num_kv_groups, self.head_dim).transpose(1, 2)",
+            "uses": [],
+            "inputs": [
+             {
+              "from": 23
+             }
+            ],
+            "returned_by": 15,
+            "in": [
+             [
+              "B",
+              "T",
+              8,
+              128
+             ]
+            ],
+            "out": [
+             "B",
+             8,
+             "T",
+             128
+            ],
+            "children": [],
+            "total": 0,
+            "repeat": 1,
+            "label": "Split values into heads"
            }
           ],
-          "returned_by": 15,
-          "in": [
-           [
-            "B",
-            "T",
-            8,
-            128
-           ]
-          ],
-          "out": [
-           "B",
-           8,
-           "T",
-           128
-          ],
-          "children": [],
           "total": 0,
           "repeat": 1,
-          "label": "Split values into heads"
+          "returned_by": 15
          },
          {
           "module": "trf_blocks.0.att.q_norm",
@@ -17098,46 +20032,9 @@ window.ARCHITECTURE = {
             "label": "Compute in float32"
            },
            {
-            "op": "torch.Tensor.pow",
-            "id": 27,
-            "line": 38,
-            "code": "variance = x.pow(2).mean(dim=-1, keepdim=True)",
-            "uses": [],
-            "inputs": [
-             {
-              "from": 20
-             }
-            ],
-            "in": [
-             [
-              "B",
-              16,
-              "T",
-              128
-             ]
-            ],
-            "out": [
-             "B",
-             16,
-             "T",
-             128
-            ],
-            "children": [],
-            "total": 0,
-            "repeat": 1,
-            "label": "Mean square over channels"
-           },
-           {
-            "op": "torch.Tensor.mean",
-            "id": 28,
-            "line": 38,
-            "code": "variance = x.pow(2).mean(dim=-1, keepdim=True)",
-            "uses": [],
-            "inputs": [
-             {
-              "from": 27
-             }
-            ],
+            "group": true,
+            "label": "Mean square over channels",
+            "id": 2570,
             "in": [
              [
               "B",
@@ -17152,97 +20049,92 @@ window.ARCHITECTURE = {
              "T",
              1
             ],
-            "children": [],
-            "total": 0,
-            "repeat": 1,
-            "label": "Mean square over channels"
-           },
-           {
-            "op": "torch.Tensor.add",
-            "id": 29,
-            "line": 39,
-            "code": "norm_x = x * torch.rsqrt(variance + self.eps)",
-            "uses": [],
-            "inputs": [
-             {
-              "from": 28
-             }
-            ],
-            "in": [
-             [
-              "B",
-              16,
-              "T",
-              1
-             ]
-            ],
-            "out": [
-             "B",
-             16,
-             "T",
-             1
-            ],
-            "children": [],
-            "total": 0,
-            "repeat": 1,
-            "label": "Divide by the root mean square"
-           },
-           {
-            "op": "torch.rsqrt",
-            "id": 30,
-            "line": 39,
-            "code": "norm_x = x * torch.rsqrt(variance + self.eps)",
-            "uses": [],
-            "inputs": [
-             {
-              "from": 29
-             }
-            ],
-            "in": [
-             [
-              "B",
-              16,
-              "T",
-              1
-             ]
-            ],
-            "out": [
-             "B",
-             16,
-             "T",
-             1
-            ],
-            "children": [],
-            "total": 0,
-            "repeat": 1,
-            "label": "Divide by the root mean square"
-           },
-           {
-            "op": "torch.Tensor.mul",
-            "id": 31,
-            "line": 39,
-            "code": "norm_x = x * torch.rsqrt(variance + self.eps)",
-            "uses": [],
             "inputs": [
              {
               "from": 20
+             }
+            ],
+            "children": [
+             {
+              "op": "torch.Tensor.pow",
+              "id": 27,
+              "line": 38,
+              "code": "variance = x.pow(2).mean(dim=-1, keepdim=True)",
+              "uses": [],
+              "inputs": [
+               {
+                "from": 20
+               }
+              ],
+              "in": [
+               [
+                "B",
+                16,
+                "T",
+                128
+               ]
+              ],
+              "out": [
+               "B",
+               16,
+               "T",
+               128
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Mean square over channels"
              },
              {
-              "from": 30
+              "op": "torch.Tensor.mean",
+              "id": 28,
+              "line": 38,
+              "code": "variance = x.pow(2).mean(dim=-1, keepdim=True)",
+              "uses": [],
+              "inputs": [
+               {
+                "from": 27
+               }
+              ],
+              "in": [
+               [
+                "B",
+                16,
+                "T",
+                128
+               ]
+              ],
+              "out": [
+               "B",
+               16,
+               "T",
+               1
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Mean square over channels"
              }
             ],
+            "total": 0,
+            "repeat": 1
+           },
+           {
+            "group": true,
+            "label": "Divide by the root mean square",
+            "id": 2571,
             "in": [
              [
               "B",
               16,
               "T",
-              128
+              1
              ],
              [
               "B",
               16,
               "T",
-              1
+              128
              ]
             ],
             "out": [
@@ -17251,10 +20143,117 @@ window.ARCHITECTURE = {
              "T",
              128
             ],
-            "children": [],
+            "inputs": [
+             {
+              "from": 28
+             },
+             {
+              "from": 20
+             }
+            ],
+            "children": [
+             {
+              "op": "torch.Tensor.add",
+              "id": 29,
+              "line": 39,
+              "code": "norm_x = x * torch.rsqrt(variance + self.eps)",
+              "uses": [],
+              "inputs": [
+               {
+                "from": 28
+               }
+              ],
+              "in": [
+               [
+                "B",
+                16,
+                "T",
+                1
+               ]
+              ],
+              "out": [
+               "B",
+               16,
+               "T",
+               1
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Divide by the root mean square"
+             },
+             {
+              "op": "torch.rsqrt",
+              "id": 30,
+              "line": 39,
+              "code": "norm_x = x * torch.rsqrt(variance + self.eps)",
+              "uses": [],
+              "inputs": [
+               {
+                "from": 29
+               }
+              ],
+              "in": [
+               [
+                "B",
+                16,
+                "T",
+                1
+               ]
+              ],
+              "out": [
+               "B",
+               16,
+               "T",
+               1
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Divide by the root mean square"
+             },
+             {
+              "op": "torch.Tensor.mul",
+              "id": 31,
+              "line": 39,
+              "code": "norm_x = x * torch.rsqrt(variance + self.eps)",
+              "uses": [],
+              "inputs": [
+               {
+                "from": 20
+               },
+               {
+                "from": 30
+               }
+              ],
+              "in": [
+               [
+                "B",
+                16,
+                "T",
+                128
+               ],
+               [
+                "B",
+                16,
+                "T",
+                1
+               ]
+              ],
+              "out": [
+               "B",
+               16,
+               "T",
+               128
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Divide by the root mean square"
+             }
+            ],
             "total": 0,
-            "repeat": 1,
-            "label": "Divide by the root mean square"
+            "repeat": 1
            },
            {
             "op": "torch.Tensor.mul",
@@ -17396,46 +20395,9 @@ window.ARCHITECTURE = {
             "label": "Compute in float32"
            },
            {
-            "op": "torch.Tensor.pow",
-            "id": 36,
-            "line": 38,
-            "code": "variance = x.pow(2).mean(dim=-1, keepdim=True)",
-            "uses": [],
-            "inputs": [
-             {
-              "from": 22
-             }
-            ],
-            "in": [
-             [
-              "B",
-              8,
-              "T",
-              128
-             ]
-            ],
-            "out": [
-             "B",
-             8,
-             "T",
-             128
-            ],
-            "children": [],
-            "total": 0,
-            "repeat": 1,
-            "label": "Mean square over channels"
-           },
-           {
-            "op": "torch.Tensor.mean",
-            "id": 37,
-            "line": 38,
-            "code": "variance = x.pow(2).mean(dim=-1, keepdim=True)",
-            "uses": [],
-            "inputs": [
-             {
-              "from": 36
-             }
-            ],
+            "group": true,
+            "label": "Mean square over channels",
+            "id": 2572,
             "in": [
              [
               "B",
@@ -17450,97 +20412,92 @@ window.ARCHITECTURE = {
              "T",
              1
             ],
-            "children": [],
-            "total": 0,
-            "repeat": 1,
-            "label": "Mean square over channels"
-           },
-           {
-            "op": "torch.Tensor.add",
-            "id": 38,
-            "line": 39,
-            "code": "norm_x = x * torch.rsqrt(variance + self.eps)",
-            "uses": [],
-            "inputs": [
-             {
-              "from": 37
-             }
-            ],
-            "in": [
-             [
-              "B",
-              8,
-              "T",
-              1
-             ]
-            ],
-            "out": [
-             "B",
-             8,
-             "T",
-             1
-            ],
-            "children": [],
-            "total": 0,
-            "repeat": 1,
-            "label": "Divide by the root mean square"
-           },
-           {
-            "op": "torch.rsqrt",
-            "id": 39,
-            "line": 39,
-            "code": "norm_x = x * torch.rsqrt(variance + self.eps)",
-            "uses": [],
-            "inputs": [
-             {
-              "from": 38
-             }
-            ],
-            "in": [
-             [
-              "B",
-              8,
-              "T",
-              1
-             ]
-            ],
-            "out": [
-             "B",
-             8,
-             "T",
-             1
-            ],
-            "children": [],
-            "total": 0,
-            "repeat": 1,
-            "label": "Divide by the root mean square"
-           },
-           {
-            "op": "torch.Tensor.mul",
-            "id": 40,
-            "line": 39,
-            "code": "norm_x = x * torch.rsqrt(variance + self.eps)",
-            "uses": [],
             "inputs": [
              {
               "from": 22
+             }
+            ],
+            "children": [
+             {
+              "op": "torch.Tensor.pow",
+              "id": 36,
+              "line": 38,
+              "code": "variance = x.pow(2).mean(dim=-1, keepdim=True)",
+              "uses": [],
+              "inputs": [
+               {
+                "from": 22
+               }
+              ],
+              "in": [
+               [
+                "B",
+                8,
+                "T",
+                128
+               ]
+              ],
+              "out": [
+               "B",
+               8,
+               "T",
+               128
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Mean square over channels"
              },
              {
-              "from": 39
+              "op": "torch.Tensor.mean",
+              "id": 37,
+              "line": 38,
+              "code": "variance = x.pow(2).mean(dim=-1, keepdim=True)",
+              "uses": [],
+              "inputs": [
+               {
+                "from": 36
+               }
+              ],
+              "in": [
+               [
+                "B",
+                8,
+                "T",
+                128
+               ]
+              ],
+              "out": [
+               "B",
+               8,
+               "T",
+               1
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Mean square over channels"
              }
             ],
+            "total": 0,
+            "repeat": 1
+           },
+           {
+            "group": true,
+            "label": "Divide by the root mean square",
+            "id": 2573,
             "in": [
              [
               "B",
               8,
               "T",
-              128
+              1
              ],
              [
               "B",
               8,
               "T",
-              1
+              128
              ]
             ],
             "out": [
@@ -17549,10 +20506,117 @@ window.ARCHITECTURE = {
              "T",
              128
             ],
-            "children": [],
+            "inputs": [
+             {
+              "from": 37
+             },
+             {
+              "from": 22
+             }
+            ],
+            "children": [
+             {
+              "op": "torch.Tensor.add",
+              "id": 38,
+              "line": 39,
+              "code": "norm_x = x * torch.rsqrt(variance + self.eps)",
+              "uses": [],
+              "inputs": [
+               {
+                "from": 37
+               }
+              ],
+              "in": [
+               [
+                "B",
+                8,
+                "T",
+                1
+               ]
+              ],
+              "out": [
+               "B",
+               8,
+               "T",
+               1
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Divide by the root mean square"
+             },
+             {
+              "op": "torch.rsqrt",
+              "id": 39,
+              "line": 39,
+              "code": "norm_x = x * torch.rsqrt(variance + self.eps)",
+              "uses": [],
+              "inputs": [
+               {
+                "from": 38
+               }
+              ],
+              "in": [
+               [
+                "B",
+                8,
+                "T",
+                1
+               ]
+              ],
+              "out": [
+               "B",
+               8,
+               "T",
+               1
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Divide by the root mean square"
+             },
+             {
+              "op": "torch.Tensor.mul",
+              "id": 40,
+              "line": 39,
+              "code": "norm_x = x * torch.rsqrt(variance + self.eps)",
+              "uses": [],
+              "inputs": [
+               {
+                "from": 22
+               },
+               {
+                "from": 39
+               }
+              ],
+              "in": [
+               [
+                "B",
+                8,
+                "T",
+                128
+               ],
+               [
+                "B",
+                8,
+                "T",
+                1
+               ]
+              ],
+              "out": [
+               "B",
+               8,
+               "T",
+               128
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Divide by the root mean square"
+             }
+            ],
             "total": 0,
-            "repeat": 1,
-            "label": "Divide by the root mean square"
+            "repeat": 1
            },
            {
             "op": "torch.Tensor.mul",
@@ -17732,18 +20796,119 @@ window.ARCHITECTURE = {
             "label": "Second half of each head"
            },
            {
-            "op": "torch.Tensor.__getitem__",
-            "id": 46,
-            "line": 97,
-            "code": "cos[offset : offset + seq_len, :].unsqueeze(0).unsqueeze(0)",
-            "uses": [
-             "cos"
+            "group": true,
+            "label": "Cosines for positions 0 … T−1",
+            "id": 2574,
+            "in": [
+             [
+              40960,
+              128
+             ]
+            ],
+            "out": [
+             1,
+             1,
+             "T",
+             128
             ],
             "inputs": [
              {
               "tensor": "cos"
              }
             ],
+            "children": [
+             {
+              "op": "torch.Tensor.__getitem__",
+              "id": 46,
+              "line": 97,
+              "code": "cos[offset : offset + seq_len, :].unsqueeze(0).unsqueeze(0)",
+              "uses": [
+               "cos"
+              ],
+              "inputs": [
+               {
+                "tensor": "cos"
+               }
+              ],
+              "in": [
+               [
+                40960,
+                128
+               ]
+              ],
+              "out": [
+               "T",
+               128
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Cosines for positions 0 … T−1"
+             },
+             {
+              "op": "torch.Tensor.unsqueeze",
+              "id": 47,
+              "line": 97,
+              "code": "cos[offset : offset + seq_len, :].unsqueeze(0).unsqueeze(0)",
+              "uses": [],
+              "inputs": [
+               {
+                "from": 46
+               }
+              ],
+              "in": [
+               [
+                "T",
+                128
+               ]
+              ],
+              "out": [
+               1,
+               "T",
+               128
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Cosines for positions 0 … T−1"
+             },
+             {
+              "op": "torch.Tensor.unsqueeze",
+              "id": 48,
+              "line": 97,
+              "code": "cos[offset : offset + seq_len, :].unsqueeze(0).unsqueeze(0)",
+              "uses": [],
+              "inputs": [
+               {
+                "from": 47
+               }
+              ],
+              "in": [
+               [
+                1,
+                "T",
+                128
+               ]
+              ],
+              "out": [
+               1,
+               1,
+               "T",
+               128
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Cosines for positions 0 … T−1"
+             }
+            ],
+            "total": 0,
+            "repeat": 1
+           },
+           {
+            "group": true,
+            "label": "Sines for positions 0 … T−1",
+            "id": 2575,
             "in": [
              [
               40960,
@@ -17751,198 +20916,109 @@ window.ARCHITECTURE = {
              ]
             ],
             "out": [
-             "T",
-             128
-            ],
-            "children": [],
-            "total": 0,
-            "repeat": 1,
-            "label": "Cosines for positions 0 … T−1"
-           },
-           {
-            "op": "torch.Tensor.unsqueeze",
-            "id": 47,
-            "line": 97,
-            "code": "cos[offset : offset + seq_len, :].unsqueeze(0).unsqueeze(0)",
-            "uses": [],
-            "inputs": [
-             {
-              "from": 46
-             }
-            ],
-            "in": [
-             [
-              "T",
-              128
-             ]
-            ],
-            "out": [
-             1,
-             "T",
-             128
-            ],
-            "children": [],
-            "total": 0,
-            "repeat": 1,
-            "label": "Cosines for positions 0 … T−1"
-           },
-           {
-            "op": "torch.Tensor.unsqueeze",
-            "id": 48,
-            "line": 97,
-            "code": "cos[offset : offset + seq_len, :].unsqueeze(0).unsqueeze(0)",
-            "uses": [],
-            "inputs": [
-             {
-              "from": 47
-             }
-            ],
-            "in": [
-             [
-              1,
-              "T",
-              128
-             ]
-            ],
-            "out": [
              1,
              1,
              "T",
              128
-            ],
-            "children": [],
-            "total": 0,
-            "repeat": 1,
-            "label": "Cosines for positions 0 … T−1"
-           },
-           {
-            "op": "torch.Tensor.__getitem__",
-            "id": 49,
-            "line": 99,
-            "code": "sin = sin[offset : offset + seq_len, :].unsqueeze(0).unsqueeze(0)",
-            "uses": [
-             "sin"
             ],
             "inputs": [
              {
               "tensor": "sin"
              }
             ],
-            "in": [
-             [
-              40960,
-              128
-             ]
-            ],
-            "out": [
-             "T",
-             128
-            ],
-            "children": [],
-            "total": 0,
-            "repeat": 1,
-            "label": "Sines for positions 0 … T−1"
-           },
-           {
-            "op": "torch.Tensor.unsqueeze",
-            "id": 50,
-            "line": 99,
-            "code": "sin = sin[offset : offset + seq_len, :].unsqueeze(0).unsqueeze(0)",
-            "uses": [],
-            "inputs": [
+            "children": [
              {
-              "from": 49
-             }
-            ],
-            "in": [
-             [
-              "T",
-              128
-             ]
-            ],
-            "out": [
-             1,
-             "T",
-             128
-            ],
-            "children": [],
-            "total": 0,
-            "repeat": 1,
-            "label": "Sines for positions 0 … T−1"
-           },
-           {
-            "op": "torch.Tensor.unsqueeze",
-            "id": 51,
-            "line": 99,
-            "code": "sin = sin[offset : offset + seq_len, :].unsqueeze(0).unsqueeze(0)",
-            "uses": [],
-            "inputs": [
-             {
-              "from": 50
-             }
-            ],
-            "in": [
-             [
-              1,
-              "T",
-              128
-             ]
-            ],
-            "out": [
-             1,
-             1,
-             "T",
-             128
-            ],
-            "children": [],
-            "total": 0,
-            "repeat": 1,
-            "label": "Sines for positions 0 … T−1"
-           },
-           {
-            "op": "torch.Tensor.neg",
-            "id": 52,
-            "line": 102,
-            "code": "rotated = torch.cat((-x2, x1), dim=-1)",
-            "uses": [],
-            "inputs": [
-             {
-              "from": 45
-             }
-            ],
-            "in": [
-             [
-              "B",
-              16,
-              "T",
-              64
-             ]
-            ],
-            "out": [
-             "B",
-             16,
-             "T",
-             64
-            ],
-            "children": [],
-            "total": 0,
-            "repeat": 1,
-            "label": "Swap halves: (−x₂, x₁)"
-           },
-           {
-            "op": "torch.cat",
-            "id": 53,
-            "line": 102,
-            "code": "rotated = torch.cat((-x2, x1), dim=-1)",
-            "uses": [],
-            "inputs": [
-             {
-              "from": 52
+              "op": "torch.Tensor.__getitem__",
+              "id": 49,
+              "line": 99,
+              "code": "sin = sin[offset : offset + seq_len, :].unsqueeze(0).unsqueeze(0)",
+              "uses": [
+               "sin"
+              ],
+              "inputs": [
+               {
+                "tensor": "sin"
+               }
+              ],
+              "in": [
+               [
+                40960,
+                128
+               ]
+              ],
+              "out": [
+               "T",
+               128
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Sines for positions 0 … T−1"
              },
              {
-              "from": 44
+              "op": "torch.Tensor.unsqueeze",
+              "id": 50,
+              "line": 99,
+              "code": "sin = sin[offset : offset + seq_len, :].unsqueeze(0).unsqueeze(0)",
+              "uses": [],
+              "inputs": [
+               {
+                "from": 49
+               }
+              ],
+              "in": [
+               [
+                "T",
+                128
+               ]
+              ],
+              "out": [
+               1,
+               "T",
+               128
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Sines for positions 0 … T−1"
+             },
+             {
+              "op": "torch.Tensor.unsqueeze",
+              "id": 51,
+              "line": 99,
+              "code": "sin = sin[offset : offset + seq_len, :].unsqueeze(0).unsqueeze(0)",
+              "uses": [],
+              "inputs": [
+               {
+                "from": 50
+               }
+              ],
+              "in": [
+               [
+                1,
+                "T",
+                128
+               ]
+              ],
+              "out": [
+               1,
+               1,
+               "T",
+               128
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Sines for positions 0 … T−1"
              }
             ],
+            "total": 0,
+            "repeat": 1
+           },
+           {
+            "group": true,
+            "label": "Swap halves: (−x₂, x₁)",
+            "id": 2576,
             "in": [
              [
               "B",
@@ -17963,57 +21039,131 @@ window.ARCHITECTURE = {
              "T",
              128
             ],
-            "children": [],
+            "inputs": [
+             {
+              "from": 45
+             },
+             {
+              "from": 44
+             }
+            ],
+            "children": [
+             {
+              "op": "torch.Tensor.neg",
+              "id": 52,
+              "line": 102,
+              "code": "rotated = torch.cat((-x2, x1), dim=-1)",
+              "uses": [],
+              "inputs": [
+               {
+                "from": 45
+               }
+              ],
+              "in": [
+               [
+                "B",
+                16,
+                "T",
+                64
+               ]
+              ],
+              "out": [
+               "B",
+               16,
+               "T",
+               64
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Swap halves: (−x₂, x₁)"
+             },
+             {
+              "op": "torch.cat",
+              "id": 53,
+              "line": 102,
+              "code": "rotated = torch.cat((-x2, x1), dim=-1)",
+              "uses": [],
+              "inputs": [
+               {
+                "from": 52
+               },
+               {
+                "from": 44
+               }
+              ],
+              "in": [
+               [
+                "B",
+                16,
+                "T",
+                64
+               ],
+               [
+                "B",
+                16,
+                "T",
+                64
+               ]
+              ],
+              "out": [
+               "B",
+               16,
+               "T",
+               128
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Swap halves: (−x₂, x₁)"
+             }
+            ],
             "total": 0,
-            "repeat": 1,
-            "label": "Swap halves: (−x₂, x₁)"
+            "repeat": 1
            },
            {
-            "op": "torch.Tensor.mul",
-            "id": 54,
-            "line": 103,
-            "code": "x_rotated = (x * cos) + (rotated * sin)",
-            "uses": [],
+            "group": true,
+            "label": "Rotate each channel pair",
+            "id": 2577,
+            "in": [
+             [
+              "B",
+              16,
+              "T",
+              128
+             ],
+             [
+              1,
+              1,
+              "T",
+              128
+             ],
+             [
+              "B",
+              16,
+              "T",
+              128
+             ],
+             [
+              1,
+              1,
+              "T",
+              128
+             ]
+            ],
+            "out": [
+             "B",
+             16,
+             "T",
+             128
+            ],
             "inputs": [
              {
               "from": 25
              },
              {
               "from": 48
-             }
-            ],
-            "in": [
-             [
-              "B",
-              16,
-              "T",
-              128
-             ],
-             [
-              1,
-              1,
-              "T",
-              128
-             ]
-            ],
-            "out": [
-             "B",
-             16,
-             "T",
-             128
-            ],
-            "children": [],
-            "total": 0,
-            "repeat": 1,
-            "label": "Rotate each channel pair"
-           },
-           {
-            "op": "torch.Tensor.mul",
-            "id": 55,
-            "line": 103,
-            "code": "x_rotated = (x * cos) + (rotated * sin)",
-            "uses": [],
-            "inputs": [
+             },
              {
               "from": 53
              },
@@ -18021,70 +21171,129 @@ window.ARCHITECTURE = {
               "from": 51
              }
             ],
-            "in": [
-             [
-              "B",
-              16,
-              "T",
-              128
-             ],
-             [
-              1,
-              1,
-              "T",
-              128
-             ]
-            ],
-            "out": [
-             "B",
-             16,
-             "T",
-             128
-            ],
-            "children": [],
-            "total": 0,
-            "repeat": 1,
-            "label": "Rotate each channel pair"
-           },
-           {
-            "op": "torch.Tensor.add",
-            "id": 56,
-            "line": 103,
-            "code": "x_rotated = (x * cos) + (rotated * sin)",
-            "uses": [],
-            "inputs": [
+            "children": [
              {
-              "from": 54
+              "op": "torch.Tensor.mul",
+              "id": 54,
+              "line": 103,
+              "code": "x_rotated = (x * cos) + (rotated * sin)",
+              "uses": [],
+              "inputs": [
+               {
+                "from": 25
+               },
+               {
+                "from": 48
+               }
+              ],
+              "in": [
+               [
+                "B",
+                16,
+                "T",
+                128
+               ],
+               [
+                1,
+                1,
+                "T",
+                128
+               ]
+              ],
+              "out": [
+               "B",
+               16,
+               "T",
+               128
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Rotate each channel pair"
              },
              {
-              "from": 55
+              "op": "torch.Tensor.mul",
+              "id": 55,
+              "line": 103,
+              "code": "x_rotated = (x * cos) + (rotated * sin)",
+              "uses": [],
+              "inputs": [
+               {
+                "from": 53
+               },
+               {
+                "from": 51
+               }
+              ],
+              "in": [
+               [
+                "B",
+                16,
+                "T",
+                128
+               ],
+               [
+                1,
+                1,
+                "T",
+                128
+               ]
+              ],
+              "out": [
+               "B",
+               16,
+               "T",
+               128
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Rotate each channel pair"
+             },
+             {
+              "op": "torch.Tensor.add",
+              "id": 56,
+              "line": 103,
+              "code": "x_rotated = (x * cos) + (rotated * sin)",
+              "uses": [],
+              "inputs": [
+               {
+                "from": 54
+               },
+               {
+                "from": 55
+               }
+              ],
+              "returned_by": 43,
+              "in": [
+               [
+                "B",
+                16,
+                "T",
+                128
+               ],
+               [
+                "B",
+                16,
+                "T",
+                128
+               ]
+              ],
+              "out": [
+               "B",
+               16,
+               "T",
+               128
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Rotate each channel pair"
              }
             ],
-            "returned_by": 43,
-            "in": [
-             [
-              "B",
-              16,
-              "T",
-              128
-             ],
-             [
-              "B",
-              16,
-              "T",
-              128
-             ]
-            ],
-            "out": [
-             "B",
-             16,
-             "T",
-             128
-            ],
-            "children": [],
             "total": 0,
             "repeat": 1,
-            "label": "Rotate each channel pair"
+            "returned_by": 43
            },
            {
             "op": "torch.Tensor.to",
@@ -18214,18 +21423,119 @@ window.ARCHITECTURE = {
             "label": "Second half of each head"
            },
            {
-            "op": "torch.Tensor.__getitem__",
-            "id": 61,
-            "line": 97,
-            "code": "cos[offset : offset + seq_len, :].unsqueeze(0).unsqueeze(0)",
-            "uses": [
-             "cos"
+            "group": true,
+            "label": "Cosines for positions 0 … T−1",
+            "id": 2578,
+            "in": [
+             [
+              40960,
+              128
+             ]
+            ],
+            "out": [
+             1,
+             1,
+             "T",
+             128
             ],
             "inputs": [
              {
               "tensor": "cos"
              }
             ],
+            "children": [
+             {
+              "op": "torch.Tensor.__getitem__",
+              "id": 61,
+              "line": 97,
+              "code": "cos[offset : offset + seq_len, :].unsqueeze(0).unsqueeze(0)",
+              "uses": [
+               "cos"
+              ],
+              "inputs": [
+               {
+                "tensor": "cos"
+               }
+              ],
+              "in": [
+               [
+                40960,
+                128
+               ]
+              ],
+              "out": [
+               "T",
+               128
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Cosines for positions 0 … T−1"
+             },
+             {
+              "op": "torch.Tensor.unsqueeze",
+              "id": 62,
+              "line": 97,
+              "code": "cos[offset : offset + seq_len, :].unsqueeze(0).unsqueeze(0)",
+              "uses": [],
+              "inputs": [
+               {
+                "from": 61
+               }
+              ],
+              "in": [
+               [
+                "T",
+                128
+               ]
+              ],
+              "out": [
+               1,
+               "T",
+               128
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Cosines for positions 0 … T−1"
+             },
+             {
+              "op": "torch.Tensor.unsqueeze",
+              "id": 63,
+              "line": 97,
+              "code": "cos[offset : offset + seq_len, :].unsqueeze(0).unsqueeze(0)",
+              "uses": [],
+              "inputs": [
+               {
+                "from": 62
+               }
+              ],
+              "in": [
+               [
+                1,
+                "T",
+                128
+               ]
+              ],
+              "out": [
+               1,
+               1,
+               "T",
+               128
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Cosines for positions 0 … T−1"
+             }
+            ],
+            "total": 0,
+            "repeat": 1
+           },
+           {
+            "group": true,
+            "label": "Sines for positions 0 … T−1",
+            "id": 2579,
             "in": [
              [
               40960,
@@ -18233,198 +21543,109 @@ window.ARCHITECTURE = {
              ]
             ],
             "out": [
-             "T",
-             128
-            ],
-            "children": [],
-            "total": 0,
-            "repeat": 1,
-            "label": "Cosines for positions 0 … T−1"
-           },
-           {
-            "op": "torch.Tensor.unsqueeze",
-            "id": 62,
-            "line": 97,
-            "code": "cos[offset : offset + seq_len, :].unsqueeze(0).unsqueeze(0)",
-            "uses": [],
-            "inputs": [
-             {
-              "from": 61
-             }
-            ],
-            "in": [
-             [
-              "T",
-              128
-             ]
-            ],
-            "out": [
-             1,
-             "T",
-             128
-            ],
-            "children": [],
-            "total": 0,
-            "repeat": 1,
-            "label": "Cosines for positions 0 … T−1"
-           },
-           {
-            "op": "torch.Tensor.unsqueeze",
-            "id": 63,
-            "line": 97,
-            "code": "cos[offset : offset + seq_len, :].unsqueeze(0).unsqueeze(0)",
-            "uses": [],
-            "inputs": [
-             {
-              "from": 62
-             }
-            ],
-            "in": [
-             [
-              1,
-              "T",
-              128
-             ]
-            ],
-            "out": [
              1,
              1,
              "T",
              128
-            ],
-            "children": [],
-            "total": 0,
-            "repeat": 1,
-            "label": "Cosines for positions 0 … T−1"
-           },
-           {
-            "op": "torch.Tensor.__getitem__",
-            "id": 64,
-            "line": 99,
-            "code": "sin = sin[offset : offset + seq_len, :].unsqueeze(0).unsqueeze(0)",
-            "uses": [
-             "sin"
             ],
             "inputs": [
              {
               "tensor": "sin"
              }
             ],
-            "in": [
-             [
-              40960,
-              128
-             ]
-            ],
-            "out": [
-             "T",
-             128
-            ],
-            "children": [],
-            "total": 0,
-            "repeat": 1,
-            "label": "Sines for positions 0 … T−1"
-           },
-           {
-            "op": "torch.Tensor.unsqueeze",
-            "id": 65,
-            "line": 99,
-            "code": "sin = sin[offset : offset + seq_len, :].unsqueeze(0).unsqueeze(0)",
-            "uses": [],
-            "inputs": [
+            "children": [
              {
-              "from": 64
-             }
-            ],
-            "in": [
-             [
-              "T",
-              128
-             ]
-            ],
-            "out": [
-             1,
-             "T",
-             128
-            ],
-            "children": [],
-            "total": 0,
-            "repeat": 1,
-            "label": "Sines for positions 0 … T−1"
-           },
-           {
-            "op": "torch.Tensor.unsqueeze",
-            "id": 66,
-            "line": 99,
-            "code": "sin = sin[offset : offset + seq_len, :].unsqueeze(0).unsqueeze(0)",
-            "uses": [],
-            "inputs": [
-             {
-              "from": 65
-             }
-            ],
-            "in": [
-             [
-              1,
-              "T",
-              128
-             ]
-            ],
-            "out": [
-             1,
-             1,
-             "T",
-             128
-            ],
-            "children": [],
-            "total": 0,
-            "repeat": 1,
-            "label": "Sines for positions 0 … T−1"
-           },
-           {
-            "op": "torch.Tensor.neg",
-            "id": 67,
-            "line": 102,
-            "code": "rotated = torch.cat((-x2, x1), dim=-1)",
-            "uses": [],
-            "inputs": [
-             {
-              "from": 60
-             }
-            ],
-            "in": [
-             [
-              "B",
-              8,
-              "T",
-              64
-             ]
-            ],
-            "out": [
-             "B",
-             8,
-             "T",
-             64
-            ],
-            "children": [],
-            "total": 0,
-            "repeat": 1,
-            "label": "Swap halves: (−x₂, x₁)"
-           },
-           {
-            "op": "torch.cat",
-            "id": 68,
-            "line": 102,
-            "code": "rotated = torch.cat((-x2, x1), dim=-1)",
-            "uses": [],
-            "inputs": [
-             {
-              "from": 67
+              "op": "torch.Tensor.__getitem__",
+              "id": 64,
+              "line": 99,
+              "code": "sin = sin[offset : offset + seq_len, :].unsqueeze(0).unsqueeze(0)",
+              "uses": [
+               "sin"
+              ],
+              "inputs": [
+               {
+                "tensor": "sin"
+               }
+              ],
+              "in": [
+               [
+                40960,
+                128
+               ]
+              ],
+              "out": [
+               "T",
+               128
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Sines for positions 0 … T−1"
              },
              {
-              "from": 59
+              "op": "torch.Tensor.unsqueeze",
+              "id": 65,
+              "line": 99,
+              "code": "sin = sin[offset : offset + seq_len, :].unsqueeze(0).unsqueeze(0)",
+              "uses": [],
+              "inputs": [
+               {
+                "from": 64
+               }
+              ],
+              "in": [
+               [
+                "T",
+                128
+               ]
+              ],
+              "out": [
+               1,
+               "T",
+               128
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Sines for positions 0 … T−1"
+             },
+             {
+              "op": "torch.Tensor.unsqueeze",
+              "id": 66,
+              "line": 99,
+              "code": "sin = sin[offset : offset + seq_len, :].unsqueeze(0).unsqueeze(0)",
+              "uses": [],
+              "inputs": [
+               {
+                "from": 65
+               }
+              ],
+              "in": [
+               [
+                1,
+                "T",
+                128
+               ]
+              ],
+              "out": [
+               1,
+               1,
+               "T",
+               128
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Sines for positions 0 … T−1"
              }
             ],
+            "total": 0,
+            "repeat": 1
+           },
+           {
+            "group": true,
+            "label": "Swap halves: (−x₂, x₁)",
+            "id": 2580,
             "in": [
              [
               "B",
@@ -18445,57 +21666,131 @@ window.ARCHITECTURE = {
              "T",
              128
             ],
-            "children": [],
+            "inputs": [
+             {
+              "from": 60
+             },
+             {
+              "from": 59
+             }
+            ],
+            "children": [
+             {
+              "op": "torch.Tensor.neg",
+              "id": 67,
+              "line": 102,
+              "code": "rotated = torch.cat((-x2, x1), dim=-1)",
+              "uses": [],
+              "inputs": [
+               {
+                "from": 60
+               }
+              ],
+              "in": [
+               [
+                "B",
+                8,
+                "T",
+                64
+               ]
+              ],
+              "out": [
+               "B",
+               8,
+               "T",
+               64
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Swap halves: (−x₂, x₁)"
+             },
+             {
+              "op": "torch.cat",
+              "id": 68,
+              "line": 102,
+              "code": "rotated = torch.cat((-x2, x1), dim=-1)",
+              "uses": [],
+              "inputs": [
+               {
+                "from": 67
+               },
+               {
+                "from": 59
+               }
+              ],
+              "in": [
+               [
+                "B",
+                8,
+                "T",
+                64
+               ],
+               [
+                "B",
+                8,
+                "T",
+                64
+               ]
+              ],
+              "out": [
+               "B",
+               8,
+               "T",
+               128
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Swap halves: (−x₂, x₁)"
+             }
+            ],
             "total": 0,
-            "repeat": 1,
-            "label": "Swap halves: (−x₂, x₁)"
+            "repeat": 1
            },
            {
-            "op": "torch.Tensor.mul",
-            "id": 69,
-            "line": 103,
-            "code": "x_rotated = (x * cos) + (rotated * sin)",
-            "uses": [],
+            "group": true,
+            "label": "Rotate each channel pair",
+            "id": 2581,
+            "in": [
+             [
+              "B",
+              8,
+              "T",
+              128
+             ],
+             [
+              1,
+              1,
+              "T",
+              128
+             ],
+             [
+              "B",
+              8,
+              "T",
+              128
+             ],
+             [
+              1,
+              1,
+              "T",
+              128
+             ]
+            ],
+            "out": [
+             "B",
+             8,
+             "T",
+             128
+            ],
             "inputs": [
              {
               "from": 34
              },
              {
               "from": 63
-             }
-            ],
-            "in": [
-             [
-              "B",
-              8,
-              "T",
-              128
-             ],
-             [
-              1,
-              1,
-              "T",
-              128
-             ]
-            ],
-            "out": [
-             "B",
-             8,
-             "T",
-             128
-            ],
-            "children": [],
-            "total": 0,
-            "repeat": 1,
-            "label": "Rotate each channel pair"
-           },
-           {
-            "op": "torch.Tensor.mul",
-            "id": 70,
-            "line": 103,
-            "code": "x_rotated = (x * cos) + (rotated * sin)",
-            "uses": [],
-            "inputs": [
+             },
              {
               "from": 68
              },
@@ -18503,70 +21798,129 @@ window.ARCHITECTURE = {
               "from": 66
              }
             ],
-            "in": [
-             [
-              "B",
-              8,
-              "T",
-              128
-             ],
-             [
-              1,
-              1,
-              "T",
-              128
-             ]
-            ],
-            "out": [
-             "B",
-             8,
-             "T",
-             128
-            ],
-            "children": [],
-            "total": 0,
-            "repeat": 1,
-            "label": "Rotate each channel pair"
-           },
-           {
-            "op": "torch.Tensor.add",
-            "id": 71,
-            "line": 103,
-            "code": "x_rotated = (x * cos) + (rotated * sin)",
-            "uses": [],
-            "inputs": [
+            "children": [
              {
-              "from": 69
+              "op": "torch.Tensor.mul",
+              "id": 69,
+              "line": 103,
+              "code": "x_rotated = (x * cos) + (rotated * sin)",
+              "uses": [],
+              "inputs": [
+               {
+                "from": 34
+               },
+               {
+                "from": 63
+               }
+              ],
+              "in": [
+               [
+                "B",
+                8,
+                "T",
+                128
+               ],
+               [
+                1,
+                1,
+                "T",
+                128
+               ]
+              ],
+              "out": [
+               "B",
+               8,
+               "T",
+               128
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Rotate each channel pair"
              },
              {
-              "from": 70
+              "op": "torch.Tensor.mul",
+              "id": 70,
+              "line": 103,
+              "code": "x_rotated = (x * cos) + (rotated * sin)",
+              "uses": [],
+              "inputs": [
+               {
+                "from": 68
+               },
+               {
+                "from": 66
+               }
+              ],
+              "in": [
+               [
+                "B",
+                8,
+                "T",
+                128
+               ],
+               [
+                1,
+                1,
+                "T",
+                128
+               ]
+              ],
+              "out": [
+               "B",
+               8,
+               "T",
+               128
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Rotate each channel pair"
+             },
+             {
+              "op": "torch.Tensor.add",
+              "id": 71,
+              "line": 103,
+              "code": "x_rotated = (x * cos) + (rotated * sin)",
+              "uses": [],
+              "inputs": [
+               {
+                "from": 69
+               },
+               {
+                "from": 70
+               }
+              ],
+              "returned_by": 58,
+              "in": [
+               [
+                "B",
+                8,
+                "T",
+                128
+               ],
+               [
+                "B",
+                8,
+                "T",
+                128
+               ]
+              ],
+              "out": [
+               "B",
+               8,
+               "T",
+               128
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Rotate each channel pair"
              }
             ],
-            "returned_by": 58,
-            "in": [
-             [
-              "B",
-              8,
-              "T",
-              128
-             ],
-             [
-              "B",
-              8,
-              "T",
-              128
-             ]
-            ],
-            "out": [
-             "B",
-             8,
-             "T",
-             128
-            ],
-            "children": [],
             "total": 0,
             "repeat": 1,
-            "label": "Rotate each channel pair"
+            "returned_by": 58
            },
            {
             "op": "torch.Tensor.to",
@@ -18712,51 +22066,14 @@ window.ARCHITECTURE = {
           "label": "Causal attention, fused"
          },
          {
-          "op": "torch.Tensor.transpose",
-          "id": 76,
-          "line": 95,
-          "code": "context = context.transpose(1, 2).reshape(b, num_tokens, self.d_out)",
-          "uses": [],
-          "inputs": [
-           {
-            "from": 75
-           }
-          ],
+          "group": true,
+          "label": "Merge heads",
+          "id": 2569,
           "in": [
            [
             "B",
             16,
             "T",
-            128
-           ]
-          ],
-          "out": [
-           "B",
-           "T",
-           16,
-           128
-          ],
-          "children": [],
-          "total": 0,
-          "repeat": 1,
-          "label": "Merge heads"
-         },
-         {
-          "op": "torch.Tensor.reshape",
-          "id": 77,
-          "line": 95,
-          "code": "context = context.transpose(1, 2).reshape(b, num_tokens, self.d_out)",
-          "uses": [],
-          "inputs": [
-           {
-            "from": 76
-           }
-          ],
-          "in": [
-           [
-            "B",
-            "T",
-            16,
             128
            ]
           ],
@@ -18765,10 +22082,74 @@ window.ARCHITECTURE = {
            "T",
            2048
           ],
-          "children": [],
+          "inputs": [
+           {
+            "from": 75
+           }
+          ],
+          "children": [
+           {
+            "op": "torch.Tensor.transpose",
+            "id": 76,
+            "line": 95,
+            "code": "context = context.transpose(1, 2).reshape(b, num_tokens, self.d_out)",
+            "uses": [],
+            "inputs": [
+             {
+              "from": 75
+             }
+            ],
+            "in": [
+             [
+              "B",
+              16,
+              "T",
+              128
+             ]
+            ],
+            "out": [
+             "B",
+             "T",
+             16,
+             128
+            ],
+            "children": [],
+            "total": 0,
+            "repeat": 1,
+            "label": "Merge heads"
+           },
+           {
+            "op": "torch.Tensor.reshape",
+            "id": 77,
+            "line": 95,
+            "code": "context = context.transpose(1, 2).reshape(b, num_tokens, self.d_out)",
+            "uses": [],
+            "inputs": [
+             {
+              "from": 76
+             }
+            ],
+            "in": [
+             [
+              "B",
+              "T",
+              16,
+              128
+             ]
+            ],
+            "out": [
+             "B",
+             "T",
+             2048
+            ],
+            "children": [],
+            "total": 0,
+            "repeat": 1,
+            "label": "Merge heads"
+           }
+          ],
           "total": 0,
-          "repeat": 1,
-          "label": "Merge heads"
+          "repeat": 1
          },
          {
           "module": "trf_blocks.0.att.out_proj",
@@ -18902,44 +22283,9 @@ window.ARCHITECTURE = {
           "label": "Compute in float32"
          },
          {
-          "op": "torch.Tensor.pow",
-          "id": 82,
-          "line": 38,
-          "code": "variance = x.pow(2).mean(dim=-1, keepdim=True)",
-          "uses": [],
-          "inputs": [
-           {
-            "from": 79
-           }
-          ],
-          "in": [
-           [
-            "B",
-            "T",
-            1024
-           ]
-          ],
-          "out": [
-           "B",
-           "T",
-           1024
-          ],
-          "children": [],
-          "total": 0,
-          "repeat": 1,
-          "label": "Mean square over channels"
-         },
-         {
-          "op": "torch.Tensor.mean",
-          "id": 83,
-          "line": 38,
-          "code": "variance = x.pow(2).mean(dim=-1, keepdim=True)",
-          "uses": [],
-          "inputs": [
-           {
-            "from": 82
-           }
-          ],
+          "group": true,
+          "label": "Mean square over channels",
+          "id": 2582,
           "in": [
            [
             "B",
@@ -18952,91 +22298,86 @@ window.ARCHITECTURE = {
            "T",
            1
           ],
-          "children": [],
-          "total": 0,
-          "repeat": 1,
-          "label": "Mean square over channels"
-         },
-         {
-          "op": "torch.Tensor.add",
-          "id": 84,
-          "line": 39,
-          "code": "norm_x = x * torch.rsqrt(variance + self.eps)",
-          "uses": [],
-          "inputs": [
-           {
-            "from": 83
-           }
-          ],
-          "in": [
-           [
-            "B",
-            "T",
-            1
-           ]
-          ],
-          "out": [
-           "B",
-           "T",
-           1
-          ],
-          "children": [],
-          "total": 0,
-          "repeat": 1,
-          "label": "Divide by the root mean square"
-         },
-         {
-          "op": "torch.rsqrt",
-          "id": 85,
-          "line": 39,
-          "code": "norm_x = x * torch.rsqrt(variance + self.eps)",
-          "uses": [],
-          "inputs": [
-           {
-            "from": 84
-           }
-          ],
-          "in": [
-           [
-            "B",
-            "T",
-            1
-           ]
-          ],
-          "out": [
-           "B",
-           "T",
-           1
-          ],
-          "children": [],
-          "total": 0,
-          "repeat": 1,
-          "label": "Divide by the root mean square"
-         },
-         {
-          "op": "torch.Tensor.mul",
-          "id": 86,
-          "line": 39,
-          "code": "norm_x = x * torch.rsqrt(variance + self.eps)",
-          "uses": [],
           "inputs": [
            {
             "from": 79
+           }
+          ],
+          "children": [
+           {
+            "op": "torch.Tensor.pow",
+            "id": 82,
+            "line": 38,
+            "code": "variance = x.pow(2).mean(dim=-1, keepdim=True)",
+            "uses": [],
+            "inputs": [
+             {
+              "from": 79
+             }
+            ],
+            "in": [
+             [
+              "B",
+              "T",
+              1024
+             ]
+            ],
+            "out": [
+             "B",
+             "T",
+             1024
+            ],
+            "children": [],
+            "total": 0,
+            "repeat": 1,
+            "label": "Mean square over channels"
            },
            {
-            "from": 85
+            "op": "torch.Tensor.mean",
+            "id": 83,
+            "line": 38,
+            "code": "variance = x.pow(2).mean(dim=-1, keepdim=True)",
+            "uses": [],
+            "inputs": [
+             {
+              "from": 82
+             }
+            ],
+            "in": [
+             [
+              "B",
+              "T",
+              1024
+             ]
+            ],
+            "out": [
+             "B",
+             "T",
+             1
+            ],
+            "children": [],
+            "total": 0,
+            "repeat": 1,
+            "label": "Mean square over channels"
            }
           ],
+          "total": 0,
+          "repeat": 1
+         },
+         {
+          "group": true,
+          "label": "Divide by the root mean square",
+          "id": 2583,
           "in": [
            [
             "B",
             "T",
-            1024
+            1
            ],
            [
             "B",
             "T",
-            1
+            1024
            ]
           ],
           "out": [
@@ -19044,10 +22385,110 @@ window.ARCHITECTURE = {
            "T",
            1024
           ],
-          "children": [],
+          "inputs": [
+           {
+            "from": 83
+           },
+           {
+            "from": 79
+           }
+          ],
+          "children": [
+           {
+            "op": "torch.Tensor.add",
+            "id": 84,
+            "line": 39,
+            "code": "norm_x = x * torch.rsqrt(variance + self.eps)",
+            "uses": [],
+            "inputs": [
+             {
+              "from": 83
+             }
+            ],
+            "in": [
+             [
+              "B",
+              "T",
+              1
+             ]
+            ],
+            "out": [
+             "B",
+             "T",
+             1
+            ],
+            "children": [],
+            "total": 0,
+            "repeat": 1,
+            "label": "Divide by the root mean square"
+           },
+           {
+            "op": "torch.rsqrt",
+            "id": 85,
+            "line": 39,
+            "code": "norm_x = x * torch.rsqrt(variance + self.eps)",
+            "uses": [],
+            "inputs": [
+             {
+              "from": 84
+             }
+            ],
+            "in": [
+             [
+              "B",
+              "T",
+              1
+             ]
+            ],
+            "out": [
+             "B",
+             "T",
+             1
+            ],
+            "children": [],
+            "total": 0,
+            "repeat": 1,
+            "label": "Divide by the root mean square"
+           },
+           {
+            "op": "torch.Tensor.mul",
+            "id": 86,
+            "line": 39,
+            "code": "norm_x = x * torch.rsqrt(variance + self.eps)",
+            "uses": [],
+            "inputs": [
+             {
+              "from": 79
+             },
+             {
+              "from": 85
+             }
+            ],
+            "in": [
+             [
+              "B",
+              "T",
+              1024
+             ],
+             [
+              "B",
+              "T",
+              1
+             ]
+            ],
+            "out": [
+             "B",
+             "T",
+             1024
+            ],
+            "children": [],
+            "total": 0,
+            "repeat": 1,
+            "label": "Divide by the root mean square"
+           }
+          ],
           "total": 0,
-          "repeat": 1,
-          "label": "Divide by the root mean square"
+          "repeat": 1
          },
          {
           "op": "torch.Tensor.mul",
@@ -19428,44 +22869,9 @@ window.ARCHITECTURE = {
         "label": "Compute in float32"
        },
        {
-        "op": "torch.Tensor.pow",
-        "id": 2555,
-        "line": 38,
-        "code": "variance = x.pow(2).mean(dim=-1, keepdim=True)",
-        "uses": [],
-        "inputs": [
-         {
-          "from": 5
-         }
-        ],
-        "in": [
-         [
-          "B",
-          "T",
-          1024
-         ]
-        ],
-        "out": [
-         "B",
-         "T",
-         1024
-        ],
-        "children": [],
-        "total": 0,
-        "repeat": 1,
-        "label": "Mean square over channels"
-       },
-       {
-        "op": "torch.Tensor.mean",
-        "id": 2556,
-        "line": 38,
-        "code": "variance = x.pow(2).mean(dim=-1, keepdim=True)",
-        "uses": [],
-        "inputs": [
-         {
-          "from": 2555
-         }
-        ],
+        "group": true,
+        "label": "Mean square over channels",
+        "id": 2584,
         "in": [
          [
           "B",
@@ -19478,91 +22884,86 @@ window.ARCHITECTURE = {
          "T",
          1
         ],
-        "children": [],
-        "total": 0,
-        "repeat": 1,
-        "label": "Mean square over channels"
-       },
-       {
-        "op": "torch.Tensor.add",
-        "id": 2557,
-        "line": 39,
-        "code": "norm_x = x * torch.rsqrt(variance + self.eps)",
-        "uses": [],
-        "inputs": [
-         {
-          "from": 2556
-         }
-        ],
-        "in": [
-         [
-          "B",
-          "T",
-          1
-         ]
-        ],
-        "out": [
-         "B",
-         "T",
-         1
-        ],
-        "children": [],
-        "total": 0,
-        "repeat": 1,
-        "label": "Divide by the root mean square"
-       },
-       {
-        "op": "torch.rsqrt",
-        "id": 2558,
-        "line": 39,
-        "code": "norm_x = x * torch.rsqrt(variance + self.eps)",
-        "uses": [],
-        "inputs": [
-         {
-          "from": 2557
-         }
-        ],
-        "in": [
-         [
-          "B",
-          "T",
-          1
-         ]
-        ],
-        "out": [
-         "B",
-         "T",
-         1
-        ],
-        "children": [],
-        "total": 0,
-        "repeat": 1,
-        "label": "Divide by the root mean square"
-       },
-       {
-        "op": "torch.Tensor.mul",
-        "id": 2559,
-        "line": 39,
-        "code": "norm_x = x * torch.rsqrt(variance + self.eps)",
-        "uses": [],
         "inputs": [
          {
           "from": 5
+         }
+        ],
+        "children": [
+         {
+          "op": "torch.Tensor.pow",
+          "id": 2555,
+          "line": 38,
+          "code": "variance = x.pow(2).mean(dim=-1, keepdim=True)",
+          "uses": [],
+          "inputs": [
+           {
+            "from": 5
+           }
+          ],
+          "in": [
+           [
+            "B",
+            "T",
+            1024
+           ]
+          ],
+          "out": [
+           "B",
+           "T",
+           1024
+          ],
+          "children": [],
+          "total": 0,
+          "repeat": 1,
+          "label": "Mean square over channels"
          },
          {
-          "from": 2558
+          "op": "torch.Tensor.mean",
+          "id": 2556,
+          "line": 38,
+          "code": "variance = x.pow(2).mean(dim=-1, keepdim=True)",
+          "uses": [],
+          "inputs": [
+           {
+            "from": 2555
+           }
+          ],
+          "in": [
+           [
+            "B",
+            "T",
+            1024
+           ]
+          ],
+          "out": [
+           "B",
+           "T",
+           1
+          ],
+          "children": [],
+          "total": 0,
+          "repeat": 1,
+          "label": "Mean square over channels"
          }
         ],
+        "total": 0,
+        "repeat": 1
+       },
+       {
+        "group": true,
+        "label": "Divide by the root mean square",
+        "id": 2585,
         "in": [
          [
           "B",
           "T",
-          1024
+          1
          ],
          [
           "B",
           "T",
-          1
+          1024
          ]
         ],
         "out": [
@@ -19570,10 +22971,110 @@ window.ARCHITECTURE = {
          "T",
          1024
         ],
-        "children": [],
+        "inputs": [
+         {
+          "from": 2556
+         },
+         {
+          "from": 5
+         }
+        ],
+        "children": [
+         {
+          "op": "torch.Tensor.add",
+          "id": 2557,
+          "line": 39,
+          "code": "norm_x = x * torch.rsqrt(variance + self.eps)",
+          "uses": [],
+          "inputs": [
+           {
+            "from": 2556
+           }
+          ],
+          "in": [
+           [
+            "B",
+            "T",
+            1
+           ]
+          ],
+          "out": [
+           "B",
+           "T",
+           1
+          ],
+          "children": [],
+          "total": 0,
+          "repeat": 1,
+          "label": "Divide by the root mean square"
+         },
+         {
+          "op": "torch.rsqrt",
+          "id": 2558,
+          "line": 39,
+          "code": "norm_x = x * torch.rsqrt(variance + self.eps)",
+          "uses": [],
+          "inputs": [
+           {
+            "from": 2557
+           }
+          ],
+          "in": [
+           [
+            "B",
+            "T",
+            1
+           ]
+          ],
+          "out": [
+           "B",
+           "T",
+           1
+          ],
+          "children": [],
+          "total": 0,
+          "repeat": 1,
+          "label": "Divide by the root mean square"
+         },
+         {
+          "op": "torch.Tensor.mul",
+          "id": 2559,
+          "line": 39,
+          "code": "norm_x = x * torch.rsqrt(variance + self.eps)",
+          "uses": [],
+          "inputs": [
+           {
+            "from": 5
+           },
+           {
+            "from": 2558
+           }
+          ],
+          "in": [
+           [
+            "B",
+            "T",
+            1024
+           ],
+           [
+            "B",
+            "T",
+            1
+           ]
+          ],
+          "out": [
+           "B",
+           "T",
+           1024
+          ],
+          "children": [],
+          "total": 0,
+          "repeat": 1,
+          "label": "Divide by the root mean square"
+         }
+        ],
         "total": 0,
-        "repeat": 1,
-        "label": "Divide by the root mean square"
+        "repeat": 1
        },
        {
         "op": "torch.Tensor.mul",
@@ -20025,11 +23526,31 @@ window.ARCHITECTURE = {
             "label": "Variance over channels"
            },
            {
-            "op": "torch.Tensor.sub",
-            "id": 11,
-            "line": 20,
-            "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
-            "uses": [],
+            "group": true,
+            "label": "Normalize",
+            "id": 133,
+            "in": [
+             [
+              "B",
+              "T",
+              32
+             ],
+             [
+              "B",
+              "T",
+              1
+             ],
+             [
+              "B",
+              "T",
+              1
+             ]
+            ],
+            "out": [
+             "B",
+             "T",
+             32
+            ],
             "inputs": [
              {
               "from": 5,
@@ -20037,129 +23558,166 @@ window.ARCHITECTURE = {
              },
              {
               "from": 9
-             }
-            ],
-            "in": [
-             [
-              "B",
-              "T",
-              32
-             ],
-             [
-              "B",
-              "T",
-              1
-             ]
-            ],
-            "out": [
-             "B",
-             "T",
-             32
-            ],
-            "children": [],
-            "total": 0,
-            "repeat": 1,
-            "label": "Normalize"
-           },
-           {
-            "op": "torch.Tensor.add",
-            "id": 12,
-            "line": 20,
-            "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
-            "uses": [],
-            "inputs": [
+             },
              {
               "from": 10
              }
             ],
-            "in": [
-             [
-              "B",
-              "T",
-              1
-             ]
-            ],
-            "out": [
-             "B",
-             "T",
-             1
-            ],
-            "children": [],
-            "total": 0,
-            "repeat": 1,
-            "label": "Normalize"
-           },
-           {
-            "op": "torch.sqrt",
-            "id": 13,
-            "line": 20,
-            "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
-            "uses": [],
-            "inputs": [
+            "children": [
              {
-              "from": 12
-             }
-            ],
-            "in": [
-             [
-              "B",
-              "T",
-              1
-             ]
-            ],
-            "out": [
-             "B",
-             "T",
-             1
-            ],
-            "children": [],
-            "total": 0,
-            "repeat": 1,
-            "label": "Normalize"
-           },
-           {
-            "op": "torch.Tensor.div",
-            "id": 14,
-            "line": 20,
-            "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
-            "uses": [],
-            "inputs": [
-             {
-              "from": 11
+              "op": "torch.Tensor.sub",
+              "id": 11,
+              "line": 20,
+              "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
+              "uses": [],
+              "inputs": [
+               {
+                "from": 5,
+                "first_copy": true
+               },
+               {
+                "from": 9
+               }
+              ],
+              "in": [
+               [
+                "B",
+                "T",
+                32
+               ],
+               [
+                "B",
+                "T",
+                1
+               ]
+              ],
+              "out": [
+               "B",
+               "T",
+               32
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Normalize"
              },
              {
-              "from": 13
+              "op": "torch.Tensor.add",
+              "id": 12,
+              "line": 20,
+              "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
+              "uses": [],
+              "inputs": [
+               {
+                "from": 10
+               }
+              ],
+              "in": [
+               [
+                "B",
+                "T",
+                1
+               ]
+              ],
+              "out": [
+               "B",
+               "T",
+               1
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Normalize"
+             },
+             {
+              "op": "torch.sqrt",
+              "id": 13,
+              "line": 20,
+              "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
+              "uses": [],
+              "inputs": [
+               {
+                "from": 12
+               }
+              ],
+              "in": [
+               [
+                "B",
+                "T",
+                1
+               ]
+              ],
+              "out": [
+               "B",
+               "T",
+               1
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Normalize"
+             },
+             {
+              "op": "torch.Tensor.div",
+              "id": 14,
+              "line": 20,
+              "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
+              "uses": [],
+              "inputs": [
+               {
+                "from": 11
+               },
+               {
+                "from": 13
+               }
+              ],
+              "in": [
+               [
+                "B",
+                "T",
+                32
+               ],
+               [
+                "B",
+                "T",
+                1
+               ]
+              ],
+              "out": [
+               "B",
+               "T",
+               32
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Normalize"
              }
             ],
+            "total": 0,
+            "repeat": 1
+           },
+           {
+            "group": true,
+            "label": "Learned scale and shift",
+            "id": 134,
             "in": [
+             [
+              32
+             ],
              [
               "B",
               "T",
               32
              ],
              [
-              "B",
-              "T",
-              1
+              32
              ]
             ],
             "out": [
              "B",
              "T",
              32
-            ],
-            "children": [],
-            "total": 0,
-            "repeat": 1,
-            "label": "Normalize"
-           },
-           {
-            "op": "torch.Tensor.mul",
-            "id": 15,
-            "line": 21,
-            "code": "return self.scale * norm_x + self.shift",
-            "uses": [
-             "scale"
             ],
             "inputs": [
              {
@@ -20167,64 +23725,89 @@ window.ARCHITECTURE = {
              },
              {
               "from": 14
-             }
-            ],
-            "in": [
-             [
-              32
-             ],
-             [
-              "B",
-              "T",
-              32
-             ]
-            ],
-            "out": [
-             "B",
-             "T",
-             32
-            ],
-            "children": [],
-            "total": 0,
-            "repeat": 1,
-            "label": "Learned scale and shift"
-           },
-           {
-            "op": "torch.Tensor.add",
-            "id": 16,
-            "line": 21,
-            "code": "return self.scale * norm_x + self.shift",
-            "uses": [
-             "shift"
-            ],
-            "inputs": [
-             {
-              "from": 15
              },
              {
               "tensor": "trf_blocks.0.norm1.shift"
              }
             ],
-            "returned_by": 8,
-            "in": [
-             [
-              "B",
-              "T",
-              32
-             ],
-             [
-              32
-             ]
+            "children": [
+             {
+              "op": "torch.Tensor.mul",
+              "id": 15,
+              "line": 21,
+              "code": "return self.scale * norm_x + self.shift",
+              "uses": [
+               "scale"
+              ],
+              "inputs": [
+               {
+                "tensor": "trf_blocks.0.norm1.scale"
+               },
+               {
+                "from": 14
+               }
+              ],
+              "in": [
+               [
+                32
+               ],
+               [
+                "B",
+                "T",
+                32
+               ]
+              ],
+              "out": [
+               "B",
+               "T",
+               32
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Learned scale and shift"
+             },
+             {
+              "op": "torch.Tensor.add",
+              "id": 16,
+              "line": 21,
+              "code": "return self.scale * norm_x + self.shift",
+              "uses": [
+               "shift"
+              ],
+              "inputs": [
+               {
+                "from": 15
+               },
+               {
+                "tensor": "trf_blocks.0.norm1.shift"
+               }
+              ],
+              "returned_by": 8,
+              "in": [
+               [
+                "B",
+                "T",
+                32
+               ],
+               [
+                32
+               ]
+              ],
+              "out": [
+               "B",
+               "T",
+               32
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Learned scale and shift"
+             }
             ],
-            "out": [
-             "B",
-             "T",
-             32
-            ],
-            "children": [],
             "total": 0,
             "repeat": 1,
-            "label": "Learned scale and shift"
+            "returned_by": 8
            }
           ],
           "class": "llm_training.model.gpt2.layers.LayerNorm",
@@ -20555,49 +24138,9 @@ window.ARCHITECTURE = {
             "label": "Split values into heads"
            },
            {
-            "op": "torch.Tensor.transpose",
-            "id": 27,
-            "line": 61,
-            "code": "attn_scores = queries @ keys.transpose(2, 3)  # Dot product for each head",
-            "uses": [],
-            "inputs": [
-             {
-              "from": 24
-             }
-            ],
-            "in": [
-             [
-              "B",
-              4,
-              "T",
-              8
-             ]
-            ],
-            "out": [
-             "B",
-             4,
-             8,
-             "T"
-            ],
-            "children": [],
-            "total": 0,
-            "repeat": 1,
-            "label": "Attention scores Q·Kᵀ"
-           },
-           {
-            "op": "torch.Tensor.matmul",
-            "id": 28,
-            "line": 61,
-            "code": "attn_scores = queries @ keys.transpose(2, 3)  # Dot product for each head",
-            "uses": [],
-            "inputs": [
-             {
-              "from": 25
-             },
-             {
-              "from": 27
-             }
-            ],
+            "group": true,
+            "label": "Attention scores Q·Kᵀ",
+            "id": 135,
             "in": [
              [
               "B",
@@ -20608,8 +24151,8 @@ window.ARCHITECTURE = {
              [
               "B",
               4,
-              8,
-              "T"
+              "T",
+              8
              ]
             ],
             "out": [
@@ -20618,101 +24161,213 @@ window.ARCHITECTURE = {
              "T",
              "T"
             ],
-            "children": [],
+            "inputs": [
+             {
+              "from": 24
+             },
+             {
+              "from": 25
+             }
+            ],
+            "children": [
+             {
+              "op": "torch.Tensor.transpose",
+              "id": 27,
+              "line": 61,
+              "code": "attn_scores = queries @ keys.transpose(2, 3)  # Dot product for each head",
+              "uses": [],
+              "inputs": [
+               {
+                "from": 24
+               }
+              ],
+              "in": [
+               [
+                "B",
+                4,
+                "T",
+                8
+               ]
+              ],
+              "out": [
+               "B",
+               4,
+               8,
+               "T"
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Attention scores Q·Kᵀ"
+             },
+             {
+              "op": "torch.Tensor.matmul",
+              "id": 28,
+              "line": 61,
+              "code": "attn_scores = queries @ keys.transpose(2, 3)  # Dot product for each head",
+              "uses": [],
+              "inputs": [
+               {
+                "from": 25
+               },
+               {
+                "from": 27
+               }
+              ],
+              "in": [
+               [
+                "B",
+                4,
+                "T",
+                8
+               ],
+               [
+                "B",
+                4,
+                8,
+                "T"
+               ]
+              ],
+              "out": [
+               "B",
+               4,
+               "T",
+               "T"
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Attention scores Q·Kᵀ"
+             }
+            ],
             "total": 0,
-            "repeat": 1,
-            "label": "Attention scores Q·Kᵀ"
+            "repeat": 1
            },
            {
-            "op": "torch.Tensor.bool",
-            "id": 29,
-            "line": 64,
-            "code": "mask_bool = self.mask.bool()[:num_tokens, :num_tokens]",
-            "uses": [
-             "mask"
+            "group": true,
+            "label": "Causal mask",
+            "id": 136,
+            "in": [
+             [
+              16,
+              16
+             ],
+             [
+              "B",
+              4,
+              "T",
+              "T"
+             ]
+            ],
+            "out": [
+             "B",
+             4,
+             "T",
+             "T"
             ],
             "inputs": [
              {
               "tensor": "trf_blocks.0.att.mask"
-             }
-            ],
-            "in": [
-             [
-              16,
-              16
-             ]
-            ],
-            "out": [
-             16,
-             16
-            ],
-            "children": [],
-            "total": 0,
-            "repeat": 1,
-            "label": "Causal mask"
-           },
-           {
-            "op": "torch.Tensor.__getitem__",
-            "id": 30,
-            "line": 64,
-            "code": "mask_bool = self.mask.bool()[:num_tokens, :num_tokens]",
-            "uses": [],
-            "inputs": [
-             {
-              "from": 29
-             }
-            ],
-            "in": [
-             [
-              16,
-              16
-             ]
-            ],
-            "out": [
-             "T",
-             "T"
-            ],
-            "children": [],
-            "total": 0,
-            "repeat": 1,
-            "label": "Causal mask"
-           },
-           {
-            "op": "torch.Tensor.masked_fill_",
-            "id": 31,
-            "line": 67,
-            "code": "attn_scores.masked_fill_(mask_bool, -torch.inf)",
-            "uses": [],
-            "inputs": [
-             {
-              "from": 28
              },
              {
-              "from": 30
+              "from": 28
              }
             ],
-            "in": [
-             [
-              "B",
-              4,
-              "T",
-              "T"
-             ],
-             [
-              "T",
-              "T"
-             ]
+            "children": [
+             {
+              "op": "torch.Tensor.bool",
+              "id": 29,
+              "line": 64,
+              "code": "mask_bool = self.mask.bool()[:num_tokens, :num_tokens]",
+              "uses": [
+               "mask"
+              ],
+              "inputs": [
+               {
+                "tensor": "trf_blocks.0.att.mask"
+               }
+              ],
+              "in": [
+               [
+                16,
+                16
+               ]
+              ],
+              "out": [
+               16,
+               16
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Causal mask"
+             },
+             {
+              "op": "torch.Tensor.__getitem__",
+              "id": 30,
+              "line": 64,
+              "code": "mask_bool = self.mask.bool()[:num_tokens, :num_tokens]",
+              "uses": [],
+              "inputs": [
+               {
+                "from": 29
+               }
+              ],
+              "in": [
+               [
+                16,
+                16
+               ]
+              ],
+              "out": [
+               "T",
+               "T"
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Causal mask"
+             },
+             {
+              "op": "torch.Tensor.masked_fill_",
+              "id": 31,
+              "line": 67,
+              "code": "attn_scores.masked_fill_(mask_bool, -torch.inf)",
+              "uses": [],
+              "inputs": [
+               {
+                "from": 28
+               },
+               {
+                "from": 30
+               }
+              ],
+              "in": [
+               [
+                "B",
+                4,
+                "T",
+                "T"
+               ],
+               [
+                "T",
+                "T"
+               ]
+              ],
+              "out": [
+               "B",
+               4,
+               "T",
+               "T"
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Causal mask"
+             }
             ],
-            "out": [
-             "B",
-             4,
-             "T",
-             "T"
-            ],
-            "children": [],
             "total": 0,
-            "repeat": 1,
-            "label": "Causal mask"
+            "repeat": 1
            },
            {
             "op": "torch.Tensor.div",
@@ -20843,51 +24498,14 @@ window.ARCHITECTURE = {
             "label": "Weighted sum of values"
            },
            {
-            "op": "torch.Tensor.transpose",
-            "id": 36,
-            "line": 73,
-            "code": "context_vec = (attn_weights @ values).transpose(1, 2)",
-            "uses": [],
-            "inputs": [
-             {
-              "from": 35
-             }
-            ],
+            "group": true,
+            "label": "Merge heads",
+            "id": 137,
             "in": [
              [
               "B",
               4,
               "T",
-              8
-             ]
-            ],
-            "out": [
-             "B",
-             "T",
-             4,
-             8
-            ],
-            "children": [],
-            "total": 0,
-            "repeat": 1,
-            "label": "Merge heads"
-           },
-           {
-            "op": "torch.Tensor.reshape",
-            "id": 37,
-            "line": 76,
-            "code": "context_vec = context_vec.reshape(b, num_tokens, self.d_out)",
-            "uses": [],
-            "inputs": [
-             {
-              "from": 36
-             }
-            ],
-            "in": [
-             [
-              "B",
-              "T",
-              4,
               8
              ]
             ],
@@ -20896,10 +24514,74 @@ window.ARCHITECTURE = {
              "T",
              32
             ],
-            "children": [],
+            "inputs": [
+             {
+              "from": 35
+             }
+            ],
+            "children": [
+             {
+              "op": "torch.Tensor.transpose",
+              "id": 36,
+              "line": 73,
+              "code": "context_vec = (attn_weights @ values).transpose(1, 2)",
+              "uses": [],
+              "inputs": [
+               {
+                "from": 35
+               }
+              ],
+              "in": [
+               [
+                "B",
+                4,
+                "T",
+                8
+               ]
+              ],
+              "out": [
+               "B",
+               "T",
+               4,
+               8
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Merge heads"
+             },
+             {
+              "op": "torch.Tensor.reshape",
+              "id": 37,
+              "line": 76,
+              "code": "context_vec = context_vec.reshape(b, num_tokens, self.d_out)",
+              "uses": [],
+              "inputs": [
+               {
+                "from": 36
+               }
+              ],
+              "in": [
+               [
+                "B",
+                "T",
+                4,
+                8
+               ]
+              ],
+              "out": [
+               "B",
+               "T",
+               32
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Merge heads"
+             }
+            ],
             "total": 0,
-            "repeat": 1,
-            "label": "Merge heads"
+            "repeat": 1
            },
            {
             "module": "trf_blocks.0.att.out_proj",
@@ -21103,140 +24785,196 @@ window.ARCHITECTURE = {
             "label": "Variance over channels"
            },
            {
-            "op": "torch.Tensor.sub",
-            "id": 44,
-            "line": 20,
-            "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
-            "uses": [],
+            "group": true,
+            "label": "Normalize",
+            "id": 138,
+            "in": [
+             [
+              "B",
+              "T",
+              32
+             ],
+             [
+              "B",
+              "T",
+              1
+             ],
+             [
+              "B",
+              "T",
+              1
+             ]
+            ],
+            "out": [
+             "B",
+             "T",
+             32
+            ],
             "inputs": [
              {
               "from": 40
              },
              {
               "from": 42
-             }
-            ],
-            "in": [
-             [
-              "B",
-              "T",
-              32
-             ],
-             [
-              "B",
-              "T",
-              1
-             ]
-            ],
-            "out": [
-             "B",
-             "T",
-             32
-            ],
-            "children": [],
-            "total": 0,
-            "repeat": 1,
-            "label": "Normalize"
-           },
-           {
-            "op": "torch.Tensor.add",
-            "id": 45,
-            "line": 20,
-            "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
-            "uses": [],
-            "inputs": [
+             },
              {
               "from": 43
              }
             ],
-            "in": [
-             [
-              "B",
-              "T",
-              1
-             ]
-            ],
-            "out": [
-             "B",
-             "T",
-             1
-            ],
-            "children": [],
-            "total": 0,
-            "repeat": 1,
-            "label": "Normalize"
-           },
-           {
-            "op": "torch.sqrt",
-            "id": 46,
-            "line": 20,
-            "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
-            "uses": [],
-            "inputs": [
+            "children": [
              {
-              "from": 45
-             }
-            ],
-            "in": [
-             [
-              "B",
-              "T",
-              1
-             ]
-            ],
-            "out": [
-             "B",
-             "T",
-             1
-            ],
-            "children": [],
-            "total": 0,
-            "repeat": 1,
-            "label": "Normalize"
-           },
-           {
-            "op": "torch.Tensor.div",
-            "id": 47,
-            "line": 20,
-            "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
-            "uses": [],
-            "inputs": [
-             {
-              "from": 44
+              "op": "torch.Tensor.sub",
+              "id": 44,
+              "line": 20,
+              "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
+              "uses": [],
+              "inputs": [
+               {
+                "from": 40
+               },
+               {
+                "from": 42
+               }
+              ],
+              "in": [
+               [
+                "B",
+                "T",
+                32
+               ],
+               [
+                "B",
+                "T",
+                1
+               ]
+              ],
+              "out": [
+               "B",
+               "T",
+               32
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Normalize"
              },
              {
-              "from": 46
+              "op": "torch.Tensor.add",
+              "id": 45,
+              "line": 20,
+              "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
+              "uses": [],
+              "inputs": [
+               {
+                "from": 43
+               }
+              ],
+              "in": [
+               [
+                "B",
+                "T",
+                1
+               ]
+              ],
+              "out": [
+               "B",
+               "T",
+               1
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Normalize"
+             },
+             {
+              "op": "torch.sqrt",
+              "id": 46,
+              "line": 20,
+              "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
+              "uses": [],
+              "inputs": [
+               {
+                "from": 45
+               }
+              ],
+              "in": [
+               [
+                "B",
+                "T",
+                1
+               ]
+              ],
+              "out": [
+               "B",
+               "T",
+               1
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Normalize"
+             },
+             {
+              "op": "torch.Tensor.div",
+              "id": 47,
+              "line": 20,
+              "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
+              "uses": [],
+              "inputs": [
+               {
+                "from": 44
+               },
+               {
+                "from": 46
+               }
+              ],
+              "in": [
+               [
+                "B",
+                "T",
+                32
+               ],
+               [
+                "B",
+                "T",
+                1
+               ]
+              ],
+              "out": [
+               "B",
+               "T",
+               32
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Normalize"
              }
             ],
+            "total": 0,
+            "repeat": 1
+           },
+           {
+            "group": true,
+            "label": "Learned scale and shift",
+            "id": 139,
             "in": [
+             [
+              32
+             ],
              [
               "B",
               "T",
               32
              ],
              [
-              "B",
-              "T",
-              1
+              32
              ]
             ],
             "out": [
              "B",
              "T",
              32
-            ],
-            "children": [],
-            "total": 0,
-            "repeat": 1,
-            "label": "Normalize"
-           },
-           {
-            "op": "torch.Tensor.mul",
-            "id": 48,
-            "line": 21,
-            "code": "return self.scale * norm_x + self.shift",
-            "uses": [
-             "scale"
             ],
             "inputs": [
              {
@@ -21244,64 +24982,89 @@ window.ARCHITECTURE = {
              },
              {
               "from": 47
-             }
-            ],
-            "in": [
-             [
-              32
-             ],
-             [
-              "B",
-              "T",
-              32
-             ]
-            ],
-            "out": [
-             "B",
-             "T",
-             32
-            ],
-            "children": [],
-            "total": 0,
-            "repeat": 1,
-            "label": "Learned scale and shift"
-           },
-           {
-            "op": "torch.Tensor.add",
-            "id": 49,
-            "line": 21,
-            "code": "return self.scale * norm_x + self.shift",
-            "uses": [
-             "shift"
-            ],
-            "inputs": [
-             {
-              "from": 48
              },
              {
               "tensor": "trf_blocks.0.norm2.shift"
              }
             ],
-            "returned_by": 41,
-            "in": [
-             [
-              "B",
-              "T",
-              32
-             ],
-             [
-              32
-             ]
+            "children": [
+             {
+              "op": "torch.Tensor.mul",
+              "id": 48,
+              "line": 21,
+              "code": "return self.scale * norm_x + self.shift",
+              "uses": [
+               "scale"
+              ],
+              "inputs": [
+               {
+                "tensor": "trf_blocks.0.norm2.scale"
+               },
+               {
+                "from": 47
+               }
+              ],
+              "in": [
+               [
+                32
+               ],
+               [
+                "B",
+                "T",
+                32
+               ]
+              ],
+              "out": [
+               "B",
+               "T",
+               32
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Learned scale and shift"
+             },
+             {
+              "op": "torch.Tensor.add",
+              "id": 49,
+              "line": 21,
+              "code": "return self.scale * norm_x + self.shift",
+              "uses": [
+               "shift"
+              ],
+              "inputs": [
+               {
+                "from": 48
+               },
+               {
+                "tensor": "trf_blocks.0.norm2.shift"
+               }
+              ],
+              "returned_by": 41,
+              "in": [
+               [
+                "B",
+                "T",
+                32
+               ],
+               [
+                32
+               ]
+              ],
+              "out": [
+               "B",
+               "T",
+               32
+              ],
+              "children": [],
+              "total": 0,
+              "repeat": 1,
+              "label": "Learned scale and shift"
+             }
             ],
-            "out": [
-             "B",
-             "T",
-             32
-            ],
-            "children": [],
             "total": 0,
             "repeat": 1,
-            "label": "Learned scale and shift"
+            "returned_by": 41
            }
           ],
           "class": "llm_training.model.gpt2.layers.LayerNorm",
@@ -21431,251 +25194,282 @@ window.ARCHITECTURE = {
               ],
               "children": [
                {
-                "op": "torch.Tensor.mul",
-                "id": 54,
-                "line": 34,
-                "code": "return 0.5 * x * (1 + torch.tanh(self._sqrt_two_over_pi * (x + 0.044715 * torch.pow(x, 3))))",
-                "uses": [],
-                "inputs": [
-                 {
-                  "from": 52
-                 }
-                ],
-                "in": [
-                 [
-                  "B",
-                  "T",
-                  128
-                 ]
-                ],
-                "out": [
-                 "B",
-                 "T",
-                 128
-                ],
-                "children": [],
-                "total": 0,
-                "repeat": 1,
-                "label": "GELU, tanh approximation"
-               },
-               {
-                "op": "torch.pow",
-                "id": 55,
-                "line": 34,
-                "code": "return 0.5 * x * (1 + torch.tanh(self._sqrt_two_over_pi * (x + 0.044715 * torch.pow(x, 3))))",
-                "uses": [],
-                "inputs": [
-                 {
-                  "from": 52
-                 }
-                ],
-                "in": [
-                 [
-                  "B",
-                  "T",
-                  128
-                 ]
-                ],
-                "out": [
-                 "B",
-                 "T",
-                 128
-                ],
-                "children": [],
-                "total": 0,
-                "repeat": 1,
-                "label": "GELU, tanh approximation"
-               },
-               {
-                "op": "torch.Tensor.mul",
-                "id": 56,
-                "line": 34,
-                "code": "return 0.5 * x * (1 + torch.tanh(self._sqrt_two_over_pi * (x + 0.044715 * torch.pow(x, 3))))",
-                "uses": [],
-                "inputs": [
-                 {
-                  "from": 55
-                 }
-                ],
-                "in": [
-                 [
-                  "B",
-                  "T",
-                  128
-                 ]
-                ],
-                "out": [
-                 "B",
-                 "T",
-                 128
-                ],
-                "children": [],
-                "total": 0,
-                "repeat": 1,
-                "label": "GELU, tanh approximation"
-               },
-               {
-                "op": "torch.Tensor.add",
-                "id": 57,
-                "line": 34,
-                "code": "return 0.5 * x * (1 + torch.tanh(self._sqrt_two_over_pi * (x + 0.044715 * torch.pow(x, 3))))",
-                "uses": [],
-                "inputs": [
-                 {
-                  "from": 52
-                 },
-                 {
-                  "from": 56
-                 }
-                ],
+                "group": true,
+                "label": "GELU, tanh approximation",
+                "id": 140,
                 "in": [
                  [
                   "B",
                   "T",
                   128
                  ],
-                 [
-                  "B",
-                  "T",
-                  128
-                 ]
+                 []
                 ],
                 "out": [
                  "B",
                  "T",
                  128
                 ],
-                "children": [],
-                "total": 0,
-                "repeat": 1,
-                "label": "GELU, tanh approximation"
-               },
-               {
-                "op": "torch.Tensor.mul",
-                "id": 58,
-                "line": 34,
-                "code": "return 0.5 * x * (1 + torch.tanh(self._sqrt_two_over_pi * (x + 0.044715 * torch.pow(x, 3))))",
-                "uses": [
-                 "_sqrt_two_over_pi"
-                ],
                 "inputs": [
+                 {
+                  "from": 52
+                 },
                  {
                   "tensor": "trf_blocks.0.ff.layers.1._sqrt_two_over_pi"
+                 }
+                ],
+                "children": [
+                 {
+                  "op": "torch.Tensor.mul",
+                  "id": 54,
+                  "line": 34,
+                  "code": "return 0.5 * x * (1 + torch.tanh(self._sqrt_two_over_pi * (x + 0.044715 * torch.pow(x, 3))))",
+                  "uses": [],
+                  "inputs": [
+                   {
+                    "from": 52
+                   }
+                  ],
+                  "in": [
+                   [
+                    "B",
+                    "T",
+                    128
+                   ]
+                  ],
+                  "out": [
+                   "B",
+                   "T",
+                   128
+                  ],
+                  "children": [],
+                  "total": 0,
+                  "repeat": 1,
+                  "label": "GELU, tanh approximation"
                  },
                  {
-                  "from": 57
-                 }
-                ],
-                "in": [
-                 [],
-                 [
-                  "B",
-                  "T",
-                  128
-                 ]
-                ],
-                "out": [
-                 "B",
-                 "T",
-                 128
-                ],
-                "children": [],
-                "total": 0,
-                "repeat": 1,
-                "label": "GELU, tanh approximation"
-               },
-               {
-                "op": "torch.tanh",
-                "id": 59,
-                "line": 34,
-                "code": "return 0.5 * x * (1 + torch.tanh(self._sqrt_two_over_pi * (x + 0.044715 * torch.pow(x, 3))))",
-                "uses": [],
-                "inputs": [
-                 {
-                  "from": 58
-                 }
-                ],
-                "in": [
-                 [
-                  "B",
-                  "T",
-                  128
-                 ]
-                ],
-                "out": [
-                 "B",
-                 "T",
-                 128
-                ],
-                "children": [],
-                "total": 0,
-                "repeat": 1,
-                "label": "GELU, tanh approximation"
-               },
-               {
-                "op": "torch.Tensor.add",
-                "id": 60,
-                "line": 34,
-                "code": "return 0.5 * x * (1 + torch.tanh(self._sqrt_two_over_pi * (x + 0.044715 * torch.pow(x, 3))))",
-                "uses": [],
-                "inputs": [
-                 {
-                  "from": 59
-                 }
-                ],
-                "in": [
-                 [
-                  "B",
-                  "T",
-                  128
-                 ]
-                ],
-                "out": [
-                 "B",
-                 "T",
-                 128
-                ],
-                "children": [],
-                "total": 0,
-                "repeat": 1,
-                "label": "GELU, tanh approximation"
-               },
-               {
-                "op": "torch.Tensor.mul",
-                "id": 61,
-                "line": 34,
-                "code": "return 0.5 * x * (1 + torch.tanh(self._sqrt_two_over_pi * (x + 0.044715 * torch.pow(x, 3))))",
-                "uses": [],
-                "inputs": [
-                 {
-                  "from": 54
+                  "op": "torch.pow",
+                  "id": 55,
+                  "line": 34,
+                  "code": "return 0.5 * x * (1 + torch.tanh(self._sqrt_two_over_pi * (x + 0.044715 * torch.pow(x, 3))))",
+                  "uses": [],
+                  "inputs": [
+                   {
+                    "from": 52
+                   }
+                  ],
+                  "in": [
+                   [
+                    "B",
+                    "T",
+                    128
+                   ]
+                  ],
+                  "out": [
+                   "B",
+                   "T",
+                   128
+                  ],
+                  "children": [],
+                  "total": 0,
+                  "repeat": 1,
+                  "label": "GELU, tanh approximation"
                  },
                  {
-                  "from": 60
+                  "op": "torch.Tensor.mul",
+                  "id": 56,
+                  "line": 34,
+                  "code": "return 0.5 * x * (1 + torch.tanh(self._sqrt_two_over_pi * (x + 0.044715 * torch.pow(x, 3))))",
+                  "uses": [],
+                  "inputs": [
+                   {
+                    "from": 55
+                   }
+                  ],
+                  "in": [
+                   [
+                    "B",
+                    "T",
+                    128
+                   ]
+                  ],
+                  "out": [
+                   "B",
+                   "T",
+                   128
+                  ],
+                  "children": [],
+                  "total": 0,
+                  "repeat": 1,
+                  "label": "GELU, tanh approximation"
+                 },
+                 {
+                  "op": "torch.Tensor.add",
+                  "id": 57,
+                  "line": 34,
+                  "code": "return 0.5 * x * (1 + torch.tanh(self._sqrt_two_over_pi * (x + 0.044715 * torch.pow(x, 3))))",
+                  "uses": [],
+                  "inputs": [
+                   {
+                    "from": 52
+                   },
+                   {
+                    "from": 56
+                   }
+                  ],
+                  "in": [
+                   [
+                    "B",
+                    "T",
+                    128
+                   ],
+                   [
+                    "B",
+                    "T",
+                    128
+                   ]
+                  ],
+                  "out": [
+                   "B",
+                   "T",
+                   128
+                  ],
+                  "children": [],
+                  "total": 0,
+                  "repeat": 1,
+                  "label": "GELU, tanh approximation"
+                 },
+                 {
+                  "op": "torch.Tensor.mul",
+                  "id": 58,
+                  "line": 34,
+                  "code": "return 0.5 * x * (1 + torch.tanh(self._sqrt_two_over_pi * (x + 0.044715 * torch.pow(x, 3))))",
+                  "uses": [
+                   "_sqrt_two_over_pi"
+                  ],
+                  "inputs": [
+                   {
+                    "tensor": "trf_blocks.0.ff.layers.1._sqrt_two_over_pi"
+                   },
+                   {
+                    "from": 57
+                   }
+                  ],
+                  "in": [
+                   [],
+                   [
+                    "B",
+                    "T",
+                    128
+                   ]
+                  ],
+                  "out": [
+                   "B",
+                   "T",
+                   128
+                  ],
+                  "children": [],
+                  "total": 0,
+                  "repeat": 1,
+                  "label": "GELU, tanh approximation"
+                 },
+                 {
+                  "op": "torch.tanh",
+                  "id": 59,
+                  "line": 34,
+                  "code": "return 0.5 * x * (1 + torch.tanh(self._sqrt_two_over_pi * (x + 0.044715 * torch.pow(x, 3))))",
+                  "uses": [],
+                  "inputs": [
+                   {
+                    "from": 58
+                   }
+                  ],
+                  "in": [
+                   [
+                    "B",
+                    "T",
+                    128
+                   ]
+                  ],
+                  "out": [
+                   "B",
+                   "T",
+                   128
+                  ],
+                  "children": [],
+                  "total": 0,
+                  "repeat": 1,
+                  "label": "GELU, tanh approximation"
+                 },
+                 {
+                  "op": "torch.Tensor.add",
+                  "id": 60,
+                  "line": 34,
+                  "code": "return 0.5 * x * (1 + torch.tanh(self._sqrt_two_over_pi * (x + 0.044715 * torch.pow(x, 3))))",
+                  "uses": [],
+                  "inputs": [
+                   {
+                    "from": 59
+                   }
+                  ],
+                  "in": [
+                   [
+                    "B",
+                    "T",
+                    128
+                   ]
+                  ],
+                  "out": [
+                   "B",
+                   "T",
+                   128
+                  ],
+                  "children": [],
+                  "total": 0,
+                  "repeat": 1,
+                  "label": "GELU, tanh approximation"
+                 },
+                 {
+                  "op": "torch.Tensor.mul",
+                  "id": 61,
+                  "line": 34,
+                  "code": "return 0.5 * x * (1 + torch.tanh(self._sqrt_two_over_pi * (x + 0.044715 * torch.pow(x, 3))))",
+                  "uses": [],
+                  "inputs": [
+                   {
+                    "from": 54
+                   },
+                   {
+                    "from": 60
+                   }
+                  ],
+                  "returned_by": 53,
+                  "in": [
+                   [
+                    "B",
+                    "T",
+                    128
+                   ],
+                   [
+                    "B",
+                    "T",
+                    128
+                   ]
+                  ],
+                  "out": [
+                   "B",
+                   "T",
+                   128
+                  ],
+                  "children": [],
+                  "total": 0,
+                  "repeat": 1,
+                  "label": "GELU, tanh approximation"
                  }
                 ],
-                "returned_by": 53,
-                "in": [
-                 [
-                  "B",
-                  "T",
-                  128
-                 ],
-                 [
-                  "B",
-                  "T",
-                  128
-                 ]
-                ],
-                "out": [
-                 "B",
-                 "T",
-                 128
-                ],
-                "children": [],
                 "total": 0,
                 "repeat": 1,
-                "label": "GELU, tanh approximation"
+                "returned_by": 53
                }
               ],
               "class": "llm_training.model.gpt2.layers.GELU",
@@ -21910,140 +25704,196 @@ window.ARCHITECTURE = {
         "label": "Variance over channels"
        },
        {
-        "op": "torch.Tensor.sub",
-        "id": 126,
-        "line": 20,
-        "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
-        "uses": [],
+        "group": true,
+        "label": "Normalize",
+        "id": 141,
+        "in": [
+         [
+          "B",
+          "T",
+          32
+         ],
+         [
+          "B",
+          "T",
+          1
+         ],
+         [
+          "B",
+          "T",
+          1
+         ]
+        ],
+        "out": [
+         "B",
+         "T",
+         32
+        ],
         "inputs": [
          {
           "from": 6
          },
          {
           "from": 124
-         }
-        ],
-        "in": [
-         [
-          "B",
-          "T",
-          32
-         ],
-         [
-          "B",
-          "T",
-          1
-         ]
-        ],
-        "out": [
-         "B",
-         "T",
-         32
-        ],
-        "children": [],
-        "total": 0,
-        "repeat": 1,
-        "label": "Normalize"
-       },
-       {
-        "op": "torch.Tensor.add",
-        "id": 127,
-        "line": 20,
-        "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
-        "uses": [],
-        "inputs": [
+         },
          {
           "from": 125
          }
         ],
-        "in": [
-         [
-          "B",
-          "T",
-          1
-         ]
-        ],
-        "out": [
-         "B",
-         "T",
-         1
-        ],
-        "children": [],
-        "total": 0,
-        "repeat": 1,
-        "label": "Normalize"
-       },
-       {
-        "op": "torch.sqrt",
-        "id": 128,
-        "line": 20,
-        "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
-        "uses": [],
-        "inputs": [
+        "children": [
          {
-          "from": 127
-         }
-        ],
-        "in": [
-         [
-          "B",
-          "T",
-          1
-         ]
-        ],
-        "out": [
-         "B",
-         "T",
-         1
-        ],
-        "children": [],
-        "total": 0,
-        "repeat": 1,
-        "label": "Normalize"
-       },
-       {
-        "op": "torch.Tensor.div",
-        "id": 129,
-        "line": 20,
-        "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
-        "uses": [],
-        "inputs": [
-         {
-          "from": 126
+          "op": "torch.Tensor.sub",
+          "id": 126,
+          "line": 20,
+          "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
+          "uses": [],
+          "inputs": [
+           {
+            "from": 6
+           },
+           {
+            "from": 124
+           }
+          ],
+          "in": [
+           [
+            "B",
+            "T",
+            32
+           ],
+           [
+            "B",
+            "T",
+            1
+           ]
+          ],
+          "out": [
+           "B",
+           "T",
+           32
+          ],
+          "children": [],
+          "total": 0,
+          "repeat": 1,
+          "label": "Normalize"
          },
          {
-          "from": 128
+          "op": "torch.Tensor.add",
+          "id": 127,
+          "line": 20,
+          "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
+          "uses": [],
+          "inputs": [
+           {
+            "from": 125
+           }
+          ],
+          "in": [
+           [
+            "B",
+            "T",
+            1
+           ]
+          ],
+          "out": [
+           "B",
+           "T",
+           1
+          ],
+          "children": [],
+          "total": 0,
+          "repeat": 1,
+          "label": "Normalize"
+         },
+         {
+          "op": "torch.sqrt",
+          "id": 128,
+          "line": 20,
+          "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
+          "uses": [],
+          "inputs": [
+           {
+            "from": 127
+           }
+          ],
+          "in": [
+           [
+            "B",
+            "T",
+            1
+           ]
+          ],
+          "out": [
+           "B",
+           "T",
+           1
+          ],
+          "children": [],
+          "total": 0,
+          "repeat": 1,
+          "label": "Normalize"
+         },
+         {
+          "op": "torch.Tensor.div",
+          "id": 129,
+          "line": 20,
+          "code": "norm_x = (x - mean) / torch.sqrt(var + self.eps)",
+          "uses": [],
+          "inputs": [
+           {
+            "from": 126
+           },
+           {
+            "from": 128
+           }
+          ],
+          "in": [
+           [
+            "B",
+            "T",
+            32
+           ],
+           [
+            "B",
+            "T",
+            1
+           ]
+          ],
+          "out": [
+           "B",
+           "T",
+           32
+          ],
+          "children": [],
+          "total": 0,
+          "repeat": 1,
+          "label": "Normalize"
          }
         ],
+        "total": 0,
+        "repeat": 1
+       },
+       {
+        "group": true,
+        "label": "Learned scale and shift",
+        "id": 142,
         "in": [
+         [
+          32
+         ],
          [
           "B",
           "T",
           32
          ],
          [
-          "B",
-          "T",
-          1
+          32
          ]
         ],
         "out": [
          "B",
          "T",
          32
-        ],
-        "children": [],
-        "total": 0,
-        "repeat": 1,
-        "label": "Normalize"
-       },
-       {
-        "op": "torch.Tensor.mul",
-        "id": 130,
-        "line": 21,
-        "code": "return self.scale * norm_x + self.shift",
-        "uses": [
-         "scale"
         ],
         "inputs": [
          {
@@ -22051,64 +25901,89 @@ window.ARCHITECTURE = {
          },
          {
           "from": 129
-         }
-        ],
-        "in": [
-         [
-          32
-         ],
-         [
-          "B",
-          "T",
-          32
-         ]
-        ],
-        "out": [
-         "B",
-         "T",
-         32
-        ],
-        "children": [],
-        "total": 0,
-        "repeat": 1,
-        "label": "Learned scale and shift"
-       },
-       {
-        "op": "torch.Tensor.add",
-        "id": 131,
-        "line": 21,
-        "code": "return self.scale * norm_x + self.shift",
-        "uses": [
-         "shift"
-        ],
-        "inputs": [
-         {
-          "from": 130
          },
          {
           "tensor": "final_norm.shift"
          }
         ],
-        "returned_by": 123,
-        "in": [
-         [
-          "B",
-          "T",
-          32
-         ],
-         [
-          32
-         ]
+        "children": [
+         {
+          "op": "torch.Tensor.mul",
+          "id": 130,
+          "line": 21,
+          "code": "return self.scale * norm_x + self.shift",
+          "uses": [
+           "scale"
+          ],
+          "inputs": [
+           {
+            "tensor": "final_norm.scale"
+           },
+           {
+            "from": 129
+           }
+          ],
+          "in": [
+           [
+            32
+           ],
+           [
+            "B",
+            "T",
+            32
+           ]
+          ],
+          "out": [
+           "B",
+           "T",
+           32
+          ],
+          "children": [],
+          "total": 0,
+          "repeat": 1,
+          "label": "Learned scale and shift"
+         },
+         {
+          "op": "torch.Tensor.add",
+          "id": 131,
+          "line": 21,
+          "code": "return self.scale * norm_x + self.shift",
+          "uses": [
+           "shift"
+          ],
+          "inputs": [
+           {
+            "from": 130
+           },
+           {
+            "tensor": "final_norm.shift"
+           }
+          ],
+          "returned_by": 123,
+          "in": [
+           [
+            "B",
+            "T",
+            32
+           ],
+           [
+            32
+           ]
+          ],
+          "out": [
+           "B",
+           "T",
+           32
+          ],
+          "children": [],
+          "total": 0,
+          "repeat": 1,
+          "label": "Learned scale and shift"
+         }
         ],
-        "out": [
-         "B",
-         "T",
-         32
-        ],
-        "children": [],
         "total": 0,
         "repeat": 1,
-        "label": "Learned scale and shift"
+        "returned_by": 123
        }
       ],
       "class": "llm_training.model.gpt2.layers.LayerNorm",
