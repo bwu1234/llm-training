@@ -189,14 +189,14 @@ Graphics and guides that teach the two architectures from this repo's own code. 
 advantage over generic visualizers such as
 [Transformer Explainer](https://poloclub.github.io/transformer-explainer/) is that every box
 links to the module that implements it, and GPT-2 and Qwen3 sit side by side. The
-architecture explorer (`docs/architecture/`, described in the README, live at
+architecture explorer (`docs/architecture/`, described in [its guide](architecture-explorer.md), live at
 [GitHub Pages](https://bwu1234.github.io/llm-training/)) is built; these
 items extend it.
 
 | Item | Why it matters | Notes |
 | --- | --- | --- |
 | Live views on real weights | Attention heatmaps, logit lens, GQA head sharing, RoPE rotation | Uses the weights already in `data/`; could extend the explorer's traced pass with real inputs. Plotting or notebook dependencies go in an optional group, as `IMPLEMENTATION_PLAN.md` requires. Several days |
-| Run viewer for GRPO | The next-token run viewer (`explain/runs.py`, see the README) rejects GRPO runs, so GRPO's reward, answer length and rollouts have no view | Plot `reward_mean`, `mean_gen_len`, `hit_token_limit` and `grad_norm` per step, mark `updated: false` steps, mark snapshots, and show each step's rollouts from `rollouts.jsonl`. About half a day |
+| Run viewer for GRPO | The next-token run viewer (`explain/runs.py`, see [View a run](how-to/view-a-run.md)) rejects GRPO runs, so GRPO's reward, answer length and rollouts have no view | Plot `reward_mean`, `mean_gen_len`, `hit_token_limit` and `grad_norm` per step, mark `updated: false` steps, mark snapshots, and show each step's rollouts from `rollouts.jsonl`. About half a day |
 | Run viewer: live refresh | The page is a snapshot of a running run | A `--watch` mode that rewrites the page as `metrics.jsonl` grows, or a page that rereads it. Browsers block `fetch` on `file://`, so rereading needs a local server. About half a day |
 | Run viewer: smoothed training loss | One group per point makes `train_loss` noisy; a trend line is easier to read | A bias-corrected EMA (`ema / (1 - beta^(step+1))`, beta 0.9), as nanochat's `base_train.py` logs it. Computed in the page, not the trainer |
 | Run viewer: publish an example | Local only by choice (2026-10-28). A downsampled copy of the TinyStories run on GitHub Pages would show it without a checkout | Publishing a run's metrics and samples is a decision for the user. About an hour |
@@ -210,6 +210,20 @@ Constraints for all of them:
   every existing checkpoint need `--allow-code-drift`.
 - **Introspect generically.** Use `named_modules()`, parameters and forward hooks. Branching
   on a family name would break the family rule.
+
+### Documentation
+
+The docs follow [Diátaxis](https://diataxis.fr/) (tutorial, how-to, reference, explanation).
+The README became a landing page and its task and lookup sections moved to `docs/how-to/`,
+`docs/reference/` and the guides on 2026-10-28. Diátaxis says to keep improving one piece at a
+time rather than restructuring all at once, so the rest is listed here.
+
+| Item | Why it matters | Notes |
+| --- | --- | --- |
+| A first-run tutorial | No page teaches by doing: the Quick start is an execution check, and the how-tos assume you know what you want | On the smoke config, about ten minutes on CPU: `prepare`, `train --stop-after 2`, resume, `predict`, then the run viewer, saying what to notice at each step. Distinct from the `docs/learn.md` reading path above. About two hours |
+| A config reference generated from the dataclasses | Config fields are spread across the GPT-2 recipe table in `gpt2.md`, `finetuning.md`, `grpo.md` and the configs' comments, and a hand-written list would drift | Generate it from `lm/config.py` and `reasoning/config.py`, with the field notes in a JSON file and a test that fails when the page is stale or a field has no note, as `explainer.json` and `spec.js` do. Keep the generator in `explain/` or `scripts/`. Don't put the notes in `field(metadata=...)`: `lm/` and `reasoning/` are in the resume hash, so every checkpoint would need `--allow-code-drift`. About half a day |
+| A CLI reference | The commands' flags are documented only in examples across the how-tos | Generate from the `argparse` parser, with the same staleness test |
+| Finish separating the guides | Some guides still mix types | How-to: `qwen3.md` Usage, the regenerate steps in `architecture-explorer.md`. Reference: the starting-weights and instruction-data tables in `finetuning.md`, the cost and run-directory tables in `grpo.md`, the `evaluation.json` fields in `training-loop.md` |
 
 ### Deferred by choice
 
