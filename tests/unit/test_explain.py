@@ -224,3 +224,37 @@ def test_gpt2_adds_positions_to_the_token_embedding(spec):
     nodes = by_id(tree)
     (add,) = [n for n in tree["children"] if n.get("label") == "Add position to token embeddings"]
     assert [nodes[s["from"]]["module"] for s in add["inputs"]] == ["tok_emb", "pos_emb"]
+
+
+def test_operations_that_do_one_thing_are_one_row(spec):
+    """Consecutive operations with one label become a group; its inputs are what it reads from
+    outside, and a step labeled on its own stays a row of its own."""
+    tree = preset(spec, "gpt2-124m")["tree"]
+    nodes = by_id(tree)
+    norm = next(n for n, _ in walk(tree) if n.get("module") == "final_norm")
+    assert [(c.get("op", "").rsplit(".", 1)[-1], c["label"]) for c in norm["children"]] == [
+        ("mean", "Mean over channels"),
+        ("var", "Variance over channels"),
+        ("", "Normalize"),
+        ("", "Learned scale and shift"),
+    ]
+    normalize = norm["children"][2]
+    assert [c["op"].rsplit(".", 1)[1] for c in normalize["children"]] == [
+        "sub",
+        "add",
+        "sqrt",
+        "div",
+    ]
+    assert [nodes[s["from"]].get("op") for s in normalize["inputs"]] == [
+        None,  # x, the module's input
+        "torch.Tensor.mean",
+        "torch.Tensor.var",
+    ]
+    assert normalize["out"] == normalize["children"][-1]["out"] == ["B", "T", 768]
+
+    qwen = preset(spec, "qwen3-0.6b")["tree"]
+    (mask,) = [n for n in qwen["children"] if n.get("group")]
+    assert mask["label"] == "Causal mask" and mask["inputs"] == []
+    assert [c["op"].rsplit(".", 1)[1] for c in mask["children"]] == ["ones", "triu", "__getitem__"]
+    residuals = [n for n, _ in walk(qwen) if n.get("label") == "Residual connection"]
+    assert residuals and all("op" in n for n in residuals)

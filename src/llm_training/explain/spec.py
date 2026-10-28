@@ -68,6 +68,7 @@ def build_spec(content_path=CONTENT):
     presets = [_preset(entry, base, found) for entry in content["presets"]]
     for preset in presets:
         _label_steps(preset["tree"], content["steps"])
+        _group_steps(preset["tree"], itertools.count(_last_id(preset["tree"]) + 1))
         _role_keys(preset["tree"])
     for kind, entries in found.items():
         for key, info in entries.items():
@@ -521,6 +522,47 @@ def _label_steps(node, labels, container=None):
     inner = node["class"] if "module" in node else node.get("function", container)
     for child in node["children"]:
         _label_steps(child, labels, inner)
+
+
+def _group_steps(node, ids):
+    """Gather consecutive operations with the same label under one node.
+
+    `(x - mean) / torch.sqrt(var + self.eps)` runs four operations, all labeled "Normalize";
+    they become one group whose `children` are those operations. A group reads the inputs its
+    operations take from outside it. Its id comes from `ids`, after every traced node, so the
+    operations keep theirs and every reference to them stays valid.
+    """
+    children = []
+    for label, run in itertools.groupby(node["children"], lambda c: c.get("op") and c.get("label")):
+        run = list(run)
+        if not label or len(run) == 1:
+            children.extend(run)
+            continue
+        inside = {op["id"] for op in run}
+        inputs, shapes = [], []
+        for op in run:
+            for shape, entry in zip(op["in"], op["inputs"], strict=True):
+                if entry.get("from") not in inside and entry not in inputs:
+                    inputs.append(entry)
+                    shapes.append(shape)
+        group = {
+            "group": True,
+            "label": label,
+            "id": next(ids),
+            "in": shapes,
+            "out": run[-1]["out"],
+            "inputs": inputs,
+            "children": run,
+            "total": 0,
+            "repeat": 1,
+        }
+        if "returned_by" in run[-1]:
+            group["returned_by"] = run[-1]["returned_by"]
+        children.append(group)
+    node["children"] = children
+    for child in children:
+        if "group" not in child:
+            _group_steps(child, ids)
 
 
 def _role_keys(node, anchor=None):
