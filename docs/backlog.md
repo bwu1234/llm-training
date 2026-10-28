@@ -51,7 +51,7 @@ Recipes and design: [finetuning](finetuning.md).
 | Chapter 8's `--use_think_tokens` variant | The chapter's main notebook uses the reasoning tokenizer, chat template and `<think>` tags | It keeps 6,695 examples; the base-default variant built here keeps 6,725 |
 | Training Qwen3 from random weights | An architecture comparison against the 51M GPT TinyStories model | Needs a Qwen3 initialization, and probably the GPT-2 tokenizer: Qwen3's vocabulary at width 512 is ~78M embedding parameters |
 | bfloat16 training | Both books train in bfloat16; it lowers memory and may speed up training | Changes results, because many lr-1e-5 updates vanish in bfloat16. Make it a recorded runtime choice, not a silent default |
-| Faster generation | `respond`, `generate`, MATH-500 evaluation and GRPO rollouts decode one sequence at a time; the next-token path also has no KV cache | Batched decoding is the main speedup for R2–R6 |
+| Faster generation | `respond`, `generate`, MATH-500 evaluation and GRPO rollouts decode one sequence at a time; the next-token path also has no KV cache | Batched decoding is the main speedup for R2–R6. Reference for the GPT-2 cache: `LLMs-from-scratch/ch04/03_kv-cache/` (`gpt_with_kv_cache.py`, the `_optimized` variant and `tests.py`) at our pinned commit. Qwen3's model already takes a cache, which `reasoning/` uses |
 
 ### GPT-2 pretraining track
 
@@ -93,7 +93,9 @@ Found by comparing this repo with
 on 2026-10-28. File references are to that commit. Items nanochat shares with ones already
 listed above (bf16, `torch.compile`, KV cache and batched generation, DDP, fused AdamW, tok/s
 and MFU, padded vocabulary, token-weighted monitoring, stateless sampler, corpus mixing) are
-not repeated here.
+not repeated here. nanochat's GRPO variant is merged into the OLMo 3-style row of
+[Raschka's bonus material](#techniques-from-raschkas-bonus-material), which covers the same
+changes.
 
 **Evaluation**
 
@@ -110,7 +112,7 @@ not repeated here.
 | Item | What nanochat does | Why it matters | Notes |
 | --- | --- | --- | --- |
 | Warmup, constant, linear warmdown | `base_train.get_lr_multiplier`: linear warmup, flat, then a linear decay over the last `warmdown_ratio` (0.65) of updates to `final_lr_frac` (0.05) of the peak | An alternative to cosine that holds the peak rate longer | A third `lr_schedule` value in `lm/schedule.py`; still a pure function of the update index. Needs schedule-table tests and `--allow-code-drift` |
-| Muon optimizer | `optim.py` `MuonAdamW`: Muon (orthogonalized momentum via Polar Express iterations, NorMuon variance reduction, cautious weight decay) for the blocks' matrices; AdamW with its own rate, betas and decay for each of embeddings, head and scalars | nanochat's main optimizer gain over AdamW | A large port behind an opt-in `optimizer` field. nanochat's `test_optim.py` needs a GPU; the exact-resume test must cover its state |
+| Muon optimizer | `optim.py` `MuonAdamW`: Muon (orthogonalized momentum via Polar Express iterations, NorMuon variance reduction, cautious weight decay) for the blocks' matrices; AdamW with its own rate, betas and decay for each of embeddings, head and scalars | nanochat's main optimizer gain over AdamW | Porting nanochat's version is a large job. A smaller first step: PyTorch's own `torch.optim.Muon` (in 2.14.1; one step on MPS checked 2026-10-28) with the split in `LLMs-from-scratch/ch05/18_muon/gpt_train_muon.py`: Muon for 2-D weights except embeddings, AdamW for embeddings, biases and norms, `adjust_lr_fn="match_rms_adamw"`. Either way it sits behind an opt-in `optimizer` field, and the exact-resume test must cover its state. nanochat's `test_optim.py` needs a GPU |
 | Muon momentum and weight-decay schedules | `get_muon_momentum` (0.85 → 0.97 over 400 updates, → 0.90 during warmdown); `get_weight_decay` (cosine to 0) | Part of the Muon recipe | Only with Muon. Both must be pure functions of the update index |
 | Hyperparameters derived from depth | `base_train.py` "Scaling laws": tokens = 12 × (matrix + head) parameters; batch ∝ D^0.383 from a d12 reference; rates ∝ √(B/B_ref), AdamW rates ∝ 1/√(d_model/768); weight decay scaled to keep T_epoch constant | One size setting gives a compute-matched recipe; overlaps C8 (token budget) | Tuned for nanochat's model and optimizer, so the constants don't transfer to GPT-2 with AdamW. The token-budget rule could inform C8 |
 | Logit softcap | `GPT.forward`: `15 · tanh(logits / 15)` in float32 before the loss | Bounds the logits, which stabilizes training | A model option, so it lives in `model/gpt2/` and must default off for book parity |
@@ -123,7 +125,6 @@ not repeated here.
 | Packed SFT batches | `chat_sft.sft_data_generator_bos_bestfit`: conversations packed best-fit into full rows, the remainder padded and masked | Less padding than batching to the longest example | nanochat divides each micro-batch's loss by its own token count and then by `grad_accum`, which is not token-weighted. A port needs a summed loss divided by the group's supervised tokens, which would also lift the `grad_accum_steps: 1` rule |
 | SFT task mixtures | `tasks/common.TaskMixture`: SmolTalk plus MMLU ×3 and GSM8K ×4 epochs, shuffled together | Several instruction datasets in one run, each weighted by repetition | Needs a list of datasets with epochs in the recipe and in the manifest |
 | SFT optimizer warm-start | `chat_sft.py --load-optimizer`: loads the pretraining run's momentum buffers, then resets the learning rates | nanochat reports a fresh optimizer as "slightly worse" | Only for our own pretrain → SFT chain: released weights have no optimizer state, and `model.pt` is weights only |
-| nanochat's GRPO variant | `chat_rl.py`: advantage = reward − mean (no division by the standard deviation); loss normalized by valid tokens (DAPO); 16 problems per step; learning rate ramped linearly to 0 | Our loss sums each rollout's log-probabilities, so longer answers carry more weight; one problem per step gives a very noisy gradient | Four separate opt-in fields; the current values reproduce the book's 47.4% run. More problems per step needs batched generation |
 | A nanochat-style model family | `gpt.py`: value embeddings, smear, backout, per-layer residual and x0 scalars, relu² MLP, parameter-free RMSNorm, QK norm, zero-initialized projections, sliding-window attention | Its architecture gains, which `gpt2` options can't add without breaking GPT-2 | Would be a new `model/<name>/` family. Sliding windows need FA3; on SDPA nanochat warns that utilization is "terrible", so use an all-full-context pattern on MPS |
 
 Constraints for all of them:
@@ -136,6 +137,51 @@ Constraints for all of them:
   adds the license to `LICENSES/` and the provenance records, as for Raschka's repositories.
 - **Not applicable on MPS:** fp8 training (`fp8.py`, needs H100-class CUDA) and Flash
   Attention 3.
+
+### Techniques from Raschka's bonus material
+
+Found on 2026-10-28 while comparing this repo with
+[FareedKhan-dev/train-llm-from-scratch](https://github.com/FareedKhan-dev/train-llm-from-scratch).
+That repo was used only as a list of technique names, and the references below are Raschka's
+versions. All are at the commits we already pin:
+[reasoning-from-scratch `a788466`](https://github.com/rasbt/reasoning-from-scratch/tree/a788466dc85cfe8617b6c0b809ed4ab9084485de)
+and [LLMs-from-scratch `cdbd33e`](https://github.com/rasbt/LLMs-from-scratch/tree/cdbd33e6d57a71e20ea31434841095fac50cecd8).
+Muon and the GPT-2 KV cache are recorded on their existing items (the nanochat Muon row and
+"Faster generation").
+
+**GRPO.** Files are under reasoning-from-scratch's `ch07/03_rlvr_grpo_scripts_advanced/`.
+Each main script builds on the one before. Accuracies are the logged `eval_acc` in
+`ch07/02_logs/`, on MATH-500 items (the CSVs don't record how many).
+
+| Item | Reference | Why it matters | Notes |
+| --- | --- | --- | --- |
+| GRPO diagnostics | `7_3_plus_tracking.py`: advantage mean and std, and mean token entropy, per step | Entropy is the early warning for the collapse in the KL row: in upstream's log it climbs from about 1 to 11.9 before accuracy reaches 0 | `metrics.jsonl` logs reward, loss, gradient norm and lengths, but not these |
+| Clipped policy ratio with inner epochs | `7_4_plus_clip_ratio.py`: each step copies the model as the old policy, then runs `inner_epochs` (2) updates, each on fresh rollouts from the old policy. Loss `min(r·A, clip(r, 1 ± ε)·A)`, where `r` is the ratio of summed sequence log-probs and ε = 10 ("DeepSeek uses 10") | Over 500 steps the ch06 baseline falls from 46.2 (step 50) to 33.0 (step 500). This script goes 45.2 → 41.6 and never drops below 39.4 | With our one update per step the ratio is exactly 1 and the clip never acts. With ε = 10 it rarely binds, and upstream's logs don't separate the clip's effect from the extra update. Costs about 2× rollout time per step and one more model copy (~3 GB: Qwen3-0.6B with the untied head our recipes use is ~0.75B parameters in float32) |
+| KL penalty | `7_5_plus_kl.py`: adds `kl_coeff · mean(new − ref)` over summed sequence log-probs, against the frozen starting model (`kl_coeff` 0.001) | Intended to keep the policy near where it started | **Don't port as written.** Upstream's run collapses: 40.8 at step 50, then 0.0 from step 100 to 500. Entropy reaches 11.91, close to ln 151,936 = 11.93 (uniform over Qwen3's vocabulary), and every answer hits the token limit. A likely cause, not verified: this term's gradient lowers the log-probs of the sampled sequences. That cancels only in expectation under exact sampling from the policy, and these rollouts use temperature 0.8 and top-p 0.9. Whether the chapter presents this run as a failure is unchecked: the book text isn't in the repo. If a KL term is wanted, use DeepSeekMath's per-token k3 estimator, `exp(ref − new) − (ref − new) − 1`, and test that it stays non-negative and holds the policy near the reference |
+| Format reward | `7_6_plus_format_reward.py`: an extra reward for `<think>` formatting, run on the reasoning model rather than the base model, with `inner_epochs` 1 and no KL | Rewards the reasoning structure as well as the final answer | Needs the reasoning tokenizer and chat template from the `--use_think_tokens` item. Upstream's log is unstable: 50.8 at step 1, 56.2 at step 50, 9.4 at step 300, 35.0 at step 500. That makes snapshot selection (R4) matter more. GDPO (`7_7_improvements/gdpo.py`) normalizes each reward within its group before summing them, so it only applies once there are two rewards |
+| OLMo 3-style GRPO | `7_7_improvements/olmo3_style.py`, on top of 7.5: (1) skip groups with no reward spread, (2) active sampling, (3) token-level loss, (4) no KL, (5) clip-higher (`clip_eps_low` 0.2, `clip_eps_high` 10), (6) truncated importance sampling, (7) no division by the group standard deviation. nanochat's `chat_rl.py` does (3) and (7) too, and adds 16 problems per step and a learning rate ramped linearly to 0 | Our loss sums each rollout's log-probs, so longer answers carry more weight. One problem per step gives a noisy gradient. Dividing by the standard deviation over-weights nearly solved and nearly failed problems (Dr. GRPO) | Separate opt-in fields, with today's values reproducing the 47.4% run. (1) already exists as `skip_zero_advantage_updates`. Upstream logs no run of this script. More problems per step needs batched generation |
+| DeepSeek-V3.2-style GRPO | `7_7_improvements/deepseek_v32_style.py`: (8) no KL for math, (9) reweighted KL, (10) off-policy sequence masking (`off_policy_delta` 0.1), (11) reapplying the top-p/top-k sampling mask when computing training log-probs, (12) standard-deviation normalization kept | (11) makes training log-probs come from the distribution the rollouts were sampled from. We sample with top-p 0.9 but compute full-vocabulary log-probs | Lower priority than the OLMo 3 row. (10) only matters once there are inner epochs. Upstream logs no run of this script |
+
+**Preference tuning and adapters.** Files are in LLMs-from-scratch.
+
+| Item | Reference | Why it matters | Notes |
+| --- | --- | --- | --- |
+| DPO | `ch07/04_preference-tuning-with-dpo/dpo-from-scratch.ipynb`: `compute_dpo_loss`, β 0.1, lr 5e-6, one epoch on `instruction-data-with-preference.json` (387 KB, in the repo), starting from `gpt2-medium355M-sft.pth` | It starts where R1 ends, from chapter 7's SFT model on GPT-2 medium | Waits on R1. Needs a frozen reference model and a chosen/rejected dataset format, so it's a new training mode rather than a next-token loss. The preference data was generated with Ollama (`create-preference-data-ollama.ipynb`), but the file is checked in, so no external model is needed. It pairs with the same 1,100-entry set R1 uses (`data/instructions/alpaca-1100`), so DPO must reuse R1's 85/10/5 split, keeping the 110 test prompts that `respond` scores out of DPO training |
+| DPO variants | IPO, SimPO, ORPO and KTO. Neither Raschka repo covers them, so they come from their papers | SimPO and ORPO drop the reference model, which halves the models held in memory | After DPO. Each is a small change to the loss |
+| LoRA | `appendix-E/01_main-chapter-code/appendix-E.ipynb`: `LoRALayer` and `LinearWithLoRA` (rank 16, α 16) replacing the `nn.Linear` layers of GPT-2 small, for chapter 6's spam classifier | Shrinks trainable parameters and optimizer state. It is also the most widely used fine-tuning method | We have no classification task, so apply it to instruction SFT. Wrapping `nn.Linear` layers found by `named_modules()` keeps it family-agnostic. Decide whether `model.pt` stores merged weights or the adapter. The saving on R6 (41 GB peak) is unmeasured: Qwen3-0.6B's float32 gradients and AdamW state (untied, ~0.75B parameters) are about 9 GB, so if activations dominate that peak, gradient checkpointing would save more |
+
+Constraints for all of them:
+
+- **Provenance.** Both repositories are already in `LICENSES/`. Porting their code follows
+  `.claude/rules/upstream-provenance.md`: keep the headers, and update
+  `docs/upstream-provenance.md` and `src/llm_training/upstream-provenance.json`.
+- **Book parity.** Every option defaults to today's behavior. For GRPO, that is the
+  chapter 6 recipe behind the 47.4% run.
+- **Resume hash.** GRPO changes are under `reasoning/` and change `GRPO_CODE`, so GRPO
+  checkpoints need `--allow-code-drift`. DPO and LoRA modules must be added to
+  `lm_training_code`, or they escape the guard.
+- **Family rule.** DPO needs only logits, so it goes through `Family`. LoRA must not branch on
+  a family name.
 
 ### Educational material
 
@@ -168,6 +214,21 @@ Constraints for all of them:
 ### Deferred by choice
 
 - Porting Qwen3.5-0.8B.
+
+Considered alongside [Raschka's bonus material](#techniques-from-raschkas-bonus-material) on
+2026-10-28 and not planned. References are at our pinned LLMs-from-scratch commit where one
+exists.
+
+| Item | Why it's deferred | Revisit when | Reference |
+| --- | --- | --- | --- |
+| Multi-head latent attention (MLA) | Would need a new family, and no release we pin uses it | We want an architecture comparison for learning, or adopt a DeepSeek-style model | `ch04/05_mla/` (`gpt_with_kv_mla.py`, memory estimator) |
+| Sliding-window attention | Would need a new family. Neither GPT-2 nor Qwen3 uses it, and on MPS it would run through SDPA with a mask, which saves no compute | A Gemma 3-style family, or long contexts on hardware with a windowed kernel | `ch04/06_swa/` (`gpt_with_kv_swa.py`, `tests.py`) |
+| Mixture of Experts | Would need a new family. The smallest Qwen3 MoE release (30B-A3B) is far beyond a 64 GB machine in float32 | We want a small MoE trained from random weights for comparison | `ch04/07_moe/`; `ch05/11_qwen3/standalone-qwen3-moe.ipynb` for Qwen3's MoE |
+| PPO with a learned reward model | RLVR with a verifiable grader replaces both for math. PPO also needs a value head and a reward model in memory beside the policy and reference | We have a task with no verifiable answer, where preferences are the only signal; DPO covers that case first | Neither Raschka repo has one. Use the InstructGPT paper and a maintained implementation, not the survey repo |
+| Speculative decoding | Needs a second, smaller draft model with the same tokenizer, and only speeds up decoding one sequence at a time. Batched generation is the larger win for R2–R6 | Generation is batched and still the bottleneck, and a matching draft model exists | Neither Raschka repo has one. Use the paper (Leviathan et al., 2023) |
+| int8 weight quantization | Saves inference memory we don't need: the models fit in float32. Quantization kernels on MPS are limited | We serve a model under a memory limit | Neither Raschka repo has one |
+| Min-p sampling | A small sampler addition with no current use. GRPO rollouts keep the book's top-p so that results stay comparable | Sampling quality in `generate` becomes a goal | The min-p paper (Nguyen et al., 2024); a few lines beside top-p |
+| Gradient checkpointing | Not needed while every run fits. It trades about one extra forward pass per update for activation memory | R6 or a larger model runs short of memory. The LoRA row notes it may save more than LoRA on R6's 41 GB peak, so measure both together | PyTorch's `torch.utils.checkpoint` with `use_reentrant=False`. Opt-in, and it must not change results, so the exact-resume tests must cover it |
 
 ## 3. Known issues
 
