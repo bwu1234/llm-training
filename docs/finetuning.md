@@ -6,7 +6,8 @@ it does **supervised fine-tuning (SFT)**. Both use the same loop as training fro
 with the same checkpoints, exact resume, and run records. Chapter 7 of *Build a Large
 Language Model (From Scratch)* fine-tunes with chapter 5's training loop, and chapter 8 of
 *Build a Reasoning Model (From Scratch)* uses the same next-token loss on the answer tokens.
-So SFT here is a data format (`data.format: instructions`), not a separate trainer.
+So SFT here is a data format (`data.format: instructions`), not a separate trainer. The commands to train and
+use the result are in [Fine-tune from released weights](how-to/fine-tune.md).
 
 ## Starting weights
 
@@ -138,11 +139,6 @@ Either dataset works with either model family; the prompt follows the dataset. R
 `tests/unit/test_instructions.py` checks these against frozen copies of the chapters' code
 (`tests/reference/instruction_baseline.py`). `tests/integration/test_finetune.py` checks
 exact resume and the `model.pt` hand-off for both families on CPU.
-
-## Using the result
-
-The commands that use a fine-tuned model (`respond`, `math-eval`, `generate`) are in
-[Fine-tune from released weights](how-to/fine-tune.md#use-the-result).
 
 ## Tokenizers
 

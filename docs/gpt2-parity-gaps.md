@@ -121,7 +121,7 @@ Verified 2026-10-25 with the full suite (69 passed, plus the opt-in oracle, 2 pa
 | A7 | P3 | **Causal mask is a persistent buffer** (T×T float32 per layer), so it is saved in every `state_dict` and tied to the context length. | `model/gpt2/attention.py:23` | nGPT-m registers it as a non-parameter buffer for the fallback path only. | `persistent=False`; for SDPA, no mask at all. | Old checkpoints still load (`strict` handling) or the format version is bumped. |
 | A8 | P3 | **Hand-written LayerNorm** instead of `F.layer_norm`. Numerically equivalent but slower, and blocks `torch.compile` fusion on some backends. | `model/gpt2/layers.py:9-20` | OAI `eps=1e-5`, same as here. | Optional `F.layer_norm` path behind parity tests. | Equality at `atol=1e-6`. |
 | A9 | P3 | **Vocabulary fixed to 50,257.** Many reproductions pad to a multiple of 64 for GEMM efficiency. | `model/gpt2/family.py` `validate` | *unverified* (nanoGPT pads to 50,304 via `vocab_size` override; not re-fetched). | Allow `vocab_size >= 50257` with padded rows never targeted. | Loss unchanged. |
-| A10 | P3 | **Greedy generation only; no KV cache; no temperature/top-k/top-p sampling.** `predict --top-k` only changes what is displayed. | `generation.py`; `README.md` | GPT-2 samples with temperature and top-k. | Add `generate` with sampling and a KV cache (the plan's planned `generate` command). | Cache path equals the uncached path. |
+| A10 | P3 | **Greedy generation only; no KV cache; no temperature/top-k/top-p sampling.** `predict --top-k` only changes what is displayed. | `generation.py`; `docs/how-to/inspect-predictions.md` | GPT-2 samples with temperature and top-k. | Add `generate` with sampling and a KV cache (the plan's planned `generate` command). | Cache path equals the uncached path. |
 
 ## B. Optimization recipe (L2)
 
@@ -141,7 +141,7 @@ Verified 2026-10-25 with the full suite (69 passed, plus the opt-in oracle, 2 pa
 
 | ID | Pri | Gap | Evidence | Reference | Fix | Gate |
 | --- | --- | --- | --- | --- | --- | --- |
-| C1 | P1 | **No real corpus.** The only dataset is a ~20 KB story. | `data/the-verdict.txt`; `README.md` | nGPT-r uses OpenWebText, "an open reproduction of OpenAI's (private) WebText". | Choose a documented snapshot (plan M2/M4 decision). | Recorded origin, version, terms, hashes. |
+| C1 | P1 | **No real corpus.** The only dataset is a ~20 KB story. | `data/the-verdict.txt`; `docs/how-to/reproduce-chapter-5.md` | nGPT-r uses OpenWebText, "an open reproduction of OpenAI's (private) WebText". | Choose a documented snapshot (plan M2/M4 decision). | Recorded origin, version, terms, hashes. |
 | C2 | P1 | **No token shards.** The dataset tokenizes the whole text in memory and stores one tensor per window. | `data/dataset.py:12-23` | nGPT-t reads a `np.memmap` of `uint16`. | `prepare` writes `.bin` shards plus a manifest; loader memory-maps them. | Repeated preparation gives identical hashes. |
 | C3 | P1 | **Plan error on dtype.** `IMPLEMENTATION_PLAN.md` said token IDs need more than 16 bits and chose `uint32`. | (fixed in this change) | 50,257 < 65,536; nGPT-t uses `uint16`. | `uint16` shards; cast to `int64` for the embedding. Halves disk and page-cache use. | Round-trip test over IDs 0 and 50256. |
 | C4 | P1 | **Split is by character offset before tokenization**, with 90/10 and no document boundaries or deduplication. | `trainer.py:176-182` | n/a | Document-level hash split plus deduplication (plan M2). | No train/validation document or hash overlap. |
@@ -157,7 +157,7 @@ Verified 2026-10-25 with the full suite (69 passed, plus the opt-in oracle, 2 pa
 | D1 | P1 | **FP32 only.** `precision` is hard-coded and no config knob exists. | `trainer.py:145`; `config.py` `RuntimeConfig` | nGPT-t: `dtype = bfloat16` if supported, else float16. | `runtime.precision`: autocast bf16 (and fp16 + GradScaler); populate `scaler_state_dict`. | Loss within tolerance of FP32 over a short run. |
 | D2 | P1 | **No `torch.compile`.** | none | nGPT-t: `compile = True`. | `runtime.compile`; record compile time. | Same loss as eager at tolerance. |
 | D3 | P1 | **No distributed training.** Single process. | `README.md` | nGPT-r uses DDP on 8 GPUs. | DDP with per-rank RNG/cursor and reduced token-weighted metrics (plan M6). | Matched global-batch update test. |
-| D4 | P1 | **No accelerator validation.** CPU FP32 is the only tested path; MPS/CUDA resume is unvalidated. | `README.md` "Stop and resume" | n/a | Run the parity suite on real hardware. | Recorded results per backend. |
+| D4 | P1 | **No accelerator validation.** CPU FP32 is the only tested path; MPS/CUDA resume is unvalidated. | `docs/how-to/stop-and-resume.md` | n/a | Run the parity suite on real hardware. | Recorded results per backend. |
 | D5 | P2 | **No `auto` device.** | `config.py:124` allows only cpu/mps/cuda | n/a | `device: auto` resolving to a recorded backend. | Logged resolved device. |
 | D6 | P2 | **No pilot measurement** of tokens/s, peak memory, checkpoint time. | `IMPLEMENTATION_PLAN.md` §7 | n/a | Run before committing to a budget. | Report under `docs/experiments/`. |
 

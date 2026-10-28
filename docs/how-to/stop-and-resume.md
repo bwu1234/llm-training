@@ -33,5 +33,6 @@ were not retained. Best selection uses periodic monitoring; the final full-split
 report evaluates the last model rather than selecting on that report.
 
 What a checkpoint holds is in [Run artifacts](../reference/run-artifacts.md#checkpoint-contents),
-and how resume rebuilds the run is in [the training loop guide](../training-loop.md#resume).
-GRPO runs stop and resume the same way ([GRPO commands](run-grpo.md)).
+and how resume rebuilds the run is in [the training loop guide](../training-loop.md#setup-before-any-update).
+GRPO also supports `--stop-after`, SIGINT/SIGTERM and `--resume` into a child run, but counts
+steps and checks its own code fingerprint ([Run GRPO](run-grpo.md)).

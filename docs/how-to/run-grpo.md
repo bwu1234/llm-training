@@ -20,10 +20,8 @@ uv run llm-training math-eval --snapshot runs/grpo/<run>/snapshots/step00050.pt 
 uv run llm-training math-eval --snapshot runs/grpo/<run>/snapshots/step00050.pt
 ```
 
-On an M2 Max the 100-step recipe takes an estimated 1.5–3 hours (a step is 31 s measured
-with short answers, about 1.8 minutes when all rollouts reach 512 tokens), and a full
-MATH-500 evaluation of a trained model about 2–2.5 hours. Longer GRPO training can lower the score, so score the saved
-snapshots and keep the best.
+Measured times are in [the GRPO guide](../grpo.md#cost-on-an-m2-max-mps). Longer GRPO
+training can lower the score, so score the saved snapshots and keep the best.
 
 If `reasoning-from-scratch/qwen3` already holds the pinned files, `cp -c` them into
 `data/qwen3-0.6b-base` (an APFS clone: instant, no extra disk) and `grpo-prepare` only

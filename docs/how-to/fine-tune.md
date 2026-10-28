@@ -7,13 +7,14 @@ Model (From Scratch)* and chapter 8 of *Build a Reasoning Model (From Scratch)*.
 
 ```bash
 uv run llm-training prepare --config configs/sft_gpt2_medium_alpaca.yaml   # ~1.7 GB once
-uv run llm-training train --config configs/sft_gpt2_medium_alpaca.yaml     # ~8-10 min on MPS
+uv run llm-training train --config configs/sft_gpt2_medium_alpaca.yaml
 ```
 
-`configs/sft_qwen3_0_6b_math_distill.yaml` is chapter 8's reasoning distillation (an
-estimated 18–22 hours). The two `cpt_*_tinystories.yaml` recipes are plumbing tests only: a
+`configs/sft_qwen3_0_6b_math_distill.yaml` is chapter 8's reasoning distillation,
+which runs for most of a day. The two `cpt_*_tinystories.yaml` recipes are plumbing tests only: a
 long run on children's stories would erode the models' general skills. See
-[the fine-tuning guide](../finetuning.md) for measured costs and the book parity checks.
+[the fine-tuning guide](../finetuning.md#recipes) for measured times, memory and the book
+parity checks.
 
 ## Use the result
 

@@ -25,8 +25,6 @@ holds the policy near the base model, and the book's chapter 7 reports one varia
 from 33.4% to 0.4% between steps 50 and 100. A rising training reward does not guarantee a
 better test score. **Choose a snapshot by its evaluation score, not by recency.**
 
-## Commands
-
 The commands to prepare, train, stop, resume and score a run are in
 [Run GRPO on MATH](how-to/run-grpo.md).
 

@@ -3,7 +3,9 @@
 A Python package that trains GPT-style models with the implementations from Sebastian Raschka's
 *LLMs-from-scratch* (GPT-2) and *reasoning-from-scratch* (Qwen3, GRPO). The README is the
 landing page. User workflows are in `docs/how-to/` and run artifacts in
-`docs/reference/run-artifacts.md`. Read them before changing CLI behavior.
+`docs/reference/run-artifacts.md`. Read them before changing CLI behavior. Measured costs live
+in one place each: `docs/finetuning.md` (Recipes), `docs/grpo.md` (Cost on an M2 Max) and
+`docs/how-to/train-tinystories.md`; other pages link to them.
 `docs/backlog.md` is the **only** tracker for pending work, open decisions and known issues.
 
 ## Commands
@@ -102,7 +104,8 @@ code. To add a family:
   `docs/how-to/`, lookup material (files, fields, tables) in `docs/reference/`, and how and why
   in the topic guides (`docs/gpt2.md`, `qwen3.md`, `training-loop.md`, `finetuning.md`,
   `grpo.md`, `architecture-explorer.md`). The README stays a landing page; link new pages from
-  its Documentation section. The backlog, the gap register, `upstream-provenance.md` and
+  its Documentation section. The README is also the package's long description, so its links to
+  repo files are absolute `https://github.com/bwu1234/llm-training/blob/main/...` URLs. The backlog, the gap register, `upstream-provenance.md` and
   `experiments/` are project records, outside the four types.
 - `docs/backlog.md` tracks only what is pending. When an item lands, delete it there and
   describe it where its type belongs (above), or in the gap register `gpt2-parity-gaps.md`. When work is found or deferred, add it to the backlog, not

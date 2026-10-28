@@ -4,8 +4,9 @@ This guide covers the next-token trainer, [`lm/trainer.py`](../src/llm_training/
 (`llm-training train`). Pretraining, continued pretraining and SFT all run through it. It also
 explains [the evaluation metrics](#evaluation-metrics) a run reports. GRPO has its own loop,
 contrasted [at the end](#grpo-differs). For how to stop and resume a run, see
-[Stop and resume](how-to/stop-and-resume.md); for what resume rebuilds, see [Resume](#resume).
-For the files a run writes and what a checkpoint holds, see
+[Stop and resume](how-to/stop-and-resume.md); what resume rebuilds is described in
+[Setup](#setup-before-any-update) and [Epochs](#epochs). For the files a run writes, the
+`metrics.jsonl` fields and what a checkpoint holds, see
 [Run artifacts](reference/run-artifacts.md).
 
 ```mermaid
@@ -32,7 +33,8 @@ flowchart TD
 initialization and data shuffling draw from the same seeded RNG streams, so the order is fixed:
 
 1. On resume, restore the recipe from the checkpoint and reject a changed environment or code
-   (see [Stop and resume](how-to/stop-and-resume.md)).
+   (see [Stop and resume](how-to/stop-and-resume.md)). Resume starts a **new child run** that
+   records the parent checkpoint.
 2. Seed Python, NumPy and Torch with `training.seed`.
 3. Load the tokenizer, then the train and validation datasets. Text and token corpora are cut
    into non-overlapping windows of `data.max_length` tokens (`model.context_length` when it is
@@ -51,7 +53,8 @@ initialization and data shuffling draw from the same seeded RNG streams, so the 
 `Trainer.run` then measures the **initial evaluation**. A resumed run reuses its parent's
 instead. `run` creates the run directory and writes a checkpoint of the state before the first
 update, so a failure in update 1 still leaves a valid `last.pt`. A resumed run first copies
-its parent's history into its own `metrics.jsonl`.
+its parent's history into its own `metrics.jsonl`. Checkpoint history is authoritative if an
+abrupt failure left newer, uncheckpointed log lines behind.
 
 ## Epochs
 
@@ -67,6 +70,8 @@ On resume in the middle of an epoch, `_epoch_iterator` does the following:
 2. It draws the same order again and skips the `batch_cursor` batches already trained on,
    without running the model on them.
 3. It restores the live RNG state.
+
+No previous optimizer updates are repeated.
 
 The next batch is then the one an uninterrupted run would have used.
 
@@ -157,11 +162,6 @@ so it evaluates after updates 1, 251, 501, ... and checkpoints after 250, 500, .
   The recipe can't change on resume, so the budget can't be shortened later.
 - With `warmup_steps > 0`, warmup must be shorter than `N`.
 
-## Records in `metrics.jsonl`
-
-One JSON line per update. Its fields are listed in
-[Run artifacts](reference/run-artifacts.md#metricsjsonl).
-
 ## Samples
 
 Samples come from `output.prompt`, `output.sample_tokens` long:
@@ -190,14 +190,6 @@ and continued-pretraining presets sample at temperature 0.8 with top-k 50.
 - **Failed** (any exception, including a non-finite loss or gradient). `status.json` records
   `failed`, the error, and `recovery_checkpoint: checkpoints/last.pt`. Half-applied state is
   never saved, so resume from that checkpoint.
-
-## Resume
-
-Resume starts a **new child run**, records the parent checkpoint, and carries
-forward the checkpoint's metric/sample history. It replays deterministic data
-access to reconstruct the iterator, then restores the saved live RNG before the
-next update. No previous optimizer updates are repeated. Checkpoint history is
-authoritative if an abrupt failure left newer, uncheckpointed log lines behind.
 
 ## Evaluation metrics
 
