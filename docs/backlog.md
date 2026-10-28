@@ -1,6 +1,6 @@
 # Backlog
 
-Last updated 2026-10-27. **This is the one place that tracks pending work:** runs that are
+Last updated 2026-10-28. **This is the one place that tracks pending work:** runs that are
 built but not yet launched, work that is not built, known issues, decisions that block other
 work, and the recommended next steps. Other docs describe what exists and link here for
 what doesn't. The linked guides hold the details, measurements and design, and the
@@ -76,7 +76,8 @@ Open:
 - **Data (blocked on D1):**
   - C1 corpus, C4 document-level split and deduplication;
   - C6 stateless sampler, C7 test split, C8 token budget.
-- **Evaluation:** E2 token-weighted monitoring, E3 benchmarks (blocked on D1), E4
+- **Evaluation:** E2 token-weighted monitoring, E3 benchmarks (blocked on D1, except CORE,
+  which doesn't depend on the corpus; see [nanochat](#techniques-from-nanochat)), E4
   reference-loss calibration, E5 `evaluate` and `export` commands.
 - **Operations:**
   - F3 checkpoint retention (a Qwen3 `last.pt` is ~9 GB, a GPT-2 one ~1.5 GB);
@@ -84,6 +85,57 @@ Open:
 - **Hardware:** D3 DDP, D4 CUDA validation.
 - **Tests that wait on those items:** a resume from a relocated checkpoint (F5), a resume with
   an active scaler (F7), and any accelerator run in CI (D4).
+
+### Techniques from nanochat
+
+Found by comparing this repo with
+[karpathy/nanochat at `92d63d4`](https://github.com/karpathy/nanochat/tree/92d63d4e8bb4df75c3b71618f31ddde2378b2bcd)
+on 2026-10-28. File references are to that commit. Items nanochat shares with ones already
+listed above (bf16, `torch.compile`, KV cache and batched generation, DDP, fused AdamW, tok/s
+and MFU, padded vocabulary, token-weighted monitoring, stateless sampler, corpus mixing) are
+not repeated here.
+
+**Evaluation**
+
+| Item | What nanochat does | Why it matters | Notes |
+| --- | --- | --- | --- |
+| Bits per byte | `loss_eval.evaluate_bpb`: summed loss over the UTF-8 byte count of the targets, special and masked tokens excluded | Loss per token can't be compared across tokenizers ([caveats](training-loop.md#caveats-when-comparing)); bits per byte can, so GPT-2 and Qwen3 runs on the same text become comparable | Both tokenizers expose `decode_single_token_bytes`, so a byte-length table needs no family branching. Recommended as part of E5's `evaluate` command, in a module outside the resume hash |
+| CORE benchmark | `core_eval.py`, `scripts/base_eval.evaluate_core`: the DCLM paper's 22 few-shot tasks, scored by lowest mean continuation loss (multiple choice, schema) or exact greedy match (language modeling), averaged as centered accuracy (0 = random, 1 = perfect) | A capability number for base models that doesn't depend on our corpus, so unlike the rest of E3 it isn't blocked on D1 | Score public GPT-2 124M first as the anchor (nanochat lists 0.2565 for GPT-2 1.6B). The eval bundle is downloaded from nanochat's S3 URL; size unchecked. The tasks keep their own licenses; check them before pinning the bundle |
+| Fixed factual probe prompts | `base_train.py`: seven prompts ("The capital of France is", "If 5*x + 3 = 13, then x is", ...) decoded greedily for 16 tokens at each sample point | Shows when facts and simple reasoning appear during pretraining, which one story prompt doesn't | A list option beside `output.prompt`. Edits `lm/trainer.py`, so checkpoints need `--allow-code-drift` |
+| ChatCORE during SFT | `chat_eval.run_categorical_eval` scores ARC and MMLU by comparing only the answer letters' logits; `run_generative_eval` grades GSM8K and HumanEval answers; both centered on the random baseline (`chat_sft.py`) | SFT is tracked only by validation loss; this measures whether instruction following transfers to tasks, without an external grader model | Letter-logit scoring is one forward pass per batch. The generative tasks need batched generation to be affordable on MPS |
+| pass@k inside the GRPO loop | `chat_rl.run_gsm8k_eval`: every 60 steps, 8 samples at temperature 1.0 on 400 test problems, logging pass@1 through pass@8 | GRPO's loop runs no evaluation, so collapse shows only afterwards, and R4 spends about 2 h choosing a snapshot | Needs batched generation first. Use a held-out MATH subset, never MATH-500. Edits `reasoning/`, so GRPO checkpoints need `--allow-code-drift` |
+
+**Pretraining**
+
+| Item | What nanochat does | Why it matters | Notes |
+| --- | --- | --- | --- |
+| Warmup, constant, linear warmdown | `base_train.get_lr_multiplier`: linear warmup, flat, then a linear decay over the last `warmdown_ratio` (0.65) of updates to `final_lr_frac` (0.05) of the peak | An alternative to cosine that holds the peak rate longer | A third `lr_schedule` value in `lm/schedule.py`; still a pure function of the update index. Needs schedule-table tests and `--allow-code-drift` |
+| Muon optimizer | `optim.py` `MuonAdamW`: Muon (orthogonalized momentum via Polar Express iterations, NorMuon variance reduction, cautious weight decay) for the blocks' matrices; AdamW with its own rate, betas and decay for each of embeddings, head and scalars | nanochat's main optimizer gain over AdamW | A large port behind an opt-in `optimizer` field. nanochat's `test_optim.py` needs a GPU; the exact-resume test must cover its state |
+| Muon momentum and weight-decay schedules | `get_muon_momentum` (0.85 → 0.97 over 400 updates, → 0.90 during warmdown); `get_weight_decay` (cosine to 0) | Part of the Muon recipe | Only with Muon. Both must be pure functions of the update index |
+| Hyperparameters derived from depth | `base_train.py` "Scaling laws": tokens = 12 × (matrix + head) parameters; batch ∝ D^0.383 from a d12 reference; rates ∝ √(B/B_ref), AdamW rates ∝ 1/√(d_model/768); weight decay scaled to keep T_epoch constant | One size setting gives a compute-matched recipe; overlaps C8 (token budget) | Tuned for nanochat's model and optimizer, so the constants don't transfer to GPT-2 with AdamW. The token-budget rule could inform C8 |
+| Logit softcap | `GPT.forward`: `15 · tanh(logits / 15)` in float32 before the loss | Bounds the logits, which stabilizes training | A model option, so it lives in `model/gpt2/` and must default off for book parity |
+| BOS-aligned best-fit packing | `dataloader.py`: each row starts at a document start and is filled with the largest buffered document that fits, cropping only when none does (~35% of tokens cropped at T=2048) | No token attends across a document boundary, unlike C5's current policy | A token-corpus option. Changes the batch stream, so resume and manifest tests change |
+
+**Fine-tuning and RL**
+
+| Item | What nanochat does | Why it matters | Notes |
+| --- | --- | --- | --- |
+| Packed SFT batches | `chat_sft.sft_data_generator_bos_bestfit`: conversations packed best-fit into full rows, the remainder padded and masked | Less padding than batching to the longest example | nanochat divides each micro-batch's loss by its own token count and then by `grad_accum`, which is not token-weighted. A port needs a summed loss divided by the group's supervised tokens, which would also lift the `grad_accum_steps: 1` rule |
+| SFT task mixtures | `tasks/common.TaskMixture`: SmolTalk plus MMLU ×3 and GSM8K ×4 epochs, shuffled together | Several instruction datasets in one run, each weighted by repetition | Needs a list of datasets with epochs in the recipe and in the manifest |
+| SFT optimizer warm-start | `chat_sft.py --load-optimizer`: loads the pretraining run's momentum buffers, then resets the learning rates | nanochat reports a fresh optimizer as "slightly worse" | Only for our own pretrain → SFT chain: released weights have no optimizer state, and `model.pt` is weights only |
+| nanochat's GRPO variant | `chat_rl.py`: advantage = reward − mean (no division by the standard deviation); loss normalized by valid tokens (DAPO); 16 problems per step; learning rate ramped linearly to 0 | Our loss sums each rollout's log-probabilities, so longer answers carry more weight; one problem per step gives a very noisy gradient | Four separate opt-in fields; the current values reproduce the book's 47.4% run. More problems per step needs batched generation |
+| A nanochat-style model family | `gpt.py`: value embeddings, smear, backout, per-layer residual and x0 scalars, relu² MLP, parameter-free RMSNorm, QK norm, zero-initialized projections, sliding-window attention | Its architecture gains, which `gpt2` options can't add without breaking GPT-2 | Would be a new `model/<name>/` family. Sliding windows need FA3; on SDPA nanochat warns that utilization is "terrible", so use an all-full-context pattern on MPS |
+
+Constraints for all of them:
+
+- **Book parity.** Every option defaults to today's behavior.
+- **Resume hash.** Code under `lm/`, `data/`, `training/`, `model/<arch>/` or `reasoning/`
+  makes existing checkpoints need `--allow-code-drift`. Evaluation commands can avoid that by
+  living outside those paths.
+- **License.** nanochat is MIT-licensed (`LICENSE`). Porting its code, rather than its ideas,
+  adds the license to `LICENSES/` and the provenance records, as for Raschka's repositories.
+- **Not applicable on MPS:** fp8 training (`fp8.py`, needs H100-class CUDA) and Flash
+  Attention 3.
 
 ### Educational material
 
@@ -100,6 +152,7 @@ items extend it.
 | Live views on real weights | Attention heatmaps, logit lens, GQA head sharing, RoPE rotation | Uses the weights already in `data/`; could extend the explorer's traced pass with real inputs. Plotting or notebook dependencies go in an optional group, as `IMPLEMENTATION_PLAN.md` requires. Several days |
 | Run viewer for GRPO | The next-token run viewer (`explain/runs.py`, see the README) rejects GRPO runs, so GRPO's reward, answer length and rollouts have no view | Plot `reward_mean`, `mean_gen_len`, `hit_token_limit` and `grad_norm` per step, mark `updated: false` steps, mark snapshots, and show each step's rollouts from `rollouts.jsonl`. About half a day |
 | Run viewer: live refresh | The page is a snapshot of a running run | A `--watch` mode that rewrites the page as `metrics.jsonl` grows, or a page that rereads it. Browsers block `fetch` on `file://`, so rereading needs a local server. About half a day |
+| Run viewer: smoothed training loss | One group per point makes `train_loss` noisy; a trend line is easier to read | A bias-corrected EMA (`ema / (1 - beta^(step+1))`, beta 0.9), as nanochat's `base_train.py` logs it. Computed in the page, not the trainer |
 | Run viewer: publish an example | Local only by choice (2026-10-28). A downsampled copy of the TinyStories run on GitHub Pages would show it without a checkout | Publishing a run's metrics and samples is a decision for the user. About an hour |
 | A guided learning path (`docs/learn.md`) | The guides say what each part does but not what order to read the code in | Tokenizer → embeddings → attention → block → training loop → GRPO, each linked to its book chapter and to the graphics. About half a day |
 
