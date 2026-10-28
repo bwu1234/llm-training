@@ -1,5 +1,13 @@
 # Run the checks
 
+Prepare the GPT-2 tokenizer once, so the integration tests run instead of skipping:
+
+```bash
+uv run llm-training prepare --config configs/smoke.yaml
+```
+
+Then, from the repository root:
+
 ```bash
 uv run ruff check .
 uv run ruff format --check .
@@ -8,7 +16,7 @@ uv run python -m tests.reference.compare
 LLM_TEST_TOKENIZER_CACHE="$PWD/data/tokenizer" uv run pytest -q
 uv build
 # Opt-in: compare against the public GPT-2 124M weights (downloads ~550 MB once)
-# and run Qwen3-0.6B against Hugging Face Transformers (~1.5 GB once; see ../qwen3.md).
+# and run Qwen3-0.6B against Hugging Face Transformers (~1.5 GB once; see docs/qwen3.md).
 uv sync --group oracle && LLM_ORACLE=1 uv run pytest tests/oracle -q
 ```
 
