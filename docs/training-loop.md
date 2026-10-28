@@ -179,6 +179,9 @@ Samples come from `output.prompt`, `output.sample_tokens` long:
 
 - `output.temperature: 0` with no `top_k` is greedy. That is the book's text loop, and for
   instruction data it stops at end-of-text.
+- `output.temperature: 0` with a `top_k` is also greedy: the top token always survives the
+  top-k filter, and the argmax picks it. It stops at end-of-text, but `sample.json` labels it
+  `"method": "sampled"` with a seed it never uses.
 - Otherwise the sample is drawn with a private generator seeded from `(seed, update)`. It
   never draws from the training RNG, so turning samples on or off doesn't change training.
 
@@ -251,6 +254,12 @@ within a run, and `full_validation` for comparisons between runs.
   evaluates the last model, not the best one.
 - **Recipe.** `validation_only` and `sampled_train_validation` losses come from different
   formulas. Compare runs only within one recipe.
+- **Validation split and window.** Losses compare only on the same validation tokens, scored
+  with the same context window. Runs trained on different data can still share a validation
+  split (a token corpus hashes each split), but their training losses don't compare.
+- **Monitored subset.** `eval_iter` sets how many validation batches each monitored point
+  covers. Runs whose subsets differ in size have curves of different coverage; compare their
+  `full_validation` instead.
 
 ### GRPO and MATH-500
 
