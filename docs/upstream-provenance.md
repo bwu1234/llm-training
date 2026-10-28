@@ -89,7 +89,7 @@ files at `402728f` (MIT); the small file is bit-identical to OpenAI's release
 
 `configs/pretrain_gpt_162m.yaml` derives settings from
 `ch05/01_main-chapter-code/gpt_train.py`. The `sampled_train_validation` recipe preserves source evaluation RNG
-consumption and epoch sampling cadence. See the README and reproduction report
+consumption and epoch sampling cadence. See [Reproduce the chapter-5 run](how-to/reproduce-chapter-5.md) and the reproduction report
 for the full-run comparison and scope. `the-verdict.txt` is downloaded
 only by explicit preparation, with pinned revision and content hash; it is not
 bundled in the package. The committed smoke text was authored for this project.

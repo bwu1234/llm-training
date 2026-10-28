@@ -1,8 +1,9 @@
 # CLAUDE.md
 
 A Python package that trains GPT-style models with the implementations from Sebastian Raschka's
-*LLMs-from-scratch* (GPT-2) and *reasoning-from-scratch* (Qwen3, GRPO). The README covers user
-workflows, run artifacts and measured costs. Read it before changing CLI behavior.
+*LLMs-from-scratch* (GPT-2) and *reasoning-from-scratch* (Qwen3, GRPO). The README is the
+landing page. User workflows are in `docs/how-to/` and run artifacts in
+`docs/reference/run-artifacts.md`. Read them before changing CLI behavior.
 `docs/backlog.md` is the **only** tracker for pending work, open decisions and known issues.
 
 ## Commands
@@ -79,7 +80,7 @@ code. To add a family:
 **Book parity.**
 - Every config field defaults to the book's chapter-5 behavior: PyTorch init, untied head,
   explicit attention, constant LR, no clipping. The GPT-2 recipe pieces are opt-in fields
-  (table in the README).
+  (table in `docs/gpt2.md`).
 - `configs/pretrain_gpt_162m.yaml` is frozen as the source-parity reference.
 - `tests/reference/` is a frozen, attributed copy of the upstream definitions and training
   loop. Keep it independent of production refactors: the parity tests depend on it not
@@ -97,9 +98,14 @@ code. To add a family:
 
 ## Docs conventions
 
+- The docs follow [Diátaxis](https://diataxis.fr/). Each page is one type: a task goes in
+  `docs/how-to/`, lookup material (files, fields, tables) in `docs/reference/`, and how and why
+  in the topic guides (`docs/gpt2.md`, `qwen3.md`, `training-loop.md`, `finetuning.md`,
+  `grpo.md`, `architecture-explorer.md`). The README stays a landing page; link new pages from
+  its Documentation section. The backlog, the gap register, `upstream-provenance.md` and
+  `experiments/` are project records, outside the four types.
 - `docs/backlog.md` tracks only what is pending. When an item lands, delete it there and
-  describe it in its guide: `docs/gpt2.md`, `qwen3.md`, `training-loop.md`, `finetuning.md`,
-  `grpo.md`, or the gap register `gpt2-parity-gaps.md`. When work is found or deferred, add it to the backlog, not
+  describe it where its type belongs (above), or in the gap register `gpt2-parity-gaps.md`. When work is found or deferred, add it to the backlog, not
   to a guide.
 - `IMPLEMENTATION_PLAN.md` is the original plan. Where it conflicts with the gap register, the
   register's priorities win.

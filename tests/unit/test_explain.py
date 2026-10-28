@@ -8,7 +8,7 @@ from torch import nn
 
 from llm_training.explain import spec as explain
 
-# Documented in the README and the model guides.
+# Documented in the how-to guides and the model guides.
 DOCUMENTED = {
     "smoke": 3_242_240,
     "gpt-162m": 162_419_712,

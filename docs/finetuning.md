@@ -141,22 +141,8 @@ exact resume and the `model.pt` hand-off for both families on CPU.
 
 ## Using the result
 
-```bash
-# Chapter 7: responses to the 110 held-out instructions, one JSONL record each.
-uv run llm-training respond --checkpoint runs/sft/<run>/model.pt \
-  --config runs/sft/<run>/config.resolved.yaml --device mps
-
-# Chapter 8: MATH-500 accuracy of a Qwen3 model.pt (or a full checkpoint), same scorer as GRPO.
-uv run llm-training math-eval --model runs/sft/<run>/model.pt --limit 100
-
-# Free-form text; the tokenizer defaults to the checkpoint's family.
-uv run llm-training generate --checkpoint runs/cpt/<run>/model.pt --prompt "Once upon a time"
-```
-
-`respond` follows chapter 7. It decodes greedily from `format_input` until end-of-text,
-writes the model's response next to the reference, and skips recorded examples when rerun.
-Chapter 7 then has a larger model grade the responses; that grading step is not built
-([backlog](backlog.md)).
+The commands that use a fine-tuned model (`respond`, `math-eval`, `generate`) are in
+[Fine-tune from released weights](how-to/fine-tune.md#use-the-result).
 
 ## Tokenizers
 

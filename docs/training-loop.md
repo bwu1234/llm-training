@@ -3,9 +3,10 @@
 This guide covers the next-token trainer, [`lm/trainer.py`](../src/llm_training/lm/trainer.py)
 (`llm-training train`). Pretraining, continued pretraining and SFT all run through it. It also
 explains [the evaluation metrics](#evaluation-metrics) a run reports. GRPO has its own loop,
-contrasted [at the end](#grpo-differs). For stopping, resuming and what a checkpoint holds, see
-[Stop and resume](../README.md#stop-and-resume). For the files a run writes, see
-[Run artifacts](../README.md#run-artifacts).
+contrasted [at the end](#grpo-differs). For how to stop and resume a run, see
+[Stop and resume](how-to/stop-and-resume.md); for what resume rebuilds, see [Resume](#resume).
+For the files a run writes and what a checkpoint holds, see
+[Run artifacts](reference/run-artifacts.md).
 
 ```mermaid
 flowchart TD
@@ -31,7 +32,7 @@ flowchart TD
 initialization and data shuffling draw from the same seeded RNG streams, so the order is fixed:
 
 1. On resume, restore the recipe from the checkpoint and reject a changed environment or code
-   (see the README).
+   (see [Stop and resume](how-to/stop-and-resume.md)).
 2. Seed Python, NumPy and Torch with `training.seed`.
 3. Load the tokenizer, then the train and validation datasets. Text and token corpora are cut
    into non-overlapping windows of `data.max_length` tokens (`model.context_length` when it is
@@ -106,7 +107,7 @@ different numbers of supervised tokens, so they require `grad_accum_steps: 1`
 `Trainer._train_epoch` runs these in order:
 
 1. **Monitoring** (`_monitor`) after updates 1, 1 + `eval_freq`, 1 + 2·`eval_freq`, ...
-   (counting from 1; the README's 162M section counts the same points from 0):
+   (counting from 1; [the 162M how-to](how-to/reproduce-chapter-5.md) counts the same points from 0):
    - `recipe: validation_only` takes the token-weighted loss over the first `eval_iter`
      validation batches, under isolated RNG, with dropout off.
    - `recipe: sampled_train_validation` (the book's loop) takes the unweighted mean of batch
@@ -158,20 +159,8 @@ so it evaluates after updates 1, 251, 501, ... and checkpoints after 250, 500, .
 
 ## Records in `metrics.jsonl`
 
-One JSON line per update:
-
-| Field | Meaning |
-| --- | --- |
-| `optimizer_step` | completed updates, counting this one (1-based) |
-| `epoch` | epoch this update belongs to (1-based) |
-| `train_loss` | mean of the group's micro-batch losses, measured before this update's step |
-| `tokens_seen` | cumulative supervised target tokens (targets that aren't `-100`) |
-| `learning_rate` | rate this update used |
-| `grad_norm` | global gradient norm before clipping |
-| `batch_sha256` | hash of the group's input tokens, which the resume tests compare |
-| `validation` | on monitored updates under `validation_only`: `loss`, `perplexity`, `tokens` |
-| `source_train_loss`, `source_val_loss` | on monitored updates under `sampled_train_validation` |
-| `sample` | on sampled updates: the generated text |
+One JSON line per update. Its fields are listed in
+[Run artifacts](reference/run-artifacts.md#metricsjsonl).
 
 ## Samples
 
@@ -202,9 +191,17 @@ and continued-pretraining presets sample at temperature 0.8 with top-k 50.
   `failed`, the error, and `recovery_checkpoint: checkpoints/last.pt`. Half-applied state is
   never saved, so resume from that checkpoint.
 
+## Resume
+
+Resume starts a **new child run**, records the parent checkpoint, and carries
+forward the checkpoint's metric/sample history. It replays deterministic data
+access to reconstruct the iterator, then restores the saved live RNG before the
+next update. No previous optimizer updates are repeated. Checkpoint history is
+authoritative if an abrupt failure left newer, uncheckpointed log lines behind.
+
 ## Evaluation metrics
 
-To see them for a run, write its page with the [run viewer](../README.md#run-viewer).
+To see them for a run, write its page with the [run viewer](how-to/view-a-run.md).
 
 Every loss here is a cross-entropy in **nats per target token**: the average of
 `-ln p(correct next token)`. Lower is better. A model that spreads probability evenly over the

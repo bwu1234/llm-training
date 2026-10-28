@@ -27,29 +27,8 @@ better test score. **Choose a snapshot by its evaluation score, not by recency.*
 
 ## Commands
 
-```bash
-# Pinned Qwen3-0.6B base files (~1.5 GB, skipped when already verified) and MATH (~11 MB).
-uv run llm-training grpo-prepare --config configs/grpo_qwen3_0_6b_math.yaml
-
-# Baseline: the untrained base model on the same evaluation.
-uv run llm-training math-eval --base --output runs/grpo/base.math500-first500.jsonl
-
-# Train. Each run gets runs/grpo/<timestamp>-<id>/.
-uv run llm-training grpo-train --config configs/grpo_qwen3_0_6b_math.yaml
-
-# Score snapshots on a fixed subset, then the best one on all 500 problems.
-uv run llm-training math-eval --snapshot runs/grpo/<run>/snapshots/step00050.pt --limit 100
-uv run llm-training math-eval --snapshot runs/grpo/<run>/snapshots/step00050.pt
-```
-
-If `reasoning-from-scratch/qwen3` already holds the pinned files, `cp -c` them into
-`data/qwen3-0.6b-base` (an APFS clone: instant, no extra disk) and `grpo-prepare` only
-verifies them.
-
-`grpo-train --stop-after N` stops after step N. SIGINT/SIGTERM stop after the current step.
-Either way, `--resume runs/grpo/<run>/checkpoints/last.pt` continues in a child run, as the GPT
-trainer does. `math-eval` appends one JSONL record per problem and skips recorded problems on
-a rerun, so an interrupted evaluation continues where it stopped.
+The commands to prepare, train, stop, resume and score a run are in
+[Run GRPO on MATH](how-to/run-grpo.md).
 
 ## Recipe
 

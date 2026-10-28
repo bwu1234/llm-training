@@ -125,7 +125,7 @@ window. It does not cache keys and values.
 
 The GPT 162M preset shares GPT-2 small's 12 layers, 12 heads, and embedding width
 of 768. Its context length, parameter sharing, QKV bias, and initialization differ.
-The [GPT-2 small recipe](../configs/pretrain_gpt2_124m.yaml) closes those differences.
+The [GPT-2 small recipe](#gpt-2-small-recipe) closes those differences.
 Its logits match the public GPT-2 124M weights loaded into this model (see
 [GPT-2 initialization and weights](#gpt-2-initialization-and-weights)). Comparison for the
 162M book preset:
@@ -146,6 +146,35 @@ configuration; it should not be read as the parameter count of original GPT-2
 small. Enabling QKV bias, tying the head, and using context 1024 gives 124,439,808.
 Training-recipe differences (weight-decay groups, betas, schedule, clipping) and
 the plan to close all gaps are in the [GPT-2 parity gap register](gpt2-parity-gaps.md).
+
+## GPT-2 small recipe
+
+[`configs/pretrain_gpt2_124m.yaml`](../configs/pretrain_gpt2_124m.yaml) is GPT-2 small
+(**124,439,808 parameters**: tied head, QKV bias, context 1024) with nanoGPT's optimization
+recipe. Each piece is a config field whose default keeps the book behavior:
+
+| Field | GPT-2 recipe | Book default |
+| --- | --- | --- |
+| `model.init`, `residual_scaled_init` | `gpt2`, `true` | `pytorch` |
+| `model.tie_embeddings` | `true` | `false` |
+| `model.attn_impl` | `sdpa` (fused) | `explicit` |
+| `training.weight_decay_policy` | `matrices` (no decay on biases/LayerNorm) | `all` |
+| `training.beta1`, `beta2` | 0.9, 0.95 | 0.9, 0.999 |
+| `training.lr_schedule`, `warmup_steps`, `min_lr` | cosine, linear warmup | constant |
+| `training.grad_clip` | 1.0 (global norm) | none |
+| `training.grad_accum_steps` | micro-batches per update | 1 |
+
+`batch_size` is the micro-batch; one optimizer update averages `grad_accum_steps` of them, so
+tokens per update are `batch_size x context_length x grad_accum_steps`. A final partial group at
+the end of an epoch still updates, averaged over the micro-batches it has. The learning rate is
+a pure function of the update index, so resume does not depend on optimizer state. Metrics now
+include the pre-clip `grad_norm`.
+
+The preset's **data path, tokens per update (32,768, against nanoGPT's ~0.5M scale), warmup
+length, token budget, and evaluation cadence are provisional**: no corpus is selected yet, so `prepare` reports the data file missing. The
+model/recipe pieces are verified by unit tests, an exact fresh-process resume test with every
+feature active, an accumulation-equals-full-batch test, and the pretrained-weight oracle in
+[GPT-2 initialization and weights](#gpt-2-initialization-and-weights).
 
 ## GPT-2 initialization and weights
 
@@ -184,7 +213,7 @@ differs by 61.5.
   small and medium weights for `model.init_from`.
 - [`gpt2/family.py`](../src/llm_training/model/gpt2/family.py): the recipe's `model` settings
   (`GPT2ModelConfig`), their validation, and how the trainer builds, loads and tokenizes
-  GPT-2 (see [adding a model family](../README.md#adding-a-model-family)).
+  GPT-2 (see [adding a model family](how-to/add-a-model-family.md)).
 - [`dataset.py`](../src/llm_training/data/dataset.py) and
   [`loss.py`](../src/llm_training/lm/loss.py): shifted next-token targets
   and cross-entropy loss.
