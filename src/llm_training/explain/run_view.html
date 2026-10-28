@@ -1,0 +1,925 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Training Run Viewer</title>
+<meta name="description" content="Loss, learning rate, gradient norm, evaluations, checkpoints and samples of llm-training runs, from their run directories.">
+<style>
+:root {
+  --bg: #f7f7f5;
+  --surface: #ffffff;
+  --surface-2: #f0f0ed;
+  --text: #1c1c1a;
+  --text-2: #52514e;
+  --muted: #64645f;
+  --border: #dcdcd6;
+  --grid: #e1e0d9;
+  --axis: #c3c2b7;
+  --accent: #2f5fd0;
+  --warn-bg: #fbf3dc;
+  --warn-border: #e3c77a;
+  --planned: #a9a89f;
+  --series-1: #2a78d6;
+  --series-2: #eb6834;
+  --series-3: #1baf7a;
+  --series-4: #eda100;
+  --series-5: #e87ba4;
+  --series-6: #008300;
+  --series-7: #6250d6;
+  --series-8: #e34948;
+  --shadow: 0 10px 40px rgba(0, 0, 0, 0.12);
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #141413;
+    --surface: #1d1d1b;
+    --surface-2: #262623;
+    --text: #ecece8;
+    --text-2: #c3c2b7;
+    --muted: #a0a098;
+    --border: #3a3a36;
+    --grid: #2c2c2a;
+    --axis: #45453f;
+    --accent: #7ea2f5;
+    --warn-bg: #3a3120;
+    --warn-border: #7a6430;
+    --planned: #6b6b64;
+    --series-1: #3987e5;
+    --series-2: #d95926;
+    --series-3: #199e70;
+    --series-4: #c98500;
+    --series-5: #d55181;
+    --series-6: #008300;
+    --series-7: #9085e9;
+    --series-8: #e66767;
+    --shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #141413;
+  --surface: #1d1d1b;
+  --surface-2: #262623;
+  --text: #ecece8;
+  --text-2: #c3c2b7;
+  --muted: #a0a098;
+  --border: #3a3a36;
+  --grid: #2c2c2a;
+  --axis: #45453f;
+  --accent: #7ea2f5;
+  --warn-bg: #3a3120;
+  --warn-border: #7a6430;
+  --planned: #6b6b64;
+  --series-1: #3987e5;
+  --series-2: #d95926;
+  --series-3: #199e70;
+  --series-4: #c98500;
+  --series-5: #d55181;
+  --series-6: #008300;
+  --series-7: #9085e9;
+  --series-8: #e66767;
+  --shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 14px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+main { max-width: 1180px; margin: 0 auto; padding: 24px 16px 48px; }
+header { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 16px; }
+h1 { font-size: 22px; margin: 0; font-weight: 600; }
+h2 { font-size: 15px; margin: 0 0 10px; font-weight: 600; }
+.sub { color: var(--muted); }
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 16px;
+  margin-top: 16px;
+}
+.controls { display: flex; flex-wrap: wrap; gap: 10px 20px; align-items: center; margin-top: 16px; }
+.control { display: flex; align-items: center; gap: 8px; color: var(--text-2); }
+.seg { display: inline-flex; border: 1px solid var(--border); border-radius: 7px; overflow: hidden; }
+.seg button {
+  font: inherit; color: var(--text-2); background: var(--surface);
+  border: 0; padding: 4px 10px; cursor: pointer;
+}
+.seg button + button { border-left: 1px solid var(--border); }
+.seg button[aria-pressed="true"] { background: var(--surface-2); color: var(--text); font-weight: 600; }
+select, input[type="range"] { font: inherit; }
+select { color: var(--text); background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 3px 6px; }
+#theme { margin-left: auto; }
+.warn {
+  background: var(--warn-bg); border: 1px solid var(--warn-border); border-radius: 8px;
+  padding: 8px 12px; margin-top: 12px;
+}
+.warn p { margin: 2px 0; }
+.table-wrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; }
+th, td { text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
+th { color: var(--muted); font-weight: 500; font-size: 12px; white-space: nowrap; }
+td.num, th.num { text-align: right; white-space: nowrap; }
+.swatch { display: inline-block; width: 14px; height: 3px; border-radius: 2px; vertical-align: middle; margin-right: 6px; }
+.path { color: var(--muted); font-size: 12px; word-break: break-all; }
+.recipe { color: var(--text-2); margin-top: 10px; }
+.chart { position: relative; margin-top: 6px; }
+.chart + .chart { margin-top: 14px; }
+.chart-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 14px; }
+.chart-title { font-weight: 600; }
+.legend { display: flex; flex-wrap: wrap; gap: 4px 14px; color: var(--text-2); font-size: 12px; }
+.legend span { white-space: nowrap; }
+.key { display: inline-block; width: 16px; height: 2px; vertical-align: middle; margin-right: 5px; border-radius: 1px; }
+.key.faint { opacity: 0.35; }
+.key.dot { width: 8px; height: 8px; border-radius: 50%; }
+svg { display: block; width: 100%; overflow: visible; }
+svg text { fill: var(--muted); font-size: 11px; font-variant-numeric: tabular-nums; }
+.gridline { stroke: var(--grid); stroke-width: 1; }
+.axisline { stroke: var(--axis); stroke-width: 1; }
+.crosshair { stroke: var(--text-2); stroke-width: 1; pointer-events: none; }
+.note { color: var(--muted); font-size: 12px; }
+#charts { position: relative; }
+#charts:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; border-radius: 6px; }
+#tooltip {
+  position: absolute; pointer-events: none; z-index: 2;
+  background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+  box-shadow: var(--shadow); padding: 8px 10px; min-width: 200px; font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+#tooltip[hidden] { display: none; }
+#tooltip .tt-head { color: var(--muted); margin-bottom: 4px; }
+#tooltip .tt-run { margin-top: 4px; }
+#tooltip .tt-row { display: flex; gap: 8px; align-items: baseline; }
+#tooltip .tt-row b { font-weight: 600; color: var(--text); min-width: 64px; text-align: right; }
+#tooltip .tt-row span { color: var(--text-2); }
+.sample-nav { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.sample-nav button {
+  font: inherit; color: var(--text); background: var(--surface-2); border: 1px solid var(--border);
+  border-radius: 6px; padding: 2px 10px; cursor: pointer;
+}
+.sample-nav button:disabled { opacity: 0.4; cursor: default; }
+.sample-nav input[type="range"] { flex: 1 1 200px; }
+pre.sample {
+  white-space: pre-wrap; word-break: break-word; background: var(--surface-2); border-radius: 8px;
+  padding: 12px; margin: 10px 0 0; font: 13px/1.55 ui-monospace, SFMono-Regular, Menlo, monospace;
+  max-height: 320px; overflow-y: auto;
+}
+details summary { cursor: pointer; color: var(--text-2); margin-top: 12px; }
+.eval-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; }
+footer { color: var(--muted); font-size: 12px; margin-top: 20px; }
+code { font: 12px ui-monospace, SFMono-Regular, Menlo, monospace; background: var(--surface-2); padding: 1px 4px; border-radius: 4px; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Training run viewer</h1>
+    <span class="sub" id="subtitle"></span>
+  </header>
+
+  <div class="controls">
+    <div class="control">X axis
+      <span class="seg" role="group" aria-label="X axis">
+        <button type="button" data-x="step">Updates</button><button type="button" data-x="tokens">Tokens</button>
+      </span>
+    </div>
+    <div class="control">Y scale
+      <span class="seg" role="group" aria-label="Y scale for loss and gradient norm">
+        <button type="button" data-y="linear">Linear</button><button type="button" data-y="log">Log</button>
+      </span>
+    </div>
+    <label class="control">Smoothing
+      <input type="range" id="smoothing" min="0" max="0.995" step="0.005" aria-describedby="smoothing-value">
+      <span id="smoothing-value"></span>
+    </label>
+    <label class="control" id="focus-control">Samples and events for
+      <select id="focus"></select>
+    </label>
+    <span class="seg" id="theme" role="group" aria-label="Theme">
+      <button type="button" data-theme-choice="auto">Auto</button><button type="button" data-theme-choice="light">Light</button><button type="button" data-theme-choice="dark">Dark</button>
+    </span>
+  </div>
+
+  <div id="warnings"></div>
+
+  <section class="card">
+    <h2>Runs</h2>
+    <div class="table-wrap"><table id="runs-table"></table></div>
+    <div class="recipe" id="recipe"></div>
+  </section>
+
+  <section class="card">
+    <div id="charts" tabindex="0" aria-label="Charts. Use the left and right arrow keys to move through updates.">
+      <div class="chart" id="chart-loss"></div>
+      <div class="chart" id="chart-lr"></div>
+      <div class="chart" id="chart-grad"></div>
+      <div class="chart" id="chart-events"></div>
+      <div id="tooltip" hidden></div>
+    </div>
+    <p class="note" id="chart-note"></p>
+  </section>
+
+  <section class="card">
+    <h2 id="sample-title">Samples</h2>
+    <div id="sample-body"></div>
+  </section>
+
+  <section class="card">
+    <h2>End-of-run evaluation</h2>
+    <p class="note">The monitored subset is the first <code>eval_iter</code> validation batches in file order, so it can sit above or below the full split. Compare runs on the full validation split.</p>
+    <div class="eval-grid" id="evaluation"></div>
+    <details id="points">
+      <summary>Every monitored evaluation</summary>
+      <div class="table-wrap"><table id="points-table"></table></div>
+    </details>
+  </section>
+
+  <footer id="footer"></footer>
+</main>
+
+<script type="application/json" id="run-data">__RUN_DATA__</script>
+<script>
+"use strict";
+const DATA = JSON.parse(document.getElementById("run-data").textContent);
+const RUNS = DATA.runs;
+const SINGLE = RUNS.length === 1;
+const SVG_NS = "http://www.w3.org/2000/svg";
+
+const state = {
+  x: SINGLE ? "step" : "tokens",
+  y: "log",
+  smoothing: defaultSmoothing(),
+  focus: 0,
+  hover: null, // x-domain value under the crosshair
+  sampleIndex: null,
+};
+
+// ---------- helpers ----------
+function el(tag, attrs = {}, text) {
+  const node = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) node.setAttribute(k, v);
+  if (text !== undefined) node.textContent = text;
+  return node;
+}
+function svgEl(tag, attrs = {}) {
+  const node = document.createElementNS(SVG_NS, tag);
+  for (const [k, v] of Object.entries(attrs)) node.setAttribute(k, v);
+  return node;
+}
+function seriesColor(i) { return `var(--series-${i + 1})`; }
+function compact(n) {
+  if (n === null || n === undefined) return "–";
+  const a = Math.abs(n);
+  if (a >= 1e9) return (n / 1e9).toFixed(a >= 1e10 ? 0 : 1).replace(/\.0$/, "") + "B";
+  if (a >= 1e6) return (n / 1e6).toFixed(a >= 1e7 ? 0 : 1).replace(/\.0$/, "") + "M";
+  if (a >= 1e3) return (n / 1e3).toFixed(a >= 1e4 ? 0 : 1).replace(/\.0$/, "") + "K";
+  return String(Math.round(n * 100) / 100);
+}
+function int(n) { return n === null || n === undefined ? "–" : Number(n).toLocaleString("en-US"); }
+function fixed(n, d = 3) { return n === null || n === undefined ? "–" : Number(n).toFixed(d); }
+function sci(n) { return n === null || n === undefined ? "–" : Number(n).toExponential(2); }
+function tick(v) { return v >= 10 ? v.toFixed(0) : String(+v.toPrecision(2)); }
+function perplexity(n) { return n === null || n === undefined ? "–" : n >= 1000 ? int(Math.round(n)) : sig(n, 4); }
+function sig(n, d = 3) { return n === null || n === undefined ? "–" : Number(n).toPrecision(d); }
+function duration(seconds) {
+  if (seconds === null || seconds === undefined) return "–";
+  const h = Math.floor(seconds / 3600), m = Math.round((seconds % 3600) / 60);
+  return h ? `${h} h ${m} min` : `${Math.max(1, m)} min`;
+}
+function defaultSmoothing() {
+  const longest = Math.max(...RUNS.map(r => r.updates.step.length));
+  return longest > 5000 ? 0.98 : longest > 500 ? 0.9 : longest > 50 ? 0.6 : 0;
+}
+function lastIndexAtOrBefore(xs, x) { // xs ascending; -1 when x precedes every value
+  let lo = 0, hi = xs.length - 1, ans = -1;
+  while (lo <= hi) {
+    const mid = (lo + hi) >> 1;
+    if (xs[mid] <= x) { ans = mid; lo = mid + 1; } else hi = mid - 1;
+  }
+  return ans;
+}
+function nearestIndex(xs, x) {
+  const i = lastIndexAtOrBefore(xs, x);
+  if (i < 0) return xs.length ? 0 : -1;
+  if (i + 1 < xs.length && xs[i + 1] - x < x - xs[i]) return i + 1;
+  return i;
+}
+function ema(values, alpha) { // debiased, as TensorBoard smooths
+  const out = new Array(values.length);
+  let s = 0, w = 0;
+  for (let i = 0; i < values.length; i++) {
+    const v = values[i];
+    if (v === null) { out[i] = null; continue; }
+    s = alpha * s + (1 - alpha) * v;
+    w = alpha * w + (1 - alpha);
+    out[i] = s / w;
+  }
+  return out;
+}
+
+// ---------- derived data ----------
+for (const run of RUNS) {
+  const u = run.updates;
+  run.evalSteps = run.evals.map(e => e.step);
+  run.evalTokens = run.evals.map(e => e.tokens);
+  run.hasGrad = u.grad_norm.some(v => v !== null);
+  run.hasLr = u.learning_rate.some(v => v !== null);
+}
+function xsOf(run) { return state.x === "step" ? run.updates.step : run.updates.tokens; }
+function evalXs(run) { return state.x === "step" ? run.evalSteps : run.evalTokens; }
+function domainMax() {
+  let max = 1;
+  for (const run of RUNS) {
+    if (state.x === "step") max = Math.max(max, run.total_steps || 0, run.events.last_step);
+    else max = Math.max(max, run.updates.tokens.at(-1) || 0);
+  }
+  return max;
+}
+function stepToX(run, step) { // map an update number onto the current axis
+  if (state.x === "step") return step;
+  const i = lastIndexAtOrBefore(run.updates.step, step);
+  return i < 0 ? 0 : run.updates.tokens[i];
+}
+
+// ---------- scales and ticks ----------
+function niceTicks(lo, hi, count) {
+  if (!(hi > lo)) return [lo];
+  const raw = (hi - lo) / count, mag = Math.pow(10, Math.floor(Math.log10(raw)));
+  const step = [1, 2, 2.5, 5, 10].map(m => m * mag).find(s => s >= raw) || 10 * mag;
+  const ticks = [];
+  for (let t = Math.ceil(lo / step) * step; t <= hi + step * 1e-9; t += step) ticks.push(+t.toPrecision(12));
+  return ticks;
+}
+function logTicks(lo, hi) {
+  const ticks = [];
+  // Under ~1.5 decades the 1-2-5 ticks leave long stretches unlabeled.
+  const steps = Math.log10(hi / lo) < 1.5 ? [1, 1.5, 2, 3, 5, 7] : [1, 2, 5];
+  for (let e = Math.floor(Math.log10(lo)); e <= Math.ceil(Math.log10(hi)); e++)
+    for (const m of steps) {
+      const t = m * Math.pow(10, e);
+      if (t >= lo * 0.999 && t <= hi * 1.001) ticks.push(t);
+    }
+  return ticks.length >= 2 ? ticks : niceTicks(lo, hi, 4);
+}
+function yScale(lo, hi, log, top, bottom) {
+  if (log) {
+    const a = Math.log(lo), b = Math.log(hi);
+    return { map: v => bottom - (Math.log(v) - a) / (b - a || 1) * (bottom - top), ticks: logTicks(lo, hi) };
+  }
+  return { map: v => bottom - (v - lo) / (hi - lo || 1) * (bottom - top), ticks: niceTicks(lo, hi, 4) };
+}
+
+// Min/max per pixel column keeps spikes that averaging would erase.
+function pathFor(xs, ys, xmap, ymap, left, right) {
+  let d = "", col = null, lo = null, hi = null, first = null, last = null, started = false;
+  const flush = () => {
+    if (col === null) return;
+    const pts = first.v <= last.v ? [lo, hi] : [hi, lo];
+    for (const v of (lo === hi ? [lo] : pts)) {
+      d += (started ? "L" : "M") + col.toFixed(1) + "," + ymap(v).toFixed(1);
+      started = true;
+    }
+  };
+  for (let i = 0; i < xs.length; i++) {
+    const y = ys[i];
+    if (y === null || y === undefined) continue;
+    const px = Math.round(xmap(xs[i]));
+    if (px < left - 1 || px > right + 1) continue;
+    if (px !== col) {
+      flush();
+      col = px; lo = y; hi = y; first = { v: y }; last = { v: y };
+    } else {
+      lo = Math.min(lo, y); hi = Math.max(hi, y); last = { v: y };
+    }
+  }
+  flush();
+  return d;
+}
+
+// ---------- chart frame ----------
+const MARGIN = { left: 58, right: 18, top: 8, bottom: 24 };
+const charts = {}; // id -> { svg, xmap, crosshair, height }
+
+function frame(container, height, yInfo, xAxisLabels) {
+  const width = Math.max(280, container.clientWidth);
+  const svg = svgEl("svg", { viewBox: `0 0 ${width} ${height}`, height, role: "img" });
+  const left = MARGIN.left, right = width - MARGIN.right, top = MARGIN.top, bottom = height - MARGIN.bottom;
+  const max = domainMax();
+  const xmap = v => left + (v / max) * (right - left);
+  const grid = svgEl("g");
+  if (yInfo) {
+    for (const t of yInfo.scale.ticks) {
+      const y = yInfo.scale.map(t);
+      if (y < top - 1 || y > bottom + 1) continue;
+      grid.append(svgEl("line", { x1: left, x2: right, y1: y, y2: y, class: "gridline" }));
+      const label = svgEl("text", { x: left - 8, y: y + 4, "text-anchor": "end" });
+      label.textContent = yInfo.format(t);
+      grid.append(label);
+    }
+  }
+  grid.append(svgEl("line", { x1: left, x2: right, y1: bottom, y2: bottom, class: "axisline" }));
+  for (const t of niceTicks(0, max, Math.max(2, Math.floor((right - left) / 110)))) {
+    const x = xmap(t);
+    grid.append(svgEl("line", { x1: x, x2: x, y1: bottom, y2: bottom + 4, class: "axisline" }));
+    if (xAxisLabels) {
+      const label = svgEl("text", { x, y: bottom + 16, "text-anchor": "middle" });
+      label.textContent = compact(t);
+      grid.append(label);
+    }
+  }
+  svg.append(grid);
+  const crosshair = svgEl("line", { y1: top, y2: bottom, class: "crosshair", visibility: "hidden" });
+  svg.append(crosshair);
+  return { svg, xmap, left, right, top, bottom, width, crosshair };
+}
+
+function head(container, title, legendItems, extra) {
+  const h = el("div", { class: "chart-head" });
+  h.append(el("span", { class: "chart-title" }, title));
+  const legend = el("div", { class: "legend" });
+  for (const item of legendItems) {
+    const span = el("span");
+    const key = el("span", { class: "key" + (item.faint ? " faint" : "") + (item.dot ? " dot" : "") });
+    key.style.background = item.color;
+    span.append(key, document.createTextNode(item.label));
+    legend.append(span);
+  }
+  h.append(legend);
+  if (extra) h.append(el("span", { class: "note" }, extra));
+  container.append(h);
+}
+
+function line(svg, d, color, width, opacity) {
+  if (!d) return;
+  const p = svgEl("path", { d, fill: "none", "stroke-width": width, "stroke-linejoin": "round", "stroke-linecap": "round" });
+  p.style.stroke = color;
+  if (opacity !== undefined) p.style.opacity = opacity;
+  svg.append(p);
+}
+
+function extent(arrays, log) {
+  let lo = Infinity, hi = -Infinity;
+  for (const a of arrays) for (const v of a) if (v !== null && v !== undefined && (!log || v > 0)) {
+    if (v < lo) lo = v; if (v > hi) hi = v;
+  }
+  if (!isFinite(lo)) return [0, 1];
+  if (log) { // start on a 1-2-5 value so the bottom of the plot carries a label
+    const e = Math.pow(10, Math.floor(Math.log10(lo)));
+    return [[5, 2, 1].map(m => m * e).find(t => t <= lo), hi * 1.08];
+  }
+  const pad = (hi - lo) * 0.06 || Math.abs(hi) * 0.1 || 1;
+  return [Math.max(0, lo - pad), hi + pad];
+}
+
+// ---------- charts ----------
+function drawLoss() {
+  const c = document.getElementById("chart-loss");
+  c.replaceChildren();
+  const log = state.y === "log";
+  const smoothed = RUNS.map(r => ema(r.updates.train_loss, state.smoothing));
+  const evalLosses = RUNS.map(r => r.evals.map(e => e.loss));
+  // Scale to the smoothed curve and validation, so a few noisy batches don't flatten the plot.
+  const [lo, hi] = extent([...smoothed, ...evalLosses, ...RUNS.map(r => r.updates.train_loss.slice(0, 1))], log);
+  const legend = SINGLE
+    ? [
+        { label: "Training, smoothed", color: seriesColor(0) },
+        { label: "Training, per update", color: seriesColor(0), faint: true },
+        { label: `Validation (${RUNS[0].training.recipe === "sampled_train_validation" ? "book's batch mean" : "first " + RUNS[0].training.eval_iter + " batches"})`, color: seriesColor(1) },
+      ]
+    : [
+        ...RUNS.map((r, i) => ({ label: r.name, color: seriesColor(i) })),
+      ];
+  head(c, "Loss (nats per token)", legend, SINGLE ? "" : "Thick line with dots: validation. Thin line: training, smoothed.");
+  const height = 250;
+  const scale = yScale(lo, hi, log, MARGIN.top, height - MARGIN.bottom);
+  const fresh = frame(c, height, { scale, format: tick }, false);
+  const ymap = v => Math.min(Math.max(scale.map(v), fresh.top - 4), fresh.bottom + 4);
+  RUNS.forEach((run, i) => {
+    const xs = xsOf(run);
+    const trainColor = seriesColor(i), valColor = seriesColor(SINGLE ? 1 : i);
+    line(fresh.svg, pathFor(xs, run.updates.train_loss, fresh.xmap, ymap, fresh.left, fresh.right), trainColor, 1, SINGLE ? 0.3 : 0.15);
+    line(fresh.svg, pathFor(xs, smoothed[i], fresh.xmap, ymap, fresh.left, fresh.right), trainColor, SINGLE ? 2 : 1.25, SINGLE ? 1 : 0.7);
+    const exs = evalXs(run), eys = run.evals.map(e => e.loss);
+    line(fresh.svg, pathFor(exs, eys, fresh.xmap, ymap, fresh.left, fresh.right), valColor, 2);
+    if (run.evals.length <= 150) for (let k = 0; k < exs.length; k++) {
+      const dot = svgEl("circle", { cx: fresh.xmap(exs[k]), cy: ymap(eys[k]), r: 3.5, "stroke-width": 2 });
+      dot.style.fill = valColor; dot.style.stroke = "var(--surface)";
+      fresh.svg.append(dot);
+    }
+  });
+  fresh.svg.setAttribute("aria-label", "Training and validation loss");
+  c.append(fresh.svg);
+  charts.loss = fresh;
+}
+
+function drawLr() {
+  const c = document.getElementById("chart-lr");
+  c.replaceChildren();
+  const showPlanned = state.x === "step";
+  const arrays = RUNS.map(r => r.updates.learning_rate);
+  if (showPlanned) arrays.push(...RUNS.map(r => r.planned.map(p => p[1])));
+  // From zero to the next round value above the peak, so the peak itself sits on the grid.
+  let hi = Math.max(...arrays.flat().filter(v => v !== null), 0) || 1;
+  const step = niceTicks(0, hi, 4)[1] || hi;
+  hi = Math.ceil(hi / step - 1e-9) * step;
+  const lo = 0;
+  const legend = SINGLE
+    ? [{ label: "Used", color: seriesColor(0) }]
+    : RUNS.map((r, i) => ({ label: r.name, color: seriesColor(i) }));
+  if (showPlanned) legend.push({ label: "Planned for the whole budget", color: "var(--planned)" });
+  head(c, "Learning rate", legend, showPlanned ? "" : "The planned schedule is drawn on the updates axis only.");
+  const scale = yScale(lo, hi, false, MARGIN.top, 150 - MARGIN.bottom);
+  const f = frame(c, 150, { scale, format: v => (v === 0 ? "0" : v.toExponential(0)) }, false);
+  RUNS.forEach((run, i) => {
+    if (showPlanned && run.planned.length)
+      line(f.svg, pathFor(run.planned.map(p => p[0]), run.planned.map(p => p[1]), f.xmap, scale.map, f.left, f.right), "var(--planned)", 3);
+    line(f.svg, pathFor(xsOf(run), run.updates.learning_rate, f.xmap, scale.map, f.left, f.right), seriesColor(i), 2);
+  });
+  f.svg.setAttribute("aria-label", "Learning rate per update");
+  c.append(f.svg);
+  charts.lr = f;
+}
+
+function drawGrad() {
+  const c = document.getElementById("chart-grad");
+  c.replaceChildren();
+  const withGrad = RUNS.filter(r => r.hasGrad);
+  const log = state.y === "log";
+  const legend = SINGLE ? [] : RUNS.map((r, i) => ({ label: r.name, color: seriesColor(i) }));
+  const clips = [...new Set(RUNS.map(r => r.training.grad_clip).filter(v => v))];
+  head(c, "Gradient norm, before clipping", legend, withGrad.length ? (clips.length ? `Hairline: clipping threshold ${clips.join(", ")}` : "No clipping in this recipe.") : "");
+  if (!withGrad.length) {
+    c.append(el("p", { class: "note" }, "Not recorded: these runs predate the trainer's grad_norm field."));
+    charts.grad = null;
+    return;
+  }
+  const smoothed = withGrad.map(r => r.updates.grad_norm);
+  const [lo, hi] = extent([...smoothed, clips], log);
+  const scale = yScale(lo, hi, log, MARGIN.top, 160 - MARGIN.bottom);
+  const f = frame(c, 160, { scale, format: tick }, true);
+  for (const clip of clips) {
+    const y = scale.map(clip);
+    f.svg.append(svgEl("line", { x1: f.left, x2: f.right, y1: y, y2: y, class: "axisline" }));
+    const label = svgEl("text", { x: f.right, y: y - 4, "text-anchor": "end" });
+    label.textContent = `clip ${clip}`;
+    f.svg.append(label);
+  }
+  RUNS.forEach((run, i) => {
+    if (run.hasGrad) line(f.svg, pathFor(xsOf(run), run.updates.grad_norm, f.xmap, scale.map, f.left, f.right), seriesColor(i), 1.25);
+  });
+  f.svg.setAttribute("aria-label", "Gradient norm per update");
+  c.append(f.svg);
+  charts.grad = f;
+}
+
+function drawEvents() {
+  const c = document.getElementById("chart-events");
+  c.replaceChildren();
+  const run = RUNS[state.focus];
+  const e = run.events;
+  const marks = [];
+  if (e.resume_step) marks.push([e.resume_step, `Resumed at update ${int(e.resume_step)} (vertical line).`]);
+  if (e.best_step) marks.push([e.best_step, `Best monitored loss ${fixed(e.best_loss)} at update ${int(e.best_step)}, saved as best.pt (vertical line).`]);
+  head(c, `Events${SINGLE ? "" : " · " + run.name}`, [], `Evaluations after update 1, 1 + ${run.training.eval_freq}, …; checkpoints every ${run.training.checkpoint_every} updates, on each new best, and at a stop or the end. ${marks.map(m => m[1]).join(" ")}`);
+  const rows = [
+    ["Evaluation", e.evaluations],
+    ["Checkpoint", e.checkpoints],
+    ["New best", e.improvements],
+  ];
+  const rowH = 18, height = MARGIN.top + rows.length * rowH + MARGIN.bottom + 2;
+  const f = frame(c, height, null, true);
+  rows.forEach(([label, steps], r) => {
+    const y = MARGIN.top + r * rowH + rowH / 2;
+    const t = svgEl("text", { x: f.left - 8, y: y + 4, "text-anchor": "end" });
+    t.textContent = label;
+    f.svg.append(t);
+    for (const s of steps) {
+      const x = f.xmap(stepToX(run, s));
+      const tick = svgEl("line", { x1: x, x2: x, y1: y - 6, y2: y + 6, "stroke-width": r === 2 ? 2 : 1.25 });
+      tick.style.stroke = r === 2 ? seriesColor(SINGLE ? 1 : state.focus) : "var(--text-2)";
+      f.svg.append(tick);
+    }
+  });
+  for (const [s] of marks) {
+    const x = f.xmap(stepToX(run, s));
+    f.svg.append(svgEl("line", { x1: x, x2: x, y1: MARGIN.top - 2, y2: f.bottom, class: "axisline" }));
+  }
+  f.svg.setAttribute("aria-label", "Evaluation, checkpoint and best-model events");
+  c.append(f.svg);
+  charts.events = f;
+}
+
+function drawCharts() {
+  drawLoss(); drawLr(); drawGrad(); drawEvents();
+  const notes = [];
+  for (const run of RUNS) {
+    const check = run.schedule_check;
+    if (check && check.mismatched.length)
+      notes.push(`${run.name}: recorded learning rates differ from the planned schedule at updates ${check.mismatched.join(", ")} (code changed since the run?).`);
+    else if (check)
+      notes.push(`${SINGLE ? "Recorded" : run.name + ": recorded"} learning rates match the trainer's schedule function at all ${int(check.checked)} updates.`);
+  }
+  document.getElementById("chart-note").textContent = notes.join(" ");
+  if (state.hover !== null) showHover(state.hover);
+}
+
+// ---------- crosshair and tooltip ----------
+const chartsBox = document.getElementById("charts");
+const tooltip = document.getElementById("tooltip");
+
+function hoverValues(run, x) {
+  const xs = xsOf(run);
+  const i = nearestIndex(xs, x);
+  if (i < 0) return null;
+  const smoothed = ema(run.updates.train_loss.slice(0, i + 1), state.smoothing).at(-1);
+  const step = run.updates.step[i];
+  const k = lastIndexAtOrBefore(run.evalSteps, step);
+  return {
+    i, step,
+    tokens: run.updates.tokens[i],
+    epoch: run.updates.epoch[i],
+    train: run.updates.train_loss[i],
+    smoothed,
+    lr: run.updates.learning_rate[i],
+    grad: run.updates.grad_norm[i],
+    evalPoint: k >= 0 ? run.evals[k] : null,
+  };
+}
+
+function ttRow(value, label) {
+  const row = el("div", { class: "tt-row" });
+  row.append(el("b", {}, value), el("span", {}, label));
+  return row;
+}
+
+function showHover(x) {
+  state.hover = x;
+  const focusRun = RUNS[state.focus];
+  const fv = hoverValues(focusRun, x);
+  for (const ch of Object.values(charts)) {
+    if (!ch) continue;
+    const px = ch.xmap(fv ? (state.x === "step" ? fv.step : fv.tokens) : x);
+    ch.crosshair.setAttribute("x1", px); ch.crosshair.setAttribute("x2", px);
+    ch.crosshair.setAttribute("visibility", "visible");
+  }
+  tooltip.replaceChildren();
+  if (fv) tooltip.append(el("div", { class: "tt-head" }, `Update ${int(fv.step)} · ${compact(fv.tokens)} tokens · epoch ${fv.epoch}`));
+  RUNS.forEach((run, i) => {
+    const v = hoverValues(run, x);
+    if (!v) return;
+    const block = el("div", { class: "tt-run" });
+    if (!SINGLE) {
+      const name = el("div", { class: "tt-row" });
+      const key = el("span", { class: "key" });
+      key.style.background = seriesColor(i);
+      name.append(key, el("span", {}, `${run.name} · update ${int(v.step)}`));
+      block.append(name);
+    }
+    block.append(ttRow(fixed(v.smoothed), `training, smoothed (${fixed(v.train)} this update)`));
+    if (v.evalPoint) block.append(ttRow(fixed(v.evalPoint.loss), `validation at update ${int(v.evalPoint.step)}`));
+    block.append(ttRow(sci(v.lr), "learning rate"));
+    if (run.hasGrad) block.append(ttRow(sig(v.grad, 3), "gradient norm"));
+    tooltip.append(block);
+  });
+  tooltip.hidden = false;
+  const box = chartsBox.getBoundingClientRect();
+  const px = charts.loss.xmap(fv ? (state.x === "step" ? fv.step : fv.tokens) : x) * (box.width / charts.loss.width);
+  const w = tooltip.offsetWidth;
+  tooltip.style.left = (px + 16 + w > box.width ? Math.max(0, px - 16 - w) : px + 16) + "px";
+  tooltip.style.top = "28px";
+  if (fv) followSample(fv.step);
+}
+
+function hideHover() {
+  state.hover = null;
+  tooltip.hidden = true;
+  for (const ch of Object.values(charts)) if (ch) ch.crosshair.setAttribute("visibility", "hidden");
+}
+
+chartsBox.addEventListener("pointermove", ev => {
+  const ch = charts.loss;
+  const rect = ch.svg.getBoundingClientRect();
+  const px = (ev.clientX - rect.left) * (ch.width / rect.width);
+  if (px < ch.left - 10 || px > ch.right + 10) return hideHover();
+  const v = Math.max(0, Math.min(1, (px - ch.left) / (ch.right - ch.left))) * domainMax();
+  showHover(v);
+});
+chartsBox.addEventListener("pointerleave", hideHover);
+chartsBox.addEventListener("keydown", ev => {
+  const run = RUNS[state.focus];
+  const xs = xsOf(run);
+  if (!xs.length) return;
+  if (ev.key === "Escape") return hideHover();
+  if (ev.key !== "ArrowLeft" && ev.key !== "ArrowRight") return;
+  ev.preventDefault();
+  const stride = ev.shiftKey ? Math.max(1, Math.round(xs.length / 20)) : Math.max(1, Math.round(xs.length / 200));
+  let i = state.hover === null ? xs.length - 1 : nearestIndex(xs, state.hover);
+  i = Math.max(0, Math.min(xs.length - 1, i + (ev.key === "ArrowRight" ? stride : -stride)));
+  showHover(xs[i]);
+});
+
+// ---------- samples ----------
+function followSample(step) {
+  const samples = RUNS[state.focus].samples;
+  if (!samples.length) return;
+  const k = lastIndexAtOrBefore(samples.map(s => s.step), step);
+  setSample(Math.max(0, k));
+}
+
+function setSample(k) {
+  state.sampleIndex = k;
+  const samples = RUNS[state.focus].samples;
+  const s = samples[k];
+  document.getElementById("sample-title").textContent = `Sample after update ${int(s.step)}${s.kind === "update" ? "" : " (" + s.kind + ")"}`;
+  document.getElementById("sample-text").textContent = s.text;
+  const slider = document.getElementById("sample-slider");
+  slider.value = k;
+  slider.setAttribute("aria-valuetext", `update ${s.step}`);
+  document.getElementById("sample-prev").disabled = k === 0;
+  document.getElementById("sample-next").disabled = k === samples.length - 1;
+  document.getElementById("sample-count").textContent = `${k + 1} of ${samples.length}`;
+}
+
+function drawSamples() {
+  const body = document.getElementById("sample-body");
+  body.replaceChildren();
+  const run = RUNS[state.focus];
+  if (!run.samples.length) {
+    document.getElementById("sample-title").textContent = "Samples";
+    body.append(el("p", { class: "note" }, "This run recorded no samples. Set output.sample_every to add one to every Nth update."));
+    return;
+  }
+  const nav = el("div", { class: "sample-nav" });
+  const prev = el("button", { type: "button", id: "sample-prev" }, "Previous");
+  const next = el("button", { type: "button", id: "sample-next" }, "Next");
+  const slider = el("input", { type: "range", id: "sample-slider", min: 0, max: run.samples.length - 1, step: 1, "aria-label": "Sample" });
+  nav.append(prev, slider, next, el("span", { class: "note", id: "sample-count" }));
+  body.append(nav, el("pre", { class: "sample", id: "sample-text" }));
+  const t = run.training;
+  body.append(el("p", { class: "note" }, "Hover the charts to show the sample taken at or before that update."));
+  prev.addEventListener("click", () => setSample(state.sampleIndex - 1));
+  next.addEventListener("click", () => setSample(state.sampleIndex + 1));
+  slider.addEventListener("input", () => setSample(Number(slider.value)));
+  setSample(run.samples.length - 1);
+}
+
+// ---------- tables ----------
+function thead(row) { const t = el("thead"); t.append(row); return t; }
+function cell(row, text, cls) { row.append(el("td", cls ? { class: cls } : {}, text)); }
+
+function drawRunsTable() {
+  const table = document.getElementById("runs-table");
+  table.replaceChildren();
+  const head = el("tr");
+  for (const [label, num] of [["Run"], ["Status"], ["Updates", 1], ["Tokens seen", 1], ["Time", 1], ["Best monitored loss"], ["Full validation"]])
+    head.append(el("th", num ? { class: "num" } : {}, label));
+  table.append(thead(head));
+  const body = el("tbody");
+  RUNS.forEach((run, i) => {
+    const tr = el("tr");
+    const name = el("td");
+    const sw = el("span", { class: "swatch" });
+    sw.style.background = seriesColor(i);
+    name.append(sw, document.createTextNode(run.name), el("div", { class: "path" }, run.path));
+    tr.append(name);
+    const status = run.status ? run.status.status : "unknown";
+    cell(tr, status === "running" ? "running (snapshot)" : status);
+    cell(tr, `${int(run.events.last_step)}${run.total_steps ? " of " + int(run.total_steps) : ""}`, "num");
+    cell(tr, compact(run.updates.tokens.at(-1)), "num");
+    cell(tr, duration(run.status && run.status.elapsed_seconds), "num");
+    cell(tr, run.events.best_step ? `${fixed(run.events.best_loss)} at update ${int(run.events.best_step)}` : "–");
+    const full = run.evaluation && run.evaluation.full_validation;
+    cell(tr, full ? `${fixed(full.loss)} (perplexity ${perplexity(full.perplexity)})` : "written when the run completes");
+    body.append(tr);
+  });
+  table.append(body);
+}
+
+function drawRecipe() {
+  const run = RUNS[state.focus], t = run.training;
+  const parts = [];
+  parts.push(t.lr_schedule === "cosine" ? `cosine from ${sci(t.learning_rate)} to ${sci(t.min_lr)}` : `constant ${sci(t.learning_rate)}`);
+  if (t.warmup_steps) parts.push(`${int(t.warmup_steps)} warmup updates`);
+  parts.push(t.grad_clip ? `clip at ${t.grad_clip}` : "no clipping");
+  parts.push(`${t.batch_size} × ${int(t.window)} tokens${t.grad_accum_steps > 1 ? " × " + t.grad_accum_steps + " micro-batches" : ""} per update`);
+  parts.push(`${t.recipe}, evaluating ${t.eval_iter} batch${t.eval_iter === 1 ? "" : "es"} every ${t.eval_freq} updates`);
+  document.getElementById("recipe").textContent = `${SINGLE ? "" : run.name + ": "}${run.arch}, ${run.data_format} data${run.mask_prompt ? " (prompt masked)" : ""}${run.device ? " on " + run.device : ""}; ${parts.join("; ")}.`;
+}
+
+function drawEvaluation() {
+  const box = document.getElementById("evaluation");
+  box.replaceChildren();
+  RUNS.forEach((run, i) => {
+    const wrap = el("div");
+    const title = el("div", { class: "chart-head" });
+    const sw = el("span", { class: "swatch" });
+    sw.style.background = seriesColor(i);
+    title.append(sw, el("span", { class: "chart-title" }, run.name));
+    wrap.append(title);
+    const ev = run.evaluation;
+    if (!ev) {
+      wrap.append(el("p", { class: "note" }, "No evaluation.json: it is written only when a run completes its budget."));
+      box.append(wrap);
+      return;
+    }
+    const table = el("table");
+    const h = el("tr");
+    for (const [label, num] of [["Measured"], ["Loss", 1], ["Perplexity", 1], ["Tokens", 1]]) h.append(el("th", num ? { class: "num" } : {}, label));
+    table.append(thead(h));
+    const body = el("tbody");
+    for (const [key, label] of [["initial", "Before training, monitored subset"], ["final", "After training, monitored subset"], ["full_validation", "After training, full validation split"]]) {
+      const v = ev[key];
+      if (!v) continue;
+      const tr = el("tr");
+      cell(tr, label); cell(tr, fixed(v.loss), "num"); cell(tr, perplexity(v.perplexity), "num"); cell(tr, int(v.tokens), "num");
+      body.append(tr);
+    }
+    table.append(body);
+    const tw = el("div", { class: "table-wrap" });
+    tw.append(table);
+    wrap.append(tw);
+    box.append(wrap);
+  });
+}
+
+function drawPoints() {
+  const run = RUNS[state.focus];
+  const table = document.getElementById("points-table");
+  table.replaceChildren();
+  const sampled = run.training.recipe === "sampled_train_validation";
+  const cols = sampled
+    ? [["Update", 1], ["Tokens seen", 1], ["Validation loss", 1], ["Training-subset loss", 1]]
+    : [["Update", 1], ["Tokens seen", 1], ["Validation loss", 1], ["Perplexity", 1], ["Tokens evaluated", 1]];
+  const h = el("tr");
+  for (const [label] of cols) h.append(el("th", { class: "num" }, label));
+  table.append(thead(h));
+  const body = el("tbody");
+  for (const e of run.evals) {
+    const tr = el("tr");
+    cell(tr, int(e.step), "num"); cell(tr, int(e.tokens), "num"); cell(tr, fixed(e.loss, 4), "num");
+    if (sampled) cell(tr, fixed(e.train, 4), "num");
+    else { cell(tr, perplexity(e.perplexity), "num"); cell(tr, int(e.eval_tokens), "num"); }
+    body.append(tr);
+  }
+  table.append(body);
+  document.querySelector("#points summary").textContent = `Every monitored evaluation${SINGLE ? "" : " · " + run.name} (${run.evals.length})`;
+}
+
+// ---------- controls ----------
+function syncButtons() {
+  for (const b of document.querySelectorAll("[data-x]")) b.setAttribute("aria-pressed", b.dataset.x === state.x);
+  for (const b of document.querySelectorAll("[data-y]")) b.setAttribute("aria-pressed", b.dataset.y === state.y);
+  const theme = document.documentElement.dataset.theme || "auto";
+  for (const b of document.querySelectorAll("[data-theme-choice]")) b.setAttribute("aria-pressed", b.dataset.themeChoice === theme);
+  document.getElementById("smoothing-value").textContent = state.smoothing.toFixed(3).replace(/0+$/, "").replace(/\.$/, "");
+}
+for (const b of document.querySelectorAll("[data-x]")) b.addEventListener("click", () => { state.x = b.dataset.x; syncButtons(); drawCharts(); });
+for (const b of document.querySelectorAll("[data-y]")) b.addEventListener("click", () => { state.y = b.dataset.y; syncButtons(); drawCharts(); });
+for (const b of document.querySelectorAll("[data-theme-choice]")) b.addEventListener("click", () => {
+  const choice = b.dataset.themeChoice;
+  if (choice === "auto") delete document.documentElement.dataset.theme;
+  else document.documentElement.dataset.theme = choice;
+  try { localStorage.setItem("run-viewer-theme", choice); } catch (e) { /* storage unavailable */ }
+  syncButtons();
+});
+try {
+  const saved = localStorage.getItem("run-viewer-theme");
+  if (saved === "light" || saved === "dark") document.documentElement.dataset.theme = saved;
+} catch (e) { /* storage unavailable */ }
+const smoothing = document.getElementById("smoothing");
+smoothing.value = state.smoothing;
+smoothing.addEventListener("input", () => { state.smoothing = Number(smoothing.value); syncButtons(); drawCharts(); });
+const focus = document.getElementById("focus");
+RUNS.forEach((r, i) => focus.append(el("option", { value: i }, r.name)));
+if (SINGLE) document.getElementById("focus-control").hidden = true;
+focus.addEventListener("change", () => {
+  state.focus = Number(focus.value);
+  drawRecipe(); drawEvents(); drawSamples(); drawPoints();
+});
+
+// ---------- page ----------
+document.getElementById("subtitle").textContent = SINGLE ? RUNS[0].name : `${RUNS.length} runs overlaid`;
+const warnings = document.getElementById("warnings");
+const notes = [...DATA.warnings];
+for (const run of RUNS) if (run.status && run.status.status === "running")
+  notes.push(`${run.name} is still running: this page is a snapshot. Rerun the command to refresh it.`);
+if (notes.length) {
+  const box = el("div", { class: "warn", role: "note" });
+  for (const n of notes) box.append(el("p", {}, n));
+  warnings.append(box);
+}
+document.getElementById("footer").textContent =
+  "Generated by python -m llm_training.explain.runs from each run's metrics.jsonl, evaluation.json, status.json and config. " +
+  "The page loads nothing from the network.";
+syncButtons();
+drawRunsTable(); drawRecipe(); drawCharts(); drawSamples(); drawEvaluation(); drawPoints();
+let resizeTimer = null;
+new ResizeObserver(() => { clearTimeout(resizeTimer); resizeTimer = setTimeout(drawCharts, 80); }).observe(chartsBox);
+</script>
+</body>
+</html>

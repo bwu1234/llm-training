@@ -4,8 +4,10 @@
 # quality. Same block design as the GPT-2 recipe (tied head, GPT-2 init, SDPA, AdamW
 # (0.9, 0.95), decay on matrices only, clipping, warmup then cosine), scaled to 8 layers x 512.
 # Measured on an M2 Max (FP32, synthetic batches): about 6,850 tokens/s, so the ~459M-token
-# training split is about 19 hours for one epoch. `--stop-after N` ends earlier at a safe
-# boundary; every 500th update carries a temperature-0.8 sample in metrics.jsonl.
+# training split is about 19 hours for one epoch. `--stop-after N` pauses at a safe boundary
+# for a later resume; to end early for good, set `max_steps` before starting, so the cosine
+# decay fits the shorter run. Every 250th update carries a temperature-0.8 sample in
+# metrics.jsonl.
 #
 # Prepare once (downloads ~1.9 GB, pinned revision and SHA-256; see data/corpus.py):
 #   uv run llm-training prepare --config configs/tinystories_51m.yaml
