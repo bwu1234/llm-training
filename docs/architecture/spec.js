@@ -14,6 +14,7 @@ window.ARCHITECTURE = {
     "context_length": 1024,
     "emb_dim": 768,
     "n_heads": 12,
+    "head_dim": 64,
     "n_layers": 12,
     "qkv_bias": true,
     "drop_rate": 0.0,
@@ -6744,6 +6745,7 @@ window.ARCHITECTURE = {
     "context_length": 256,
     "emb_dim": 768,
     "n_heads": 12,
+    "head_dim": 64,
     "n_layers": 12,
     "qkv_bias": false,
     "drop_rate": 0.1,
@@ -9577,6 +9579,7 @@ window.ARCHITECTURE = {
     "context_length": 512,
     "emb_dim": 512,
     "n_heads": 8,
+    "head_dim": 64,
     "n_layers": 8,
     "qkv_bias": true,
     "drop_rate": 0.0,
@@ -12120,6 +12123,7 @@ window.ARCHITECTURE = {
     "context_length": 1024,
     "emb_dim": 1024,
     "n_heads": 16,
+    "head_dim": 64,
     "n_layers": 24,
     "qkv_bias": true,
     "drop_rate": 0.0,
@@ -23231,6 +23235,7 @@ window.ARCHITECTURE = {
     "context_length": 16,
     "emb_dim": 32,
     "n_heads": 4,
+    "head_dim": 8,
     "n_layers": 2,
     "qkv_bias": false,
     "drop_rate": 0.1,
@@ -26157,7 +26162,7 @@ window.ARCHITECTURE = {
    },
    "note": {
     "title": "Causal multi-head attention",
-    "text": "Queries, keys and values come from three separate linear maps. Each is split into `n_heads` heads of width `emb_dim / n_heads`. Every head scores each query against every earlier key with `Q Kᵀ / √head_dim`; a causal mask sets later positions to −∞ before the softmax. The weighted sum of values goes back through `out_proj`.\n\nThe split into heads is a reshape and a transpose: the `view` and `transpose` steps, not a module. With `attn_impl: sdpa`, PyTorch's fused kernel does the scoring without materializing the T × T matrix; the explicit path builds it and applies dropout to it.\n\nThe `mask` buffer is `context_length × context_length` and persistent, so it is saved in every checkpoint. Making it non-persistent is backlog item A7.",
+    "text": "Queries, keys and values come from three separate linear maps. Each is split into `n_heads` heads of width `head_dim = emb_dim / n_heads` (GPT-2 small: 768 / 12 = 64). Every head scores each query against every earlier key with `Q Kᵀ / √head_dim`; a causal mask sets later positions to −∞ before the softmax. The weighted sum of values goes back through `out_proj`.\n\nThe split into heads is a reshape and a transpose: the `view` and `transpose` steps, not a module. With `attn_impl: sdpa`, PyTorch's fused kernel does the scoring without materializing the T × T matrix; the explicit path builds it and applies dropout to it.\n\nThe `mask` buffer is `context_length × context_length` and persistent, so it is saved in every checkpoint. Making it non-persistent is backlog item A7.",
     "see": [
      "docs/gpt2.md#attention-and-block-details"
     ]
@@ -26630,7 +26635,7 @@ window.ARCHITECTURE = {
   },
   "llm_training.model.gpt2.attention.MultiHeadAttention.W_query": {
    "label": "Query projection",
-   "text": "What each position is looking for."
+   "text": "What each position is looking for. In GPT-2 small: 12 heads × `head_dim` 64 = 768 outputs, exactly the width of the residual stream."
   },
   "llm_training.model.gpt2.attention.MultiHeadAttention.W_key": {
    "label": "Key projection",

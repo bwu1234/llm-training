@@ -64,7 +64,7 @@
   },
   "llm_training.model.gpt2.attention.MultiHeadAttention": {
    "title": "Causal multi-head attention",
-   "text": "Queries, keys and values come from three separate linear maps. Each is split into `n_heads` heads of width `emb_dim / n_heads`. Every head scores each query against every earlier key with `Q Kᵀ / √head_dim`; a causal mask sets later positions to −∞ before the softmax. The weighted sum of values goes back through `out_proj`.\n\nThe split into heads is a reshape and a transpose: the `view` and `transpose` steps, not a module. With `attn_impl: sdpa`, PyTorch's fused kernel does the scoring without materializing the T × T matrix; the explicit path builds it and applies dropout to it.\n\nThe `mask` buffer is `context_length × context_length` and persistent, so it is saved in every checkpoint. Making it non-persistent is backlog item A7.",
+   "text": "Queries, keys and values come from three separate linear maps. Each is split into `n_heads` heads of width `head_dim = emb_dim / n_heads` (GPT-2 small: 768 / 12 = 64). Every head scores each query against every earlier key with `Q Kᵀ / √head_dim`; a causal mask sets later positions to −∞ before the softmax. The weighted sum of values goes back through `out_proj`.\n\nThe split into heads is a reshape and a transpose: the `view` and `transpose` steps, not a module. With `attn_impl: sdpa`, PyTorch's fused kernel does the scoring without materializing the T × T matrix; the explicit path builds it and applies dropout to it.\n\nThe `mask` buffer is `context_length × context_length` and persistent, so it is saved in every checkpoint. Making it non-persistent is backlog item A7.",
    "see": ["docs/gpt2.md#attention-and-block-details"]
   },
   "llm_training.model.gpt2.layers.LayerNorm": {
@@ -371,7 +371,7 @@
   "llm_training.model.gpt2.model.TransformerBlock.drop_resid": {"label": "Residual dropout", "text": "Called twice per block, after attention and after the feed-forward network, before each residual add. One module serves both because dropout has no parameters."},
   "llm_training.model.gpt2.model.TransformerBlock.norm2": {"label": "Pre-feed-forward norm", "text": "Normalizes the feed-forward sublayer's input."},
   "llm_training.model.gpt2.model.TransformerBlock.ff": {"label": "Feed-forward network (MLP)", "text": "Processes each position on its own, with no mixing between tokens."},
-  "llm_training.model.gpt2.attention.MultiHeadAttention.W_query": {"label": "Query projection", "text": "What each position is looking for."},
+  "llm_training.model.gpt2.attention.MultiHeadAttention.W_query": {"label": "Query projection", "text": "What each position is looking for. In GPT-2 small: 12 heads × `head_dim` 64 = 768 outputs, exactly the width of the residual stream."},
   "llm_training.model.gpt2.attention.MultiHeadAttention.W_key": {"label": "Key projection", "text": "What each position offers to be matched against."},
   "llm_training.model.gpt2.attention.MultiHeadAttention.W_value": {"label": "Value projection", "text": "What each position contributes when it's attended to."},
   "llm_training.model.gpt2.attention.MultiHeadAttention.dropout": {"label": "Attention dropout", "text": "Dropout on the attention weights. Its input is the full `[B, heads, T, T]` matrix, which is why explicit attention's memory grows with the square of the context."},

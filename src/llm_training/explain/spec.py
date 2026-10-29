@@ -111,6 +111,16 @@ def _preset(entry, base, found):
     tree = _collapse(tree, alias)
     _redirect(tree, alias)
     keys = model_family.architecture_keys + model_family.inherited_build_keys
+    config = {key: model_config[key] for key in keys if key in model_config}
+    if "head_dim" not in config:  # GPT-2 derives it (emb_dim / n_heads) rather than configuring it
+        head_dim = next((m.head_dim for m in model.modules() if hasattr(m, "head_dim")), None)
+        if head_dim is not None:
+            shown = {}
+            for key, value in config.items():
+                shown[key] = value
+                if key == "n_heads":
+                    shown["head_dim"] = head_dim
+            config = shown
     return {
         "id": entry["id"],
         "label": entry["label"],
@@ -118,7 +128,7 @@ def _preset(entry, base, found):
         "recipe": entry["recipe"],
         "overrides": entry.get("overrides", {}),
         "family": model_family.name,
-        "config": {key: model_config[key] for key in keys if key in model_config},
+        "config": config,
         "total": sum(p.numel() for p in model.parameters()),
         "tree": tree,
     }
