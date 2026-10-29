@@ -82,6 +82,8 @@ and explanation, and the Quick start above is the starting point. What remains i
 
 - [Run artifacts](https://github.com/bwu1234/llm-training/blob/main/docs/reference/run-artifacts.md): the files a run writes, `metrics.jsonl`
   fields, and what a checkpoint holds
+- [Model configuration](https://github.com/bwu1234/llm-training/blob/main/docs/reference/model-config.md): every `model:` field per family, with
+  defaults and which fields the weights fix
 
 **Explanation**, for how and why things work:
 

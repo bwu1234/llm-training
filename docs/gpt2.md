@@ -78,7 +78,7 @@ flowchart TD
 
 Each attention layer projects the hidden states separately into queries, keys,
 and values. The projections are split into `n_heads` heads, each of width
-`emb_dim / n_heads`. Each head computes `Q @ K.transpose(-2, -1)` and scales
+`head_dim = emb_dim / n_heads` (64 for GPT-2 small). Each head computes `Q @ K.transpose(-2, -1)` and scales
 the scores by `1 / sqrt(head_dim)`. A causal mask sets future-position scores to
 negative infinity before softmax, so those positions receive zero attention
 weight. Softmax normalizes over key positions up to and including the current
@@ -111,7 +111,8 @@ both presets use 0.1. Dropout is disabled in evaluation mode.
 
 The heads have width 8 in the smoke preset and 64 in the GPT 162M preset.
 Context length, embedding width, layer count, head count, dropout, and QKV bias
-are configuration values; `emb_dim` must be divisible by `n_heads`.
+are configuration values; `emb_dim` must be divisible by `n_heads`. Every field, with its
+default and meaning, is in [Model configuration](reference/model-config.md#gpt-2-arch-gpt2).
 The vocabulary size is currently fixed to 50,257 by the GPT-2 tokenizer
 contract.
 

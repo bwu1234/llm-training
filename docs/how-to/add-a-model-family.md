@@ -7,7 +7,10 @@ load weights into it, its tokenizer, its pinned releases, and any extra package 
 must match. To add one, write `model/<name>/` with that file, then add the name to `FAMILIES`
 in `model/registry.py` and its releases to `PRETRAINED`. `tests/unit/test_families.py` checks
 the declaration, and `tests/unit/test_fingerprint_scope.py` checks that the resume fingerprint
-covers the family's code and nothing from another family. GRPO (`reasoning/`) is built on
+covers the family's code and nothing from another family. Add a section for the family's
+config fields to [Model configuration](../reference/model-config.md), headed
+``## <Name> (`arch: <name>`)``, with the same columns as the others;
+`tests/unit/test_model_config_docs.py` fails until every field and default matches. GRPO (`reasoning/`) is built on
 Qwen3 directly and is not covered by this. To show the new family in the
 [architecture explorer](../architecture-explorer.md), add a preset and notes for its module
 classes to `docs/architecture/explainer.json`.

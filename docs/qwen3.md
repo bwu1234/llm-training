@@ -41,6 +41,9 @@ component is different:
 | Biases, dropout | configurable | none |
 | Output head | optionally tied | tied to the token embedding |
 
+The fields each family's recipe accepts, and why GPT-2 has some Qwen3 lacks, are in
+[Model configuration](reference/model-config.md).
+
 The preset `QWEN3_0_6B` has 596,049,920 parameters: 28 layers, `emb_dim` 1024, and a
 151,936-token vocabulary. The fine-tuning recipes untie the output head, as the book's
 chapters 6 and 8 do, which adds a second 151,936 × 1,024 matrix: 751,632,384 parameters.
