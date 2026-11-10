@@ -1,6 +1,6 @@
 # Backlog
 
-Last updated 2026-10-28. **This is the one place that tracks pending work:** runs that are
+Last updated 2026-11-09. **This is the one place that tracks pending work:** runs that are
 built but not yet launched, work that is not built, known issues, decisions that block other
 work, and the recommended next steps. Other docs describe what exists and link here for
 what doesn't. The linked guides hold the details, measurements and design, and the
@@ -86,6 +86,82 @@ Open:
 - **Tests that wait on those items:** a resume from a relocated checkpoint (F5), a resume with
   an active scaler (F7), and any accelerator run in CI (D4).
 
+### Published training recipes (OpenAI GPT-2, Alibaba Qwen3)
+
+Added 2026-11-09. Goal: one configurable choice between the book's recipe, nanoGPT's, and the
+recipe each model's authors published. Today the choice is made field by field: the defaults
+are the book, and `pretrain_gpt2_124m.yaml` spells out nanoGPT.
+
+**"Identical" is not reachable for either model**, because neither recipe is fully published.
+The target here is "every published detail, with each unpublished value recorded as an
+assumption". **Decided 2026-11-09: unpublished values come from nanoGPT's recipe**, as
+`pretrain_gpt2_124m.yaml` sets them (AdamW (0.9, 0.95), weight decay 0.1 on matrices, clipping
+at 1.0, nanoGPT's warmup and cosine to `min_lr`, dropout 0), not from GPT-1. So `openai-gpt2`
+is the `nanogpt` preset plus the published details below, and `qwen3-report` uses the same
+optimizer settings, as `cpt_qwen3_0_6b_tinystories.yaml` already does. Sources, read on
+2026-11-09:
+
+- GPT-2: [the GPT-2 paper](https://cdn.openai.com/better-language-models/language_models_are_unsupervised_multitask_learners.pdf)
+  §2.1–2.3 and §3, [OpenAI's `model.py`](https://github.com/openai/gpt-2/blob/master/src/model.py)
+  and [model card](https://github.com/openai/gpt-2/blob/master/model_card.md). The paper says
+  the model "largely follows" GPT-1, so the
+  [GPT-1 paper](https://cdn.openai.com/research-covers/language-unsupervised/language_understanding_paper.pdf)
+  §4.1 "Model specifications" is the only source for the optimizer. OpenAI released no GPT-2
+  training code and no WebText.
+- Qwen3: the [Qwen3 Technical Report](https://arxiv.org/abs/2505.09388) §2–4.
+
+**The selector**
+
+| Item | Why it matters | Notes |
+| --- | --- | --- |
+| A recipe preset field | One switch instead of a dozen fields that must be set together, and a run's records say which recipe it claims to follow | `training.recipe` is taken (it selects the monitoring loop), so this needs another name, e.g. a top-level `preset: book \| nanogpt \| openai-gpt2 \| qwen3-report`. It must span `model`, `data` and `training`, since init, tying, dropout and window length are part of a recipe. A preset only supplies defaults: explicit fields override it, and `config.resolved.yaml` records the preset name and every expanded value, so the config hash and resume see plain fields. `book` is today's defaults. A preset that only fits one family is checked through `Family`, not by branching on the family name. Edits `lm/config.py`, so checkpoints need `--allow-code-drift` |
+| A published-versus-assumed table per preset | Without it a "true recipe" preset overstates what is known | A reference page listing each value's source (paper section or code line) or "assumed", generated from the preset table with a staleness test, like `model-config.md` |
+
+**GPT-2: what OpenAI published, against what is built**
+
+| Component | Published | Here | To build |
+| --- | --- | --- | --- |
+| Position-table init | `model.py`: `wpe` std 0.01; `wte` and all weights 0.02; biases 0 | `init: gpt2` uses 0.02 for both tables (nanoGPT) | An `init` value with `wpe` at 0.01. In `model/gpt2/init.py` |
+| Residual scaling at init | Paper: residual-layer weights scaled by 1/√N, N = number of residual layers. `model.py` has no such scaling | `residual_scaled_init` scales by 1/√(2·n_layers), nanoGPT's reading of N | Nothing; the preset must choose paper or code and say which. They disagree |
+| Optimizer | GPT-2: not stated. GPT-1: Adam, with decoupled weight decay 0.01 "on all non bias or gain weights" | AdamW with `weight_decay_policy: matrices` | Nothing: nanoGPT's values (betas (0.9, 0.95), weight decay 0.1), since GPT-2's are unpublished |
+| Learning rate | GPT-2: "manually tuned for the best perplexity on a 5% held-out sample of WebText", values not given. GPT-1: max 2.5e-4 | Any value | Nothing: nanoGPT's 6e-4. A sweep on the held-out sample would be the published method |
+| Schedule | GPT-1: linear from zero over 2,000 updates, cosine to 0. GPT-2: not stated | Warmup is nanoGPT's `lr·(it+1)/(warmup+1)`, which never starts at zero; cosine to `min_lr: 0` works | Nothing: nanoGPT's schedule, which is built |
+| Gradient clipping | Not stated in either paper | `grad_clip` | Nothing: nanoGPT's 1.0 |
+| Dropout | GPT-1: 0.1 on residual, embedding and attention. GPT-2: not stated | `drop_rate` | Nothing: nanoGPT's 0.0 |
+| Batch | 512 sequences of 1,024 tokens (524,288 tokens per update) | `grad_accum_steps` reaches it | Throughput first: bf16 autocast, `torch.compile`, DDP (register D1–D3) |
+| Sequence sampling | GPT-1: "randomly sampled, contiguous sequences". GPT-2: not stated | Fixed non-overlapping windows, shuffled each epoch | The stateless random-offset sampler (register C6) |
+| Corpus | WebText: outbound Reddit links with at least 3 karma, 45M links, Dragnet and Newspaper extraction, de-duplicated and cleaned to slightly over 8M documents and 40 GB, Wikipedia removed, links up to Dec 2017. Private | None chosen | OpenWebText is the usual stand-in (register C1, decision D1). It is not WebText, so the loss is not comparable with OpenAI's |
+| Held-out set | A 5% sample of WebText | A validation split only | Document-level split and a test split (register C4, C7) |
+| Training length | Not stated; "all models still underfit WebText" | `num_epochs` / `max_steps` | A token budget (register C8); any value is an assumption |
+| Precision | Not stated | float32 | Nothing |
+
+**Qwen3: what Alibaba published, against what is built**
+
+The report gives no optimizer, learning rate, batch size, weight decay, warmup, step count,
+precision or initialization. It says only that scaling laws predicted the learning-rate
+schedule and batch size for each model. So a Qwen3 preset can follow the structure of the
+recipe and none of its numbers. The token counts (36 trillion in total) are far beyond this
+machine; these items are about having the mechanisms at a small budget.
+
+| Component | Published | Here | To build |
+| --- | --- | --- | --- |
+| Tied output head | Table 1: Qwen3-0.6B, 1.7B and 4B tie the embedding | `tie_embeddings` exists; the recipes untie it, as the book does | Nothing new: the preset sets `tie_embeddings: true` |
+| Training from random weights | Initialization not stated | Not built (see Fine-tuning and evaluation above) | That item, with the init recorded as an assumption |
+| Staged pretraining | S1 general: over 30T tokens at sequence length 4,096. S2 reasoning: about 5T tokens at 4,096, with more STEM, code, reasoning and synthetic data, and a faster learning-rate decay. S3 long context: hundreds of billions of tokens at 32,768 | One corpus, one window length and one schedule per run; stages can only be chained by hand through `init_from` | A stage list in the recipe (corpus mix, `max_length`, update count and schedule segment per stage), with the stage index in the checkpoint so resume stays exact. Needs corpus mixing (see Fine-tuning and evaluation) |
+| RoPE base change | S3 raises the base from 10,000 to 1,000,000 (ABF) | `rope_base` is an architecture key, so `init_from` rejects weights saved with another value | Let a stage change `rope_base`. The tables are non-persistent buffers, so no weights change |
+| Long-context batches | S3: 75% of text between 16,384 and 32,768 tokens, 25% between 4,096 and 16,384 | Windows are cut from one token stream and cross document boundaries | Document-length buckets in the token corpus and its manifest. Memory at 32,768 tokens is unmeasured; two 1,024-token windows already peak at 30 GB, so this needs bf16 and probably gradient checkpointing |
+| Corpus | 119 languages; web text, PDF text recognized by Qwen2.5-VL and refined by Qwen2.5, and synthetic data from Qwen2.5 models; over 30T tokens annotated for educational value, field, domain and safety | TinyStories only | Out of reach. Decision D2's domain and general text stand in |
+| Post-training of the small models | Strong-to-weak distillation for 0.6B–14B: off-policy on teacher responses generated in `/think` and `/no_think` modes, then on-policy, where the student generates and its logits are aligned to the teacher's (Qwen3-32B or 235B-A22B) by KL divergence | Chapter 8 SFT on DeepSeek-R1 responses is the off-policy kind, with another teacher and no mode flags. No logit distillation | A logit-distillation training mode: a frozen teacher forward pass and a KL loss, in a new module added to `lm_training_code`. Neither teacher fits here (32B parameters is about 128 GB in float32), so a smaller Qwen3 would stand in. Needs the chat template and `<think>` handling of the `--use_think_tokens` item. This applies to the instruct model; the `-Base` weights we pin have not been through it |
+| Reasoning RL | Flagship models: GRPO on 3,995 query-verifier pairs, "a large batch size and a high number of rollouts per query, along with off-policy training", entropy kept steady or rising. Numbers not given | Chapter 6 GRPO: one problem per step, 8 rollouts, on-policy | Covered by the GRPO rows under [Raschka's bonus material](#techniques-from-raschkas-bonus-material) (diagnostics for entropy, more problems per step). The report does not apply this stage to 0.6B |
+
+Constraints for all of them:
+
+- **Book parity.** No preset changes a default; `pretrain_gpt_162m.yaml` stays frozen.
+- **Resume hash.** Everything here edits `lm/`, `data/` or `model/<arch>/`, so existing
+  checkpoints need `--allow-code-drift`.
+- **Name presets for their source, not as "true".** `openai-gpt2` and `qwen3-report` follow
+  what was published; the assumed values are theirs to list, not hide.
+
 ### Techniques from nanochat
 
 Found by comparing this repo with
@@ -140,10 +216,8 @@ Constraints for all of them:
 
 ### Techniques from Raschka's bonus material
 
-Found on 2026-10-28 while comparing this repo with
-[FareedKhan-dev/train-llm-from-scratch](https://github.com/FareedKhan-dev/train-llm-from-scratch).
-That repo was used only as a list of technique names, and the references below are Raschka's
-versions. All are at the commits we already pin:
+Found on 2026-10-28. The references below are Raschka's versions, all at the commits we
+already pin:
 [reasoning-from-scratch `a788466`](https://github.com/rasbt/reasoning-from-scratch/tree/a788466dc85cfe8617b6c0b809ed4ab9084485de)
 and [LLMs-from-scratch `cdbd33e`](https://github.com/rasbt/LLMs-from-scratch/tree/cdbd33e6d57a71e20ea31434841095fac50cecd8).
 Muon and the GPT-2 KV cache are recorded on their existing items (the nanochat Muon row and
@@ -271,6 +345,7 @@ exists.
 | D2 | Domain for continued pretraining, and the general text to mix in | A real continued-pretraining run, corpus registration |
 | D3 | Go/no-go for R1–R7 | Results for every built stage |
 | D4 | float32 versus bfloat16 as the default for fine-tuning runs | Comparability with the books' numbers; memory headroom |
+| D5 | Recipe presets: the field's name and scope (unpublished values are settled: nanoGPT's) | The [published-recipes](#published-training-recipes-openai-gpt-2-alibaba-qwen3) preset work |
 
 ## 5. Recommended next steps
 
